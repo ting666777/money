@@ -1,0 +1,3128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="智慧記帳">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>定成 & 妤珊 記帳</title>
+  <style>
+    :root,
+    body[data-theme="dark"] {
+      --bg: #0b0f19;
+      --card: #151d2f;
+      --card-soft: #111827;
+      --card-border: #243049;
+      --text: #f1f5f9;
+      --text-muted: #8292ab;
+      --ding: #38bdf8;
+      --yu: #f472b6;
+      --expense: #fb7185;
+      --income: #34d399;
+      --accent: #6366f1;
+      --hero-bg: linear-gradient(145deg, #162035, #111827);
+      --pill-active-bg: #1f293d;
+      --radius: 16px;
+    }
+
+    body[data-theme="white"] {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --card-soft: #f1f5f9;
+      --card-border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --ding: #0284c7;
+      --yu: #db2777;
+      --expense: #e11d48;
+      --income: #16a34a;
+      --accent: #4f46e5;
+      --hero-bg: linear-gradient(145deg, #ffffff, #f1f5f9);
+      --pill-active-bg: #ffffff;
+    }
+
+    body[data-theme="milktea"] {
+      --bg: #f6efe6;
+      --card: #fffdf9;
+      --card-soft: #eee4d6;
+      --card-border: #dfcfbb;
+      --text: #4a3b32;
+      --text-muted: #8b7667;
+      --ding: #5c7c99;
+      --yu: #bf6e7e;
+      --expense: #c65d47;
+      --income: #4a8c6f;
+      --accent: #a67c52;
+      --hero-bg: linear-gradient(145deg, #fffdf9, #f3e8d8);
+      --pill-active-bg: #ffffff;
+    }
+
+    body[data-theme="pink"] {
+      --bg: #fdf2f8;
+      --card: #fffafc;
+      --card-soft: #fce7f3;
+      --card-border: #f5c2dc;
+      --text: #701a46;
+      --text-muted: #ad537c;
+      --ding: #0284c7;
+      --yu: #db2777;
+      --expense: #e11d48;
+      --income: #10b981;
+      --accent: #ec4899;
+      --hero-bg: linear-gradient(145deg, #fffafc, #fce7f3);
+      --pill-active-bg: #ffffff;
+    }
+
+    body[data-theme="cyberpunk"] {
+      --bg: #080012;
+      --card: #130428;
+      --card-soft: #1d083a;
+      --card-border: #00f0ff;
+      --text: #fcee09;
+      --text-muted: #00f0ff;
+      --ding: #00f0ff;
+      --yu: #ff007f;
+      --expense: #ff0055;
+      --income: #00ff9f;
+      --accent: #ff007f;
+      --hero-bg: linear-gradient(145deg, #1f073b, #0c021c);
+      --pill-active-bg: #290a52;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 14px;
+      padding-bottom: 80px;
+      max-width: 600px;
+      margin: 0 auto;
+      touch-action: pan-y;
+    }
+
+    /* 🚀 全螢幕外框流動光暈 (Full-Screen Border Effect) */
+    .screen-neon-border {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9998;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      box-shadow: inset 0 0 25px rgba(166, 124, 82, 0.55), inset 0 0 10px rgba(191, 110, 126, 0.7);
+      border: 3px solid transparent;
+    }
+
+    .screen-neon-border.active {
+      opacity: 1;
+      animation: neon-glow-pulse 1.2s ease-in-out infinite alternate;
+    }
+
+    .screen-neon-border.active::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 3.5px solid transparent;
+      border-image: conic-gradient(from var(--neon-angle, 0deg), #a67c52, #d4a373, #bf6e7e, #5c7c99, #a67c52) 1;
+      animation: neon-rotate 1.5s linear infinite;
+    }
+
+    @property --neon-angle {
+      syntax: '<angle>';
+      inherits: false;
+      initial-value: 0deg;
+    }
+
+    @keyframes neon-rotate {
+      0% { --neon-angle: 0deg; }
+      100% { --neon-angle: 360deg; }
+    }
+
+    @keyframes neon-glow-pulse {
+      0% {
+        box-shadow: inset 0 0 20px rgba(166, 124, 82, 0.45), inset 0 0 10px rgba(212, 163, 115, 0.65), 0 0 15px rgba(166, 124, 82, 0.35);
+      }
+      100% {
+        box-shadow: inset 0 0 32px rgba(191, 110, 126, 0.6), inset 0 0 14px rgba(166, 124, 82, 0.75), 0 0 22px rgba(191, 110, 126, 0.45);
+      }
+    }
+
+    /* 頂部極簡切換列：定成 / 妤珊 + 快捷功能圖標 */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .user-pill-group {
+      display: flex;
+      background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .user-pill {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .user-pill.active-ding {
+      background: var(--pill-active-bg);
+      color: var(--ding);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    .user-pill.active-yu {
+      background: var(--pill-active-bg);
+      color: var(--yu);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--card-border);
+      background: var(--card);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 2px 5px rgba(74, 59, 50, 0.05);
+    }
+
+    .icon-btn:active {
+      background: var(--card-soft);
+      transform: scale(0.94);
+    }
+
+    .icon-btn.spinning {
+      animation: neon-spin 0.8s linear infinite !important;
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 12px rgba(166, 124, 82, 0.5), inset 0 0 6px rgba(166, 124, 82, 0.35) !important;
+    }
+
+    .icon-btn.spinning span {
+      display: inline-block;
+      animation: spin-glyph 0.8s linear infinite;
+    }
+
+    @keyframes neon-spin {
+      0% {
+        box-shadow: 0 0 6px rgba(166, 124, 82, 0.45), inset 0 0 4px rgba(166, 124, 82, 0.3);
+        border-color: #a67c52;
+      }
+      50% {
+        box-shadow: 0 0 16px rgba(191, 110, 126, 0.6), inset 0 0 8px rgba(191, 110, 126, 0.45);
+        border-color: #bf6e7e;
+      }
+      100% {
+        box-shadow: 0 0 6px rgba(166, 124, 82, 0.45), inset 0 0 4px rgba(166, 124, 82, 0.3);
+        border-color: #a67c52;
+      }
+    }
+
+    @keyframes spin-glyph {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .badge-dot {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 8px;
+      height: 8px;
+      background: #c65d47;
+      border-radius: 50%;
+    }
+
+    /* 📅 時間維度切換：天 (Day) / 月 (Month) / 年 (Year) */
+    .time-dimension-bar {
+      display: flex;
+      background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 12px;
+      gap: 4px;
+    }
+
+    .dim-btn {
+      flex: 1;
+      padding: 7px 0;
+      text-align: center;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.88rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .dim-btn.active {
+      background: var(--card);
+      color: var(--text);
+      box-shadow: 0 2px 6px rgba(74, 59, 50, 0.1);
+    }
+
+    /* ◀ 2026/11/05 ▶ 時間導航與下拉選單 */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 6px 10px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 6px rgba(74, 59, 50, 0.04);
+    }
+
+    .nav-arrow {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .nav-arrow:active {
+      background: var(--card-soft);
+      color: var(--text);
+    }
+
+    .nav-select-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .nav-select-wrapper select {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .nav-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-caret {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* 總額大字看板 */
+    .hero-stat {
+      background: var(--hero-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .hero-main {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-label {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .hero-amount {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--expense);
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .hero-sub {
+      text-align: right;
+    }
+
+    .hero-income {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--income);
+    }
+
+    .hero-count {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* 📊 分類支出佔比長條圖與色塊 */
+    .chart-box {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(74, 59, 50, 0.04);
+    }
+
+    .chart-bar {
+      display: flex;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--card-soft);
+      margin-bottom: 12px;
+    }
+
+    .bar-seg {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .cat-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+    }
+
+    .cat-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .chip-name {
+      color: var(--text-muted);
+    }
+
+    .chip-val {
+      color: var(--text);
+    }
+
+    /* ⚠️ 頂部常駐錯誤與重複警告橫幅 */
+    .alert-banner {
+      display: none;
+      background: #fdf2f0;
+      border: 1px solid #eab6ad;
+      border-left: 5px solid #c65d47;
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      color: #8c3828;
+      font-size: 0.84rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .alert-banner:active {
+      transform: scale(0.99);
+      background: #fae5e1;
+    }
+
+    .alert-banner-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .alert-banner-text {
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .alert-banner-btn {
+      background: #c65d47;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    /* 📋 細項列表 (List of Records) 與 🔍 智慧群集搜尋列 */
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 0 4px;
+    }
+
+    .list-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .search-box-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      gap: 8px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 6px rgba(74, 59, 50, 0.04);
+    }
+
+    .search-box-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(166, 124, 82, 0.18);
+    }
+
+    .search-icon {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 0.92rem;
+      outline: none;
+      width: 100%;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.75;
+    }
+
+    .search-clear-btn {
+      background: var(--card-soft);
+      border: none;
+      color: var(--text-muted);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .search-summary-bar {
+      background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.84rem;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .cluster-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(74, 59, 50, 0.05);
+    }
+
+    .cluster-header {
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .cluster-header:active {
+      background: var(--card-soft);
+    }
+
+    .cluster-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .cluster-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cluster-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .cluster-total {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--expense);
+    }
+
+    .cluster-count {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .cluster-arrow {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+
+    .cluster-arrow.open {
+      transform: rotate(180deg);
+    }
+
+    .cluster-body {
+      display: none;
+      border-top: 1px solid var(--card-border);
+      padding: 10px;
+      background: var(--bg);
+    }
+
+    .cluster-body.open {
+      display: block;
+    }
+
+    .record-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.15s, border-color 0.15s;
+      box-shadow: 0 2px 6px rgba(74, 59, 50, 0.04);
+    }
+
+    .record-card:active {
+      transform: scale(0.985);
+      border-color: var(--accent);
+    }
+
+    .rec-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    /* 點擊圓形分類圖標直接換分類 */
+    .cat-icon-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(74, 59, 50, 0.08);
+    }
+
+    .rec-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .rec-note {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rec-meta {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rec-cat-text {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .rec-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .rec-amount {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .rec-amount.income {
+      color: var(--income);
+    }
+
+    .rec-account {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* 快捷按鈕列：欠錢、編輯、刪除 */
+    .rec-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    .rec-btn-mini {
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      padding: 3px 8px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .rec-btn-mini:active {
+      background: var(--card-soft);
+      color: var(--text);
+    }
+
+    .rec-btn-mini.del {
+      color: #c65d47;
+    }
+
+    .rec-btn-mini.del:active {
+      background: rgba(198, 93, 71, 0.14);
+    }
+
+    /* 快速改分類彈出選單 (Sheet Modal) */
+    .category-picker-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(74, 59, 50, 0.35);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .category-picker-overlay.open {
+      display: flex;
+    }
+
+    .category-sheet {
+      background: var(--card);
+      border-top: 1px solid var(--card-border);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 600px;
+      padding: 18px;
+      animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 -4px 20px rgba(74, 59, 50, 0.12);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .sheet-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .cat-grid-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 4px;
+      cursor: pointer;
+      gap: 5px;
+    }
+
+    .cat-grid-btn:active {
+      background: var(--card-soft);
+    }
+
+    .cat-grid-icon {
+      font-size: 1.4rem;
+    }
+
+    .cat-grid-text {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* 手動新增/編輯記帳與欠錢 Modal */
+    .edit-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(74, 59, 50, 0.38);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+    }
+
+    .edit-modal-overlay.open {
+      display: flex;
+    }
+
+    .edit-modal {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 480px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(74, 59, 50, 0.16);
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+
+    .form-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .form-input, .form-select {
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: var(--accent);
+    }
+
+    .form-btn-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .btn-submit {
+      flex: 1;
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 0;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-submit:active {
+      background: #8f6841;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      background: var(--card-soft);
+      color: var(--text-muted);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 11px 0;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-del {
+      background: #fae5e1;
+      color: #c65d47;
+      border: 1px solid #eab6ad;
+      border-radius: 10px;
+      padding: 11px 14px;
+      cursor: pointer;
+    }
+
+    .empty-msg {
+      text-align: center;
+      padding: 40px 10px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    /* 🩺 除錯與重複偵測中心 Modal */
+    .audit-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(74, 59, 50, 0.38);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 1000;
+    }
+
+    .audit-modal-overlay.open {
+      display: flex;
+    }
+
+    .audit-modal-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 520px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(74, 59, 50, 0.16);
+    }
+
+    .audit-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .audit-tabs {
+      display: flex;
+      background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+      margin-bottom: 12px;
+    }
+
+    .audit-tab-btn {
+      flex: 1;
+      padding: 7px 0;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .audit-tab-btn.active {
+      background: var(--card);
+      color: var(--text);
+      box-shadow: 0 2px 5px rgba(74, 59, 50, 0.08);
+    }
+
+    .audit-body {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+
+    .audit-item {
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+
+    .audit-item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .audit-badge-warn {
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: #b45309;
+      background: rgba(217, 119, 6, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .audit-item-desc {
+      font-size: 0.8rem;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .audit-item-btns {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      justify-content: flex-end;
+    }
+
+    /* ➕ 右下角懸浮新增按鈕 (畫面滑動時固定於右下角) */
+    .fab-add-btn {
+      position: fixed;
+      right: 20px;
+      bottom: 24px;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #ffffff;
+      border: 2px solid var(--card);
+      font-size: 1.7rem;
+      font-weight: 700;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 900;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .fab-add-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* 🎯 每月預算進度條（位於誰的記帳與天/月/年之間） */
+    .monthly-budget-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .monthly-budget-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 7px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .monthly-budget-title {
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .monthly-budget-values {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .monthly-budget-track {
+      position: relative;
+      width: 100%;
+      height: 22px;
+      background: var(--card-soft);
+      border-radius: 99px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .monthly-budget-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0%;
+      background: var(--accent);
+      opacity: 0.42;
+      border-radius: 99px;
+      transition: width 0.35s ease, background 0.25s ease;
+    }
+
+    .monthly-budget-bar-text {
+      position: relative;
+      z-index: 1;
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.2px;
+      line-height: 1;
+    }
+
+    /* ⚙️ 設定 Modal 內的摺疊選單欄位 */
+    .settings-accordion {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .settings-sec-item {
+      border: 1.5px solid var(--card-border);
+      border-radius: 14px;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    .settings-sec-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 14px;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 0.93rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .settings-sec-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .settings-sec-arrow {
+      font-size: 0.75rem;
+      transition: transform 0.2s ease;
+    }
+
+    .settings-sec-item.open .settings-sec-arrow {
+      transform: rotate(180deg);
+    }
+
+    .settings-sec-body {
+      display: none;
+      padding: 0 12px 12px;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .settings-sec-item.open .settings-sec-body {
+      display: block;
+    }
+
+    /* ⚙️ 設定 Modal 內的色系選擇列表 */
+    .theme-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .theme-option-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1.5px solid var(--card-border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .theme-option-btn.active {
+      border-color: var(--accent);
+      background: var(--card-soft);
+    }
+
+    .theme-option-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .theme-swatch-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .theme-swatch-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid rgba(128, 128, 128, 0.35);
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <!-- 🚀 全螢幕流動霓虹光暈外框 (重新整理、編輯、刪除進行時轉動) -->
+  <div class="screen-neon-border" id="screen-neon-border"></div>
+
+  <!-- 頂部列：左側使用者標題 ＋ 右側工具按鈕（🔄 重新整理、🩺 除錯偵測、⚙️ 頁面設定） -->
+  <div class="top-bar">
+    <div class="user-pill-group" id="user-toggle-pill-group">
+      <button class="user-pill active-ding" id="pill-ding" onclick="switchUser('定成')">定成</button>
+      <button class="user-pill" id="pill-yu" onclick="switchUser('妤珊')">妤珊</button>
+    </div>
+    <div id="locked-user-title" style="display:none; font-size:1.1rem; font-weight:900; letter-spacing:-0.5px; align-items:center; gap:6px;">
+      <span id="locked-user-name">定成 記帳</span>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="btn-refresh" onclick="triggerManualRefresh()" title="重新整理最新資料"><span>🔄</span></button>
+      <button class="icon-btn" onclick="openAuditCenter()" title="除錯與重複偵測">
+        🩺
+        <span class="badge-dot" id="audit-badge" style="display:none;"></span>
+      </button>
+      <button class="icon-btn" onclick="openSettingsModal()" title="頁面設定">⚙️</button>
+    </div>
+  </div>
+
+  <!-- ➕ 右下角固定懸浮新增按鈕 -->
+  <button type="button" class="fab-add-btn" onclick="openAddModal()" title="新增記帳">＋</button>
+
+  <!-- 個人每月預算進度條（位於誰的記帳與天/月/年之間，點一下可直接改預算） -->
+  <div class="monthly-budget-card" id="monthly-budget-card" onclick="openSettingsModal('budget')" title="點此設定每月預算">
+    <div class="monthly-budget-top">
+      <span class="monthly-budget-title" id="budget-bar-title">本月預算</span>
+      <span class="monthly-budget-values" id="budget-bar-status">日均 $0</span>
+    </div>
+    <div class="monthly-budget-track">
+      <div class="monthly-budget-fill" id="budget-bar-fill"></div>
+      <span class="monthly-budget-bar-text" id="budget-bar-text">點此設定預算</span>
+    </div>
+  </div>
+
+  <!-- 📅 時間維度切換：天 / 月 / 年 -->
+  <div class="time-dimension-bar">
+    <button class="dim-btn active" id="btn-dim-day" onclick="switchDimension('day')">天</button>
+    <button class="dim-btn" id="btn-dim-month" onclick="switchDimension('month')">月</button>
+    <button class="dim-btn" id="btn-dim-year" onclick="switchDimension('year')">年</button>
+  </div>
+
+  <!-- ◀ 導航列：切換上一期 / 下一期 ＋ 下拉跳轉 -->
+  <div class="nav-bar">
+    <button class="nav-arrow" onclick="navigateStep(-1)" title="上一期">◀</button>
+    <div class="nav-select-wrapper">
+      <div class="nav-title">
+        <span id="nav-label">2026/11/05 (今天)</span>
+        <span class="nav-caret">▼</span>
+      </div>
+      <select id="time-dropdown" onchange="onTimeDropdownChange(this.value)">
+        <!-- 自動填入天/月/年清單 -->
+      </select>
+    </div>
+    <button class="nav-arrow" onclick="navigateStep(1)" title="下一期">▶</button>
+  </div>
+
+  <!-- ⚠️ 頂部常駐錯誤/重複警告橫幅 (點選直接彈窗修復，直到修正完畢才會消失) -->
+  <div class="alert-banner" id="main-alert-banner" onclick="openAuditCenter()">
+    <div class="alert-banner-inner">
+      <div class="alert-banner-text" id="alert-banner-message">⚠️ 偵測到重複或錯誤資料！</div>
+      <button type="button" class="alert-banner-btn">立即修正</button>
+    </div>
+  </div>
+
+  <!-- 當期總額看板 -->
+  <div class="hero-stat">
+    <div class="hero-main">
+      <span class="hero-label" id="hero-title">今日支出</span>
+      <span class="hero-amount" id="hero-expense">$0</span>
+    </div>
+    <div class="hero-sub">
+      <div class="hero-income" id="hero-income">+$0</div>
+      <div class="hero-count" id="hero-count">0 筆紀錄</div>
+    </div>
+  </div>
+
+  <!-- 支出分類佔比條與圖例 -->
+  <div class="chart-box" id="chart-section">
+    <div class="chart-bar" id="chart-bar"></div>
+    <div class="cat-chips" id="cat-chips"></div>
+  </div>
+
+  <!-- 明細列表與搜尋框（位於分類佔比與消費細項正下方） -->
+  <div class="list-header">
+    <span class="list-title" id="list-title-text">消費細項</span>
+  </div>
+  <div class="search-box-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" class="search-input" placeholder="搜尋品項" oninput="onSearchInput(this.value)">
+    <button type="button" id="search-clear-btn" class="search-clear-btn" style="display:none;" onclick="clearSearchInput()" title="清除搜尋">✕</button>
+  </div>
+  <div id="records-container"></div>
+
+  <!-- 快速點選切換分類 Sheet Modal -->
+  <div class="category-picker-overlay" id="category-sheet-overlay" onclick="closeCategorySheet(event)">
+    <div class="category-sheet" onclick="event.stopPropagation()">
+      <div class="sheet-title">點選直接變更分類</div>
+      <div class="cat-grid" id="category-grid-buttons"></div>
+    </div>
+  </div>
+
+  <!-- 新增/修改記帳 Modal -->
+  <div class="edit-modal-overlay" id="edit-modal" onclick="closeEditModal(event)">
+    <div class="edit-modal" onclick="event.stopPropagation()">
+      <h3 style="margin-bottom:14px; font-size:1.1rem;" id="modal-heading">記一筆帳</h3>
+      <form id="record-form" onsubmit="handleFormSubmit(event)">
+        <input type="hidden" id="form-row-index" value="">
+        <input type="hidden" id="form-user" value="定成">
+
+        <div class="form-row">
+          <label class="form-label">項目 / 備註</label>
+          <input type="text" class="form-input" id="form-note" placeholder="例如：午餐、全聯、洗衣機" required>
+        </div>
+
+        <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label class="form-label">金額</label>
+            <input type="number" step="any" class="form-input" id="form-amount" placeholder="金額" required>
+          </div>
+          <div>
+            <label class="form-label">分類</label>
+            <select class="form-select" id="form-category" style="width:100%;"></select>
+          </div>
+        </div>
+
+        <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label class="form-label">時間</label>
+            <input type="datetime-local" class="form-input" id="form-time" required>
+          </div>
+          <div>
+            <label class="form-label">帳戶</label>
+            <select class="form-select" id="form-account" style="width:100%;">
+              <option value="現金">現金</option>
+              <option value="富邦信用卡">富邦信用卡(0493)</option>
+              <option value="台新Richart">台新Richart(5403)</option>
+              <option value="全支付">全支付</option>
+              <option value="國泰世華信用卡">國泰世華信用卡(7488)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-btn-group">
+          <button type="button" class="btn-del" id="form-del-btn" style="display:none;" onclick="handleDeleteCurrentRecord()">🗑️</button>
+          <button type="button" class="btn-cancel" onclick="closeEditModal()">取消</button>
+          <button type="submit" class="btn-submit" id="form-save-btn">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 欠錢 Modal -->
+  <div class="edit-modal-overlay" id="split-debt-modal" onclick="closeDebtSplitModal(event)">
+    <div class="edit-modal" onclick="event.stopPropagation()">
+      <h3 style="margin-bottom:14px; font-size:1.1rem;" id="debt-modal-heading">欠錢</h3>
+
+      <form id="debt-split-form" onsubmit="handleDebtSplitSubmit(event)">
+        <div class="form-row">
+          <label class="form-label" id="debt-modal-input-label">金額</label>
+          <input type="number" step="1" min="1" class="form-input" id="debt-split-amount" placeholder="金額" required>
+        </div>
+
+        <div class="form-btn-group">
+          <button type="button" class="btn-cancel" onclick="closeDebtSplitModal()">取消</button>
+          <button type="submit" class="btn-submit" id="debt-save-btn">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ⚙️ 頁面設定 Modal -->
+  <div class="edit-modal-overlay" id="settings-modal" onclick="closeSettingsModal(event)">
+    <div class="edit-modal" onclick="event.stopPropagation()">
+      <h3 style="margin-bottom:14px; font-size:1.1rem;" id="settings-modal-heading">⚙️ 頁面設定</h3>
+
+      <div class="settings-accordion">
+        <!-- 欄位 1：背景樣式顏色（點開才展開 5 種色系選項） -->
+        <div class="settings-sec-item" id="settings-item-theme">
+          <button type="button" class="settings-sec-header" onclick="toggleSettingsSection('theme')">
+            <span>背景樣式顏色</span>
+            <span class="settings-sec-right">
+              <span id="settings-current-theme-label">原本深色系</span>
+              <span class="settings-sec-arrow">▼</span>
+            </span>
+          </button>
+          <div class="settings-sec-body">
+            <div class="theme-list">
+              <button type="button" class="theme-option-btn" id="theme-btn-dark" onclick="selectTheme('dark')">
+                <span class="theme-option-left"><span>原本深色系</span></span>
+                <span class="theme-swatch-group">
+                  <span class="theme-swatch-dot" style="background:#0b1120;"></span>
+                  <span class="theme-swatch-dot" style="background:#1e293b;"></span>
+                  <span class="theme-swatch-dot" style="background:#6366f1;"></span>
+                </span>
+              </button>
+
+              <button type="button" class="theme-option-btn" id="theme-btn-white" onclick="selectTheme('white')">
+                <span class="theme-option-left"><span>白色系</span></span>
+                <span class="theme-swatch-group">
+                  <span class="theme-swatch-dot" style="background:#f8fafc;"></span>
+                  <span class="theme-swatch-dot" style="background:#ffffff;"></span>
+                  <span class="theme-swatch-dot" style="background:#4f46e5;"></span>
+                </span>
+              </button>
+
+              <button type="button" class="theme-option-btn" id="theme-btn-milktea" onclick="selectTheme('milktea')">
+                <span class="theme-option-left"><span>奶茶色系</span></span>
+                <span class="theme-swatch-group">
+                  <span class="theme-swatch-dot" style="background:#f5ebe1;"></span>
+                  <span class="theme-swatch-dot" style="background:#fdfaf6;"></span>
+                  <span class="theme-swatch-dot" style="background:#b08968;"></span>
+                </span>
+              </button>
+
+              <button type="button" class="theme-option-btn" id="theme-btn-pink" onclick="selectTheme('pink')">
+                <span class="theme-option-left"><span>粉色系</span></span>
+                <span class="theme-swatch-group">
+                  <span class="theme-swatch-dot" style="background:#fdf2f8;"></span>
+                  <span class="theme-swatch-dot" style="background:#ffffff;"></span>
+                  <span class="theme-swatch-dot" style="background:#ec4899;"></span>
+                </span>
+              </button>
+
+              <button type="button" class="theme-option-btn" id="theme-btn-cyberpunk" onclick="selectTheme('cyberpunk')">
+                <span class="theme-option-left"><span>賽博朋克色系</span></span>
+                <span class="theme-swatch-group">
+                  <span class="theme-swatch-dot" style="background:#080417;"></span>
+                  <span class="theme-swatch-dot" style="background:#14092e;"></span>
+                  <span class="theme-swatch-dot" style="background:#ff007f;"></span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 欄位 2：每月預算（點開直接填寫個人每月預算） -->
+        <div class="settings-sec-item" id="settings-item-budget">
+          <button type="button" class="settings-sec-header" onclick="toggleSettingsSection('budget')">
+            <span>每月預算</span>
+            <span class="settings-sec-right">
+              <span id="settings-current-budget-label">未設定</span>
+              <span class="settings-sec-arrow">▼</span>
+            </span>
+          </button>
+          <div class="settings-sec-body">
+            <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+              <input type="number" step="1" min="0" class="form-input" id="settings-budget-input" placeholder="輸入每月預算 (例如 15000)" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();saveMonthlyBudget();}">
+              <button type="button" class="btn-submit" id="settings-budget-save-btn" style="flex:0 0 auto; padding:11px 16px;" onclick="saveMonthlyBudget()">儲存</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-btn-group">
+        <button type="button" class="btn-cancel" onclick="closeSettingsModal()">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🩺 除錯與重複偵測中心 Modal -->
+  <div class="audit-modal-overlay" id="audit-modal" onclick="closeAuditModal(event)">
+    <div class="audit-modal-card" onclick="event.stopPropagation()">
+      <div class="audit-header">
+        <h3 style="font-size:1.05rem; font-weight:800; display:flex; align-items:center; gap:6px;">
+          <span>🩺</span>
+          <span>除錯與重複偵測中心</span>
+        </h3>
+        <button type="button" class="icon-btn" style="width:30px; height:30px; font-size:0.9rem;" onclick="closeAuditModal()">✕</button>
+      </div>
+
+      <div class="audit-tabs">
+        <button class="audit-tab-btn active" id="audit-tab-7" onclick="runAuditWithDays(7)">近 7 天</button>
+        <button class="audit-tab-btn" id="audit-tab-30" onclick="runAuditWithDays(30)">近 30 天</button>
+        <button class="audit-tab-btn" id="audit-tab-all" onclick="runAuditWithDays('ALL')">全部天數</button>
+      </div>
+
+      <div class="audit-body" id="audit-results-container">
+        <div class="empty-msg">點選天數開始掃描...</div>
+      </div>
+
+      <div style="text-align:right;">
+        <button type="button" class="btn-cancel" style="padding:8px 18px;" onclick="closeAuditModal()">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================================
+    // 🔗 GitHub Pages 專用設定：連線至您的 Google Apps Script 部署網址 (/exec)
+    // （已預設填入您目前使用的 Apps Script 網址，若未來重新部署新網址只需替換下方字串）
+    // ============================================================================
+    const GAS_WEB_APP_URL = localStorage.getItem("custom_gas_webapp_url") ||
+      "https://script.google.com/macros/s/AKfycbw-II8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
+
+    // 自動將原本 Apps Script 專用的 google.script.run 轉接為標準跨網域 fetch API
+    if (typeof window.google === "undefined" || !window.google.script) {
+      function createGasRunner(successHandler, failureHandler) {
+        function callGasApi(payload, extractField) {
+          fetch(GAS_WEB_APP_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          })
+            .then(function(res) { return res.json(); })
+            .then(function(json) {
+              if (json && json.success === false) {
+                if (failureHandler) failureHandler(new Error(json.message || "操作失敗"));
+                return;
+              }
+              const resultData = extractField ? json[extractField] : json;
+              // 若成功抓回儀表板資料，順便快取至瀏覽器本地，讓下次打開 GitHub 網頁 0.01 秒瞬間顯示！
+              if (payload.action === "getDashboardData" && resultData && resultData.allRecords) {
+                try {
+                  localStorage.setItem("github_fast_dash_cache_v1", JSON.stringify(resultData));
+                } catch (e) {}
+              }
+              if (successHandler) successHandler(resultData);
+            })
+            .catch(function(err) {
+              if (failureHandler) failureHandler(err);
+            });
+        }
+
+        return {
+          withSuccessHandler: function(fn) { return createGasRunner(fn, failureHandler); },
+          withFailureHandler: function(fn) { return createGasRunner(successHandler, fn); },
+          getDashboardData: function(params) {
+            callGasApi(Object.assign({ action: "getDashboardData" }, params || {}), "data");
+          },
+          addStructuredRecord: function(record) {
+            callGasApi({ action: "addRecord", record: record, user: record && record.user }, "record");
+          },
+          updateStructuredRecord: function(user, rowIndex, record, matchCriteria) {
+            callGasApi({ action: "updateRecord", user: user, rowIndex: rowIndex, record: record, matchCriteria: matchCriteria }, "record");
+          },
+          deleteRecordByRow: function(user, rowIndex, matchCriteria) {
+            callGasApi({ action: "deleteRecord", user: user, rowIndex: rowIndex, matchCriteria: matchCriteria });
+          },
+          splitRecordAndSyncDebt: function(user, rowIndex, splitAmount, matchCriteria) {
+            callGasApi({ action: "splitRecordAndSyncDebt", user: user, rowIndex: rowIndex, splitAmount: splitAmount, matchCriteria: matchCriteria });
+          },
+          saveUserSettings: function(user, settings) {
+            callGasApi({ action: "saveUserSettings", user: user, settings: settings }, "settings");
+          },
+          scanDuplicatesAndAnomalies: function(days, user) {
+            callGasApi({ action: "scanDuplicatesAndAnomalies", days: days, user: user }, "report");
+          }
+        };
+      }
+      window.google = {
+        script: {
+          run: createGasRunner(null, null)
+        }
+      };
+    }
+
+    // 10 大分類與專屬圖標與色彩
+    const CATEGORY_META = {
+      "食物": { icon: "🍽️", color: "#f97316" },
+      "飲品": { icon: "🥤", color: "#06b6d4" },
+      "交通": { icon: "🛵", color: "#3b82f6" },
+      "居家": { icon: "🛋️", color: "#eab308" },
+      "娛樂": { icon: "🎉", color: "#a855f7" },
+      "消費": { icon: "🛍️", color: "#ec4899" },
+      "3C":   { icon: "📱", color: "#6366f1" },
+      "醫藥": { icon: "💊", color: "#14b8a6" },
+      "其他": { icon: "📦", color: "#64748b" },
+      "收入": { icon: "💰", color: "#22c55e" }
+    };
+
+    let currentUser = "定成";
+    let currentDimension = "day"; // "day" | "month" | "year"
+    let currentTimeKey = "";      // yyyy/MM/dd | yyyy/MM | yyyy
+    let allRecords = [];          // 記憶體中快取的全部記帳資料
+    let editingRecordTarget = null; // 當前正在快速改分類的項目
+
+    // 取得台灣/本地正確的今日日期 (yyyy/MM/dd)
+    function getTodayString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+      return `${y}/${m}/${d}`;
+    }
+
+    let isLockedUser = false;
+    let isMonthHistoryLoaded = false;
+    let isLoadingMonthHistory = false;
+    let isFullHistoryLoaded = false;
+    let isLoadingFullHistory = false;
+    let hasViewedAuditBanner = false;
+    let lastAuditIssueSig = "";
+    let lastAuditIssues = [];
+    let editingModalMatchCriteria = null;
+    let editingModalAccountId = 0;
+    let searchQuery = "";
+    let expandedClusters = { exact: false, similar: false };
+    let showAllClusterLimit = { exact: 100, similar: 100 };
+    let renderedRecordsPool = [];
+    let currentDebtSplitRecord = null;
+    let userSettingsMap = {
+      "定成": { theme: "dark", monthlyBudget: 0 },
+      "妤珊": { theme: "milktea", monthlyBudget: 0 }
+    };
+    let monthlyExpensesMap = {
+      "定成": {},
+      "妤珊": {}
+    };
+
+    // 初始化服務端資料注入（GitHub Pages 極速版：0.01 秒先顯示本地快取畫面，同時背景向 Google Sheet 同步最新資料）
+    window.onload = function() {
+      // 支援網址帶 ?user=定成 或 ?user=妤珊 鎖定專屬個人頁面
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlUser = urlParams.get("user") || "定成";
+      isLockedUser = urlParams.has("user");
+
+      if (urlUser && (urlUser.indexOf("妤珊") !== -1 || urlUser.indexOf("珊") !== -1)) {
+        currentUser = "妤珊";
+      } else {
+        currentUser = "定成";
+      }
+
+      // 先從 localStorage 快速讀取上次儲存的色系與每月預算避免閃爍
+      try {
+        ["定成", "妤珊"].forEach(u => {
+          const cachedTheme = localStorage.getItem("theme_" + u);
+          const cachedBudget = localStorage.getItem("budget_" + u);
+          if (cachedTheme) {
+            userSettingsMap[u].theme = cachedTheme;
+          }
+          if (cachedBudget !== null && cachedBudget !== "") {
+            const b = parseFloat(cachedBudget);
+            if (!isNaN(b) && b >= 0) userSettingsMap[u].monthlyBudget = Math.round(b);
+          }
+        });
+      } catch (e) {}
+      applyUserTheme(currentUser);
+
+      // 若為專人網址，隱藏切換分頁，顯示個人標題
+      if (isLockedUser) {
+        document.getElementById("user-toggle-pill-group").style.display = "none";
+        const titleBox = document.getElementById("locked-user-title");
+        titleBox.style.display = "flex";
+        document.getElementById("locked-user-name").innerText = `${currentUser} 記帳`;
+      } else {
+        switchUser(currentUser);
+      }
+
+      initCategoryGrid();
+      initFormCategoryOptions();
+      bindSwipeGestures();
+
+      const searchEl = document.getElementById("search-input");
+      if (searchEl) {
+        searchEl.addEventListener("input", function(e) { onSearchInput(e.target.value); });
+        searchEl.addEventListener("keyup", function(e) { onSearchInput(e.target.value); });
+        searchEl.addEventListener("search", function(e) { onSearchInput(e.target.value); });
+      }
+
+      // 1. 先從本地快取 0.01 秒瞬間渲染上次畫面（完全不白畫面等待）
+      try {
+        const cachedRaw = localStorage.getItem("github_fast_dash_cache_v1");
+        if (cachedRaw) {
+          const cachedData = JSON.parse(cachedRaw);
+          if (cachedData && cachedData.monthlyExpenses) {
+            monthlyExpensesMap = cachedData.monthlyExpenses;
+          }
+          if (cachedData && cachedData.userSettings) {
+            syncUserSettingsFromServer(cachedData.userSettings);
+          }
+          if (cachedData && cachedData.allRecords && cachedData.allRecords.length > 0) {
+            allRecords = cachedData.allRecords;
+            setDefaultTimeKey();
+            refreshView();
+          }
+        }
+      } catch (e) {}
+
+      // 2. 接著立即向 Google Apps Script 抓取最新 15 筆紀錄與最新設定
+      loadDataFromServer();
+      setTimeout(checkRecentAuditIssues, 1200);
+    };
+
+    // 🩺 背景靜態檢查：若發現有重複或錯誤則亮起紅色橫幅，但只要點開查看過就會消失！
+    function checkRecentAuditIssues() {
+      google.script.run
+        .withSuccessHandler(function(report) {
+          if (!report) return;
+          const issues = report.issues || [];
+          const total = issues.length;
+          const banner = document.getElementById("main-alert-banner");
+          const badge = document.getElementById("audit-badge");
+
+          const sig = issues.map(x => `${x.user}_${x.rowIndex}_${x.recordedAt}_${x.amount}`).join("|");
+          lastAuditIssueSig = sig;
+          let dismissedSig = "";
+          try {
+            dismissedSig = localStorage.getItem("dismissed_audit_sig") || "";
+          } catch (e) {}
+
+          if (total > 0 && !hasViewedAuditBanner && sig !== dismissedSig) {
+            badge.style.display = "block";
+            document.getElementById("alert-banner-message").innerText = `⚠️ 系統發現 ${total} 筆重複或異常資料（點此查看）`;
+            banner.style.display = "block";
+          } else {
+            badge.style.display = "none";
+            banner.style.display = "none";
+          }
+        })
+        .scanDuplicatesAndAnomalies(7, currentUser);
+    }
+
+    function setDefaultTimeKey() {
+      // 1. 優先對齊「真正的今天」(例如 2026/11/05)
+      const todayStr = getTodayString();
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+
+      if (currentDimension === "day") {
+        currentTimeKey = todayStr;
+      } else if (currentDimension === "month") {
+        currentTimeKey = `${y}/${m}`;
+      } else {
+        currentTimeKey = `${y}`;
+      }
+
+      // 2. 如果今天該使用者完全沒有任何紀錄，但有歷史資料，則自動跳轉到他最新有記帳的那一天
+      if (allRecords && allRecords.length > 0) {
+        const userRecs = allRecords.filter(r => r.user === currentUser);
+        const hasToday = userRecs.some(r => String(r["Recorded At"] || "").slice(0, 10) === todayStr);
+        if (!hasToday && userRecs.length > 0) {
+          const latestDate = String(userRecs[0]["Recorded At"] || "");
+          if (latestDate.length >= 10) {
+            if (currentDimension === "day") {
+              currentTimeKey = latestDate.slice(0, 10);
+            } else if (currentDimension === "month") {
+              currentTimeKey = latestDate.slice(0, 7);
+            } else {
+              currentTimeKey = latestDate.slice(0, 4);
+            }
+          }
+        }
+      }
+    }
+
+    function switchUser(user) {
+      currentUser = user;
+      document.getElementById("pill-ding").className = "user-pill" + (user === "定成" ? " active-ding" : "");
+      document.getElementById("pill-yu").className = "user-pill" + (user === "妤珊" ? " active-yu" : "");
+      applyUserTheme(user);
+      refreshView();
+    }
+
+    function switchDimension(dim) {
+      currentDimension = dim;
+      document.getElementById("btn-dim-day").className = "dim-btn" + (dim === "day" ? " active" : "");
+      document.getElementById("btn-dim-month").className = "dim-btn" + (dim === "month" ? " active" : "");
+      document.getElementById("btn-dim-year").className = "dim-btn" + (dim === "year" ? " active" : "");
+
+      // 智慧轉換時間 Key
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+
+      if (dim === "day") {
+        currentTimeKey = currentTimeKey.length >= 10 ? currentTimeKey : `${y}/${m}/${d}`;
+      } else if (dim === "month") {
+        currentTimeKey = currentTimeKey.slice(0, 7) || `${y}/${m}`;
+        // 點選「月」時，先快速載入近 200 筆（涵蓋近兩個月），不用一次搬全部 5000 筆
+        if (!isMonthHistoryLoaded && !isFullHistoryLoaded) {
+          loadMonthHistoryFromServer();
+        }
+      } else if (dim === "year") {
+        currentTimeKey = currentTimeKey.slice(0, 4) || `${y}`;
+        // 點選「年」時，若尚未載入全部歷史資料，自動於背景完整載入全年份！
+        if (!isFullHistoryLoaded) {
+          loadFullHistoryFromServer();
+        }
+      }
+      refreshView();
+    }
+
+    // 核心資料計算與畫面渲染
+    function refreshView() {
+      updateTimeDropdownAndNav();
+
+      // 1. 篩選出符合 當前使用者 + 當前時間維度 的資料
+      const filtered = allRecords.filter(r => {
+        if (r.user !== currentUser) return false;
+        const recDate = String(r["Recorded At"] || "");
+        if (currentDimension === "day") {
+          return recDate.slice(0, 10) === currentTimeKey;
+        } else if (currentDimension === "month") {
+          return recDate.slice(0, 7) === currentTimeKey;
+        } else if (currentDimension === "year") {
+          return recDate.slice(0, 4) === currentTimeKey;
+        }
+        return false;
+      });
+
+      // 2. 統計總支出、總收入與分類佔比
+      let totalExpense = 0;
+      let totalIncome = 0;
+      const catSums = {};
+
+      filtered.forEach(r => {
+        const amt = Number(r.Amount) || 0;
+        const cat = r.Category || "其他";
+        if (cat === "收入") {
+          totalIncome += amt;
+        } else {
+          totalExpense += amt;
+          catSums[cat] = (catSums[cat] || 0) + amt;
+        }
+      });
+
+      // 3. 更新看板數字與個人每月預算進度條
+      const dimLabelMap = { day: "今日支出", month: "本月支出", year: "今年支出" };
+      document.getElementById("hero-title").innerText = dimLabelMap[currentDimension] || "當期支出";
+      document.getElementById("hero-expense").innerText = "$" + Math.round(totalExpense).toLocaleString();
+      document.getElementById("hero-income").innerText = "+$" + Math.round(totalIncome).toLocaleString();
+      document.getElementById("hero-count").innerText = `${filtered.length} 筆紀錄`;
+      renderMonthlyBudgetBar();
+
+      // 4. 更新分類長條圖與圖例
+      renderChartSection(catSums, totalExpense);
+
+      // 5. 更新細項列表
+      renderRecordsList(filtered);
+    }
+
+    // 渲染個人每月預算進度條（位於誰的記帳與天/月/年之間）
+    function renderMonthlyBudgetBar() {
+      const todayStr = getTodayString(); // yyyy/MM/dd
+      const currentRealMonth = todayStr.slice(0, 7);
+      const targetMonth = (currentTimeKey && currentTimeKey.length >= 7)
+        ? currentTimeKey.slice(0, 7)
+        : currentRealMonth;
+      const parts = targetMonth.split("/");
+      const yearNum = parseInt(parts[0], 10) || new Date().getFullYear();
+      const monthNum = parseInt(parts[1], 10) || (new Date().getMonth() + 1);
+
+      let monthExpense = 0;
+      const hasCachedMonth = (monthlyExpensesMap && monthlyExpensesMap[currentUser] && monthlyExpensesMap[currentUser][targetMonth] !== undefined);
+      if (!isMonthHistoryLoaded && !isFullHistoryLoaded && hasCachedMonth) {
+        // 一打開只載入 15 筆時，直接取用雲端快取預先算好的當月總花費（0 秒秒開）
+        monthExpense = Math.round(Number(monthlyExpensesMap[currentUser][targetMonth]) || 0);
+      } else {
+        allRecords.forEach(r => {
+          if (r.user !== currentUser) return;
+          if (r.Category === "收入") return;
+          const recMonth = String(r["Recorded At"] || "").slice(0, 7);
+          if (recMonth === targetMonth) {
+            monthExpense += (Number(r.Amount) || 0);
+          }
+        });
+        monthExpense = Math.round(monthExpense);
+      }
+
+      // 計算當月平均日花費：若是當月則除以今天幾號；若是過去月份則除以該月總天數
+      let elapsedDays = 1;
+      if (targetMonth === currentRealMonth) {
+        elapsedDays = Math.max(1, parseInt(todayStr.slice(8, 10), 10) || new Date().getDate());
+      } else {
+        elapsedDays = new Date(yearNum, monthNum, 0).getDate() || 30;
+      }
+      const dailyAvg = Math.round(monthExpense / elapsedDays);
+
+      const userCfg = userSettingsMap[currentUser] || {};
+      const budget = Number(userCfg.monthlyBudget) || 0;
+
+      const titleEl = document.getElementById("budget-bar-title");
+      const statusEl = document.getElementById("budget-bar-status");
+      const fillEl = document.getElementById("budget-bar-fill");
+      const barTextEl = document.getElementById("budget-bar-text");
+      if (!titleEl || !statusEl || !fillEl || !barTextEl) return;
+
+      titleEl.innerText = `${monthNum}月預算`;
+      statusEl.innerText = `日均 $${dailyAvg.toLocaleString()}`;
+      statusEl.style.color = "var(--muted)";
+
+      if (budget <= 0) {
+        barTextEl.innerText = "點此設定預算";
+        fillEl.style.width = "0%";
+        fillEl.style.background = "var(--accent)";
+        return;
+      }
+
+      const pctRaw = (monthExpense / budget) * 100;
+      const pctDisplay = Math.round(pctRaw);
+      const barWidth = Math.min(100, Math.max(0, pctRaw)).toFixed(1);
+
+      barTextEl.innerText = `$${monthExpense.toLocaleString()} / $${budget.toLocaleString()} (${pctDisplay}%)`;
+      fillEl.style.width = `${barWidth}%`;
+
+      if (pctRaw >= 100) {
+        fillEl.style.background = "#ef4444";
+      } else if (pctRaw >= 80) {
+        fillEl.style.background = "#f59e0b";
+      } else {
+        fillEl.style.background = "var(--accent)";
+      }
+    }
+
+    // 渲染分類佔比條與圖例色塊
+    function renderChartSection(catSums, totalExpense) {
+      const barBox = document.getElementById("chart-bar");
+      const chipsBox = document.getElementById("cat-chips");
+      const chartSec = document.getElementById("chart-section");
+
+      if (totalExpense <= 0) {
+        chartSec.style.display = "none";
+        return;
+      }
+      chartSec.style.display = "block";
+
+      const sortedCats = Object.keys(catSums).sort((a, b) => catSums[b] - catSums[a]);
+
+      let barHtml = "";
+      let chipsHtml = "";
+
+      sortedCats.forEach(cat => {
+        const amt = catSums[cat];
+        const pct = ((amt / totalExpense) * 100).toFixed(1);
+        const meta = CATEGORY_META[cat] || { icon: "📦", color: "#64748b" };
+
+        barHtml += `<div class="bar-seg" style="width:${pct}%; background:${meta.color};" title="${cat}: ${pct}%"></div>`;
+        chipsHtml += `
+          <div class="cat-chip">
+            <span class="chip-dot" style="background:${meta.color};"></span>
+            <span class="chip-name">${meta.icon} ${cat}</span>
+            <span class="chip-val">${pct}% ($${Math.round(amt).toLocaleString()})</span>
+          </div>
+        `;
+      });
+
+      barBox.innerHTML = barHtml;
+      chipsBox.innerHTML = chipsHtml;
+    }
+
+    // 🔍 搜尋輸入處理與雙群集聚合 (完全相符「晚餐」 vs 類似項目「晚餐...」)
+    function onSearchInput(val) {
+      const q = String(val || "").trim();
+      const changed = (q !== searchQuery);
+      searchQuery = q;
+      const clearBtn = document.getElementById("search-clear-btn");
+      if (clearBtn) {
+        clearBtn.style.display = q.length > 0 ? "flex" : "none";
+      }
+
+      // 若開始搜尋且尚未載入完整歷史紀錄，自動背景載入全部歷史資料以便統計上千筆紀錄
+      if (q.length > 0 && !isFullHistoryLoaded && !isLoadingFullHistory) {
+        loadFullHistoryFromServer();
+      }
+      if (changed || q.length > 0) {
+        refreshView();
+      }
+    }
+
+    function clearSearchInput() {
+      const inp = document.getElementById("search-input");
+      if (inp) inp.value = "";
+      searchQuery = "";
+      expandedClusters = { exact: false, similar: false };
+      showAllClusterLimit = { exact: 100, similar: 100 };
+      const clearBtn = document.getElementById("search-clear-btn");
+      if (clearBtn) clearBtn.style.display = "none";
+      refreshView();
+    }
+
+    function toggleSearchCluster(clusterKey) {
+      expandedClusters[clusterKey] = !expandedClusters[clusterKey];
+      refreshView();
+    }
+
+    function expandClusterLimit(clusterKey, event) {
+      if (event) event.stopPropagation();
+      showAllClusterLimit[clusterKey] = (showAllClusterLimit[clusterKey] || 100) + 300;
+      refreshView();
+    }
+
+    function renderSingleRecordCardHtml(r, poolIdx, showFullDate) {
+      const meta = CATEGORY_META[r.Category] || { icon: "📦", color: "#64748b" };
+      const isInc = r.Category === "收入";
+      const amtStr = (isInc ? "+" : "-") + "$" + Number(r.Amount).toLocaleString();
+      const amtClass = isInc ? "rec-amount income" : "rec-amount";
+      const rawTime = String(r["Recorded At"] || "");
+      const timeSub = showFullDate ? rawTime : rawTime.slice(5);
+      const debtBtnHtml = !isInc
+        ? `<button type="button" class="rec-btn-mini" onclick="event.stopPropagation(); openDebtSplitModal(${poolIdx})">💸 欠錢</button>`
+        : "";
+
+      return `
+        <div class="record-card">
+          <div class="rec-left" onclick="openEditModal(${poolIdx})">
+            <div class="cat-icon-badge" style="background:${meta.color}22; color:${meta.color};" 
+                 onclick="openCategorySheet(event, ${poolIdx})" title="點一下直接換分類">
+              ${meta.icon}
+            </div>
+            <div class="rec-info">
+              <div class="rec-note">${escapeHtml(r.note || r.Category)}</div>
+              <div class="rec-meta">
+                <span class="rec-cat-text">${escapeHtml(r.Category)}</span>
+                <span>•</span>
+                <span>${escapeHtml(timeSub)}</span>
+              </div>
+            </div>
+          </div>
+          <div class="rec-right">
+            <div class="${amtClass}">${amtStr}</div>
+            <div class="rec-account">${escapeHtml(r.Account || "現金")}</div>
+            <div class="rec-actions">
+              ${debtBtnHtml}
+              <button type="button" class="rec-btn-mini" onclick="event.stopPropagation(); openEditModal(${poolIdx})">✏️ 編輯</button>
+              <button type="button" class="rec-btn-mini del" onclick="event.stopPropagation(); quickDeleteRecord(${poolIdx})">🗑️ 刪除</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 渲染細項列表（若有輸入搜尋關鍵字，切換為「完全相符」與「類似項目...」雙群集模式）
+    function renderRecordsList(records) {
+      const container = document.getElementById("records-container");
+      const titleEl = document.getElementById("list-title-text");
+
+      if (searchQuery.length > 0) {
+        if (titleEl) titleEl.innerText = `消費細項 — 搜尋「${searchQuery}」`;
+        renderSearchClusterView(container, searchQuery);
+        return;
+      }
+
+      if (titleEl) titleEl.innerText = "消費細項";
+      renderedRecordsPool = records.slice();
+
+      if (records.length === 0) {
+        container.innerHTML = `<div class="empty-msg">這段時間沒有記帳紀錄喔～ 🍃</div>`;
+        return;
+      }
+
+      container.innerHTML = records.map((r, idx) => renderSingleRecordCardHtml(r, idx, false)).join("");
+    }
+
+    function renderSearchClusterView(container, query) {
+      const qTrim = query.trim();
+      const qUpper = qTrim.toUpperCase();
+
+      // 搜尋當前使用者的全部歷史紀錄
+      const userAll = allRecords.filter(r => r.user === currentUser);
+      const exactList = [];
+      const similarList = [];
+
+      userAll.forEach(r => {
+        const noteText = String(r.note || r.Category || "").trim();
+        const noteUpper = noteText.toUpperCase();
+        if (noteUpper === qUpper) {
+          exactList.push(r);
+        } else if (noteUpper.indexOf(qUpper) !== -1) {
+          similarList.push(r);
+        }
+      });
+
+      const totalCount = exactList.length + similarList.length;
+      const exactSum = exactList.reduce((acc, r) => acc + (Number(r.Amount) || 0), 0);
+      const similarSum = similarList.reduce((acc, r) => acc + (Number(r.Amount) || 0), 0);
+      const grandTotal = exactSum + similarSum;
+
+      renderedRecordsPool = [];
+      let html = `
+        <div class="search-summary-bar">
+          <div>
+            🔍 搜尋「<strong>${escapeHtml(qTrim)}</strong>」共 <strong>${totalCount.toLocaleString()}</strong> 項
+            ${!isFullHistoryLoaded ? `<span style="color:#f59e0b; font-size:0.74rem; margin-left:4px;">(⏳ 正在載入全部歷史紀錄...)</span>` : ""}
+          </div>
+          <div>總計 <strong>$${Math.round(grandTotal).toLocaleString()}</strong></div>
+        </div>
+      `;
+
+      if (totalCount === 0) {
+        html += `<div class="empty-msg">${!isFullHistoryLoaded ? "⏳ 正在翻找全部歷史資料中..." : `找不到包含「${escapeHtml(qTrim)}」的記帳紀錄喔～ 🔍`}</div>`;
+        container.innerHTML = html;
+        return;
+      }
+
+      // 群集 1：一模一樣的字 (例如「晚餐」)
+      if (exactList.length > 0) {
+        const isExp = !!expandedClusters.exact;
+        const limit = showAllClusterLimit.exact || 100;
+        const sliceList = isExp ? exactList.slice(0, limit) : [];
+        const cardsHtml = sliceList.map(r => {
+          const poolIdx = renderedRecordsPool.length;
+          renderedRecordsPool.push(r);
+          return renderSingleRecordCardHtml(r, poolIdx, true);
+        }).join("");
+
+        const moreBtnHtml = (isExp && exactList.length > limit)
+          ? `<button type="button" class="rec-btn-mini" style="width:100%; padding:10px; margin-top:4px; text-align:center;" onclick="expandClusterLimit('exact', event)">👇 顯示更多（還有 ${(exactList.length - limit).toLocaleString()} 項）</button>`
+          : "";
+
+        html += `
+          <div class="cluster-card">
+            <div class="cluster-header" onclick="toggleSearchCluster('exact')">
+              <div class="cluster-left">
+                <div class="cluster-title">
+                  <span>${escapeHtml(qTrim)}</span>
+                </div>
+              </div>
+              <div class="cluster-right">
+                <div>
+                  <div class="cluster-total">$${Math.round(exactSum).toLocaleString()}</div>
+                  <div class="cluster-count">${exactList.length.toLocaleString()} 項</div>
+                </div>
+                <div class="cluster-arrow ${isExp ? "open" : ""}">▼</div>
+              </div>
+            </div>
+            <div class="cluster-body ${isExp ? "open" : ""}">
+              ${cardsHtml}
+              ${moreBtnHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      // 群集 2：類似的字 (例如「晚餐...」)
+      if (similarList.length > 0) {
+        const isExp = !!expandedClusters.similar;
+        const limit = showAllClusterLimit.similar || 100;
+
+        const sliceList = isExp ? similarList.slice(0, limit) : [];
+        const cardsHtml = sliceList.map(r => {
+          const poolIdx = renderedRecordsPool.length;
+          renderedRecordsPool.push(r);
+          return renderSingleRecordCardHtml(r, poolIdx, true);
+        }).join("");
+
+        const moreBtnHtml = (isExp && similarList.length > limit)
+          ? `<button type="button" class="rec-btn-mini" style="width:100%; padding:10px; margin-top:4px; text-align:center;" onclick="expandClusterLimit('similar', event)">👇 顯示更多（還有 ${(similarList.length - limit).toLocaleString()} 項）</button>`
+          : "";
+
+        html += `
+          <div class="cluster-card">
+            <div class="cluster-header" onclick="toggleSearchCluster('similar')">
+              <div class="cluster-left">
+                <div class="cluster-title">
+                  <span>${escapeHtml(qTrim)}...</span>
+                </div>
+              </div>
+              <div class="cluster-right">
+                <div>
+                  <div class="cluster-total">$${Math.round(similarSum).toLocaleString()}</div>
+                  <div class="cluster-count">${similarList.length.toLocaleString()} 項</div>
+                </div>
+                <div class="cluster-arrow ${isExp ? "open" : ""}">▼</div>
+              </div>
+            </div>
+            <div class="cluster-body ${isExp ? "open" : ""}">
+              ${cardsHtml}
+              ${moreBtnHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // 更新時間導航標籤與下拉選單
+    function updateTimeDropdownAndNav() {
+      const select = document.getElementById("time-dropdown");
+      const label = document.getElementById("nav-label");
+
+      // 收集該維度下所有存在過的時間選項
+      const keySet = new Set();
+      keySet.add(currentTimeKey);
+
+      allRecords.forEach(r => {
+        const recDate = String(r["Recorded At"] || "");
+        if (currentDimension === "day" && recDate.length >= 10) {
+          keySet.add(recDate.slice(0, 10));
+        } else if (currentDimension === "month" && recDate.length >= 7) {
+          keySet.add(recDate.slice(0, 7));
+        } else if (currentDimension === "year" && recDate.length >= 4) {
+          keySet.add(recDate.slice(0, 4));
+        }
+      });
+
+      const sorted = Array.from(keySet).sort().reverse();
+      select.innerHTML = sorted.map(k => `<option value="${k}" ${k === currentTimeKey ? "selected" : ""}>${k}</option>`).join("");
+
+      // 友善文字：若是今天，標註 (今天)
+      const todayStr = getTodayString();
+      let displayLabel = currentTimeKey;
+      if (currentDimension === "day" && currentTimeKey === todayStr) {
+        displayLabel += " (今天)";
+      }
+      label.innerText = displayLabel;
+    }
+
+    function onTimeDropdownChange(val) {
+      currentTimeKey = val;
+      refreshView();
+    }
+
+    // 導航切換：上一期 (-1) 或 下一期 (+1)
+    function navigateStep(direction) {
+      const parts = currentTimeKey.split("/").map(Number);
+      if (currentDimension === "day") {
+        const d = new Date(parts[0], parts[1] - 1, parts[2] + direction);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        currentTimeKey = `${y}/${m}/${day}`;
+      } else if (currentDimension === "month") {
+        let y = parts[0];
+        let m = parts[1] + direction;
+        if (m > 12) { m = 1; y++; }
+        if (m < 1) { m = 12; y--; }
+        currentTimeKey = `${y}/${String(m).padStart(2, "0")}`;
+      } else if (currentDimension === "year") {
+        currentTimeKey = String(parts[0] + direction);
+      }
+
+      // 若往前翻閱較早日期，依三段式策略（15筆 -> 200筆 -> 全部）自動載入更多紀錄
+      if (direction < 0 && !isFullHistoryLoaded && allRecords.length > 0) {
+        const oldestLoaded = String(allRecords[allRecords.length - 1]["Recorded At"] || "").slice(0, 10);
+        if (oldestLoaded && currentTimeKey <= oldestLoaded) {
+          if (!isMonthHistoryLoaded) {
+            loadMonthHistoryFromServer();
+          } else {
+            loadFullHistoryFromServer();
+          }
+        }
+      }
+      refreshView();
+    }
+
+    // 📱 手勢向左/向右滑動切換
+    function bindSwipeGestures() {
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartTime = 0;
+
+      document.addEventListener("touchstart", function(e) {
+        if (!e.touches || e.touches.length === 0) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+      }, { passive: true });
+
+      document.addEventListener("touchend", function(e) {
+        if (!e.changedTouches || e.changedTouches.length === 0) return;
+        const deltaX = e.changedTouches[0].clientX - touchStartX;
+        const deltaY = e.changedTouches[0].clientY - touchStartY;
+        const elapsed = Date.now() - touchStartTime;
+
+        // 若開啟了 Modal 或 Sheet 則不觸發切換
+        if (document.getElementById("category-sheet-overlay").classList.contains("open") ||
+            document.getElementById("edit-modal").classList.contains("open") ||
+            document.getElementById("split-debt-modal").classList.contains("open") ||
+            document.getElementById("settings-modal").classList.contains("open") ||
+            document.getElementById("audit-modal").classList.contains("open")) {
+          return;
+        }
+
+        // 判斷是否為水平滑動：滑動時間 < 600ms、水平位移 > 40px、且水平位移明顯大於垂直位移
+        if (elapsed < 600 && Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+          if (deltaX < 0) {
+            navigateStep(1);  // 往左滑切到後一天/後一月
+          } else {
+            navigateStep(-1); // 往右滑切到前一天/前一月
+          }
+        }
+      }, { passive: true });
+    }
+
+    // =====================================================
+    // ⚡ 1 秒快速點選改分類 Sheet Modal
+    // =====================================================
+    function initCategoryGrid() {
+      const grid = document.getElementById("category-grid-buttons");
+      grid.innerHTML = Object.keys(CATEGORY_META).map(cat => {
+        const meta = CATEGORY_META[cat];
+        return `
+          <div class="cat-grid-btn" onclick="selectNewCategory('${cat}')">
+            <span class="cat-grid-icon">${meta.icon}</span>
+            <span class="cat-grid-text">${cat}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function openCategorySheet(e, recordIndex) {
+      e.stopPropagation();
+      editingRecordTarget = renderedRecordsPool[recordIndex] || getFilteredRecords()[recordIndex];
+      if (!editingRecordTarget) return;
+      document.getElementById("category-sheet-overlay").classList.add("open");
+    }
+
+    function closeCategorySheet(e) {
+      document.getElementById("category-sheet-overlay").classList.remove("open");
+      editingRecordTarget = null;
+    }
+
+    function selectNewCategory(newCategory) {
+      if (!editingRecordTarget) return;
+      const rec = editingRecordTarget;
+      const oldCat = rec.Category;
+      const matchCriteria = {
+        recordedAt: rec["Recorded At"],
+        amount: rec.Amount,
+        note: rec.note
+      };
+      rec.Category = newCategory;
+      closeCategorySheet();
+      refreshView();
+
+      // 啟動全螢幕流動霓虹光暈轉圈圈動畫直到儲存完成
+      startProgress();
+
+      // 背景發送更新至 Google Sheet（附帶 matchCriteria 確保即使手機剛新增一筆也不會改錯列！）
+      google.script.run
+        .withSuccessHandler(function(updatedRec) {
+          finishProgress();
+          if (updatedRec && updatedRec.rowIndex) {
+            rec.rowIndex = updatedRec.rowIndex;
+          }
+        })
+        .withFailureHandler(function(err) {
+          finishProgress();
+          alert("更新失敗：" + err.message);
+          rec.Category = oldCat;
+          refreshView();
+        })
+        .updateStructuredRecord(rec.user, rec.rowIndex, {
+          Category: newCategory,
+          Account: rec.Account,
+          Amount: rec.Amount,
+          Currency: rec.Currency,
+          "Recorded At": rec["Recorded At"],
+          note: rec.note,
+          "Account ID": rec["Account ID"]
+        }, matchCriteria);
+    }
+
+    // =====================================================
+    // 📝 手動記帳 / 編輯 Modal 操作
+    // =====================================================
+    function initFormCategoryOptions() {
+      const sel = document.getElementById("form-category");
+      sel.innerHTML = Object.keys(CATEGORY_META).map(cat => `<option value="${cat}">${CATEGORY_META[cat].icon} ${cat}</option>`).join("");
+    }
+
+    function openAddModal() {
+      editingModalMatchCriteria = null;
+      editingModalAccountId = 0;
+      document.getElementById("modal-heading").innerText = `記一筆帳 (${currentUser})`;
+      document.getElementById("form-row-index").value = "";
+      document.getElementById("form-user").value = currentUser;
+      document.getElementById("form-note").value = "";
+      document.getElementById("form-amount").value = "";
+      document.getElementById("form-category").value = "食物";
+      document.getElementById("form-account").value = "現金";
+
+      // 預設當前時間
+      const now = new Date();
+      const tzOffset = now.getTimezoneOffset() * 60000;
+      const localISOTime = (new Date(now.getTime() - tzOffset)).toISOString().slice(0, 16);
+      document.getElementById("form-time").value = localISOTime;
+
+      document.getElementById("form-del-btn").style.display = "none";
+      document.getElementById("edit-modal").classList.add("open");
+    }
+
+    function openEditModal(index) {
+      const rec = renderedRecordsPool[index] || getFilteredRecords()[index];
+      if (!rec) return;
+      openEditModalWithRecordObj(rec);
+    }
+
+    function openEditModalWithRecordObj(rec) {
+      editingModalMatchCriteria = {
+        recordedAt: rec["Recorded At"] || rec.recordedAt || "",
+        amount: rec.Amount !== undefined ? rec.Amount : rec.amount,
+        note: rec.note || ""
+      };
+      editingModalAccountId = Number(rec["Account ID"] !== undefined ? rec["Account ID"] : (rec.accountId || 0));
+
+      document.getElementById("modal-heading").innerText = `修改記帳 (${rec.user})`;
+      document.getElementById("form-row-index").value = rec.rowIndex;
+      document.getElementById("form-user").value = rec.user;
+      document.getElementById("form-note").value = rec.note || "";
+      document.getElementById("form-amount").value = rec.Amount !== undefined ? rec.Amount : rec.amount;
+      document.getElementById("form-category").value = rec.Category || rec.category || "食物";
+      document.getElementById("form-account").value = rec.Account || rec.account || "現金";
+
+      // 轉換 Recorded At 為 datetime-local 格式 (yyyy-MM-ddTHH:mm)
+      const rawTime = String(rec["Recorded At"] || rec.recordedAt || "");
+      const isoFormat = rawTime.replace(/\//g, "-").replace(" ", "T").slice(0, 16);
+      document.getElementById("form-time").value = isoFormat;
+
+      document.getElementById("form-del-btn").style.display = "block";
+      document.getElementById("edit-modal").classList.add("open");
+    }
+
+    function closeEditModal() {
+      document.getElementById("edit-modal").classList.remove("open");
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const rowIndex = document.getElementById("form-row-index").value;
+      const user = document.getElementById("form-user").value || currentUser;
+      const note = document.getElementById("form-note").value.trim();
+      const amount = parseFloat(document.getElementById("form-amount").value);
+      const category = document.getElementById("form-category").value;
+      const account = document.getElementById("form-account").value;
+      const timeVal = document.getElementById("form-time").value;
+      const recordedAt = timeVal.replace("T", " ").replace(/-/g, "/");
+
+      const saveBtn = document.getElementById("form-save-btn");
+      saveBtn.disabled = true;
+      saveBtn.innerText = "儲存中...";
+
+      const payload = {
+        user: user,
+        Account: account,
+        Category: category,
+        Amount: amount,
+        Currency: "TWD",
+        "Recorded At": recordedAt,
+        note: note,
+        "Account ID": editingModalAccountId || 0
+      };
+
+      startProgress();
+
+      if (rowIndex) {
+        google.script.run
+          .withSuccessHandler(function() {
+            closeEditModal();
+            saveBtn.disabled = false;
+            saveBtn.innerText = "儲存";
+            loadDataFromServer();
+          })
+          .withFailureHandler(function(err) {
+            finishProgress();
+            saveBtn.disabled = false;
+            saveBtn.innerText = "儲存";
+            alert("修改失敗：" + err.message);
+          })
+          .updateStructuredRecord(user, rowIndex, payload, editingModalMatchCriteria);
+      } else {
+        google.script.run
+          .withSuccessHandler(function() {
+            closeEditModal();
+            saveBtn.disabled = false;
+            saveBtn.innerText = "儲存";
+            loadDataFromServer();
+          })
+          .withFailureHandler(function(err) {
+            finishProgress();
+            saveBtn.disabled = false;
+            saveBtn.innerText = "儲存";
+            alert("新增失敗：" + err.message);
+          })
+          .addStructuredRecord(payload);
+      }
+    }
+
+    function handleDeleteCurrentRecord() {
+      const rowIndex = document.getElementById("form-row-index").value;
+      const user = document.getElementById("form-user").value || currentUser;
+      const criteria = editingModalMatchCriteria || {
+        recordedAt: document.getElementById("form-time").value.replace("T", " ").replace(/-/g, "/"),
+        amount: parseFloat(document.getElementById("form-amount").value),
+        note: document.getElementById("form-note").value.trim()
+      };
+
+      if (!rowIndex || !confirm("確定要刪除這筆記帳紀錄嗎？")) return;
+
+      const delBtn = document.getElementById("form-del-btn");
+      delBtn.innerText = "刪除中...";
+      delBtn.disabled = true;
+      startProgress();
+
+      google.script.run
+        .withSuccessHandler(function() {
+          delBtn.innerText = "🗑️";
+          delBtn.disabled = false;
+          closeEditModal();
+          triggerManualRefresh();
+        })
+        .withFailureHandler(function(err) {
+          finishProgress();
+          delBtn.innerText = "🗑️";
+          delBtn.disabled = false;
+          alert("刪除失敗：" + err.message);
+        })
+        .deleteRecordByRow(user, rowIndex, criteria);
+    }
+
+    // =====================================================
+    // 欠錢 Modal 操作 (指定任一筆消費拆帳 + 寫入欠款 LINE Bot)
+    // =====================================================
+    function openDebtSplitModal(poolIndex) {
+      const rec = renderedRecordsPool[poolIndex] || getFilteredRecords()[poolIndex];
+      if (!rec) return;
+      currentDebtSplitRecord = rec;
+
+      const payer = rec.user || currentUser;
+      const totalAmt = Number(rec.Amount) || 0;
+      const noteText = rec.note || rec.Category || "消費";
+
+      document.getElementById("debt-modal-heading").innerText = `欠錢 (${payer})`;
+      document.getElementById("debt-modal-input-label").innerText = `${noteText} ($${totalAmt}) — 金額`;
+
+      const inp = document.getElementById("debt-split-amount");
+      inp.max = totalAmt;
+      inp.value = "";
+
+      document.getElementById("split-debt-modal").classList.add("open");
+      setTimeout(() => { inp.focus(); }, 80);
+    }
+
+    function closeDebtSplitModal() {
+      document.getElementById("split-debt-modal").classList.remove("open");
+      currentDebtSplitRecord = null;
+    }
+
+    function handleDebtSplitSubmit(e) {
+      e.preventDefault();
+      if (!currentDebtSplitRecord) return;
+      const rec = currentDebtSplitRecord;
+      const splitAmt = Math.round(parseFloat(document.getElementById("debt-split-amount").value));
+      const totalAmt = Number(rec.Amount) || 0;
+
+      if (isNaN(splitAmt) || splitAmt <= 0 || splitAmt > totalAmt) {
+        alert(`請輸入 1 ~ ${totalAmt} 之間的金額`);
+        return;
+      }
+
+      const btn = document.getElementById("debt-save-btn");
+      btn.disabled = true;
+      btn.innerText = "儲存中...";
+      startProgress();
+
+      const criteria = {
+        recordedAt: rec["Recorded At"],
+        amount: rec.Amount,
+        note: rec.note
+      };
+
+      google.script.run
+        .withSuccessHandler(function() {
+          btn.disabled = false;
+          btn.innerText = "儲存";
+          closeDebtSplitModal();
+          triggerManualRefresh();
+        })
+        .withFailureHandler(function(err) {
+          finishProgress();
+          btn.disabled = false;
+          btn.innerText = "儲存";
+          alert("失敗：" + err.message);
+        })
+        .splitRecordAndSyncDebt(rec.user, rec.rowIndex, splitAmt, criteria);
+    }
+
+    // 快捷刪除按鈕
+    function quickDeleteRecord(recordIndex) {
+      const rec = renderedRecordsPool[recordIndex] || getFilteredRecords()[recordIndex];
+      if (!rec) return;
+      if (!confirm(`確定要刪除【${rec.note || rec.Category}】$${rec.Amount} 的紀錄嗎？`)) return;
+
+      startProgress();
+
+      google.script.run
+        .withSuccessHandler(function() {
+          triggerManualRefresh();
+        })
+        .withFailureHandler(function(err) {
+          finishProgress();
+          alert("刪除失敗：" + err.message);
+        })
+        .deleteRecordByRow(rec.user, rec.rowIndex, {
+          recordedAt: rec["Recorded At"],
+          amount: rec.Amount,
+          note: rec.note
+        });
+    }
+
+    function getFilteredRecords() {
+      return allRecords.filter(r => {
+        if (r.user !== currentUser) return false;
+        const recDate = String(r["Recorded At"] || "");
+        if (currentDimension === "day") return recDate.slice(0, 10) === currentTimeKey;
+        if (currentDimension === "month") return recDate.slice(0, 7) === currentTimeKey;
+        if (currentDimension === "year") return recDate.slice(0, 4) === currentTimeKey;
+        return false;
+      });
+    }
+
+    function startProgress() {
+      // 啟動全螢幕流動霓虹光暈外框轉圈圈
+      const neon = document.getElementById("screen-neon-border");
+      if (neon) neon.classList.add("active");
+    }
+
+    function finishProgress() {
+      // 關閉全螢幕流動霓虹光暈外框
+      const neon = document.getElementById("screen-neon-border");
+      if (neon) neon.classList.remove("active");
+    }
+
+    function triggerManualRefresh() {
+      const btn = document.getElementById("btn-refresh");
+      btn.classList.add("spinning");
+      startProgress();
+      // 三段式載入：搜尋或看「年」載入全部，看「月」載入 200 筆，看「天」只極速撈取最新 15 筆
+      let fetchParams = { user: currentUser, limit: 15 };
+      if (searchQuery.length > 0 || currentDimension === "year") {
+        fetchParams = { user: currentUser, all: true };
+      } else if (currentDimension === "month") {
+        fetchParams = { user: currentUser, limit: 200 };
+      }
+      google.script.run
+        .withSuccessHandler(function(data) {
+          btn.classList.remove("spinning");
+          finishProgress();
+          if (data && data.monthlyExpenses) {
+            monthlyExpensesMap = data.monthlyExpenses;
+          }
+          if (data && data.userSettings) {
+            syncUserSettingsFromServer(data.userSettings);
+          }
+          if (data && data.allRecords) {
+            allRecords = data.allRecords;
+            isFullHistoryLoaded = !!data.isCompleteHistory;
+            isMonthHistoryLoaded = isFullHistoryLoaded || (fetchParams.limit >= 200);
+            refreshView();
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.classList.remove("spinning");
+          finishProgress();
+          alert("重新整理失敗：" + err.message);
+        })
+        .getDashboardData(fetchParams);
+    }
+
+    function loadDataFromServer() {
+      startProgress();
+      let fetchParams = { user: currentUser, limit: 15 };
+      if (searchQuery.length > 0 || currentDimension === "year") {
+        fetchParams = { user: currentUser, all: true };
+      } else if (currentDimension === "month") {
+        fetchParams = { user: currentUser, limit: 200 };
+      }
+      google.script.run
+        .withSuccessHandler(function(data) {
+          finishProgress();
+          if (data && data.monthlyExpenses) {
+            monthlyExpensesMap = data.monthlyExpenses;
+          }
+          if (data && data.userSettings) {
+            syncUserSettingsFromServer(data.userSettings);
+          }
+          if (data && data.allRecords) {
+            allRecords = data.allRecords;
+            isFullHistoryLoaded = !!data.isCompleteHistory;
+            isMonthHistoryLoaded = isFullHistoryLoaded || (fetchParams.limit >= 200);
+            setDefaultTimeKey();
+            refreshView();
+          }
+        })
+        .withFailureHandler(function() {
+          finishProgress();
+        })
+        .getDashboardData(fetchParams);
+    }
+
+    // =====================================================
+    // ⚙️ 頁面設定（背景色系 + 個人每月預算，同步寫入 Google Sheet「頁面設定」工作表）
+    // =====================================================
+    const VALID_THEMES = ["dark", "white", "milktea", "pink", "cyberpunk"];
+    const THEME_NAME_MAP = {
+      "dark": "原本深色系",
+      "white": "白色系",
+      "milktea": "奶茶色系",
+      "pink": "粉色系",
+      "cyberpunk": "賽博朋克色系"
+    };
+
+    function syncUserSettingsFromServer(serverSettings) {
+      if (!serverSettings) return;
+      ["定成", "妤珊"].forEach(u => {
+        if (!userSettingsMap[u]) {
+          userSettingsMap[u] = { theme: u === "妤珊" ? "milktea" : "dark", monthlyBudget: 0 };
+        }
+        if (serverSettings[u]) {
+          if (serverSettings[u].theme) {
+            userSettingsMap[u].theme = serverSettings[u].theme;
+            try { localStorage.setItem("theme_" + u, serverSettings[u].theme); } catch (e) {}
+          }
+          if (serverSettings[u].monthlyBudget !== undefined) {
+            const b = parseFloat(serverSettings[u].monthlyBudget);
+            const cleanBudget = (!isNaN(b) && b >= 0) ? Math.round(b) : 0;
+            userSettingsMap[u].monthlyBudget = cleanBudget;
+            try { localStorage.setItem("budget_" + u, String(cleanBudget)); } catch (e) {}
+          }
+        }
+      });
+      applyUserTheme(currentUser);
+      renderMonthlyBudgetBar();
+    }
+
+    function applyUserTheme(user) {
+      const targetUser = user || currentUser;
+      const defaultTheme = targetUser === "妤珊" ? "milktea" : "dark";
+      const userCfg = userSettingsMap[targetUser] || {};
+      const currentTheme = userCfg.theme || defaultTheme;
+      const safeTheme = VALID_THEMES.indexOf(currentTheme) !== -1 ? currentTheme : defaultTheme;
+
+      document.body.setAttribute("data-theme", safeTheme);
+
+      VALID_THEMES.forEach(t => {
+        const btn = document.getElementById("theme-btn-" + t);
+        if (btn) {
+          btn.className = "theme-option-btn" + (t === safeTheme ? " active" : "");
+        }
+      });
+
+      const themeLabelEl = document.getElementById("settings-current-theme-label");
+      if (themeLabelEl) {
+        themeLabelEl.innerText = THEME_NAME_MAP[safeTheme] || "原本深色系";
+      }
+
+      const budgetVal = Number(userCfg.monthlyBudget) || 0;
+      const budgetLabelEl = document.getElementById("settings-current-budget-label");
+      if (budgetLabelEl) {
+        budgetLabelEl.innerText = budgetVal > 0 ? `$${budgetVal.toLocaleString()}` : "未設定";
+      }
+    }
+
+    function openSettingsModal(expandTarget) {
+      document.getElementById("settings-modal-heading").innerText = `⚙️ 頁面設定 (${currentUser})`;
+      applyUserTheme(currentUser);
+
+      const userCfg = userSettingsMap[currentUser] || {};
+      const budgetVal = Number(userCfg.monthlyBudget) || 0;
+      const budgetInput = document.getElementById("settings-budget-input");
+      if (budgetInput) {
+        budgetInput.value = budgetVal > 0 ? budgetVal : "";
+      }
+
+      // 預設兩個欄位皆收合，點選對應欄位才展開；若從首頁預算進度條點進來則直接展開預算欄
+      const themeItem = document.getElementById("settings-item-theme");
+      const budgetItem = document.getElementById("settings-item-budget");
+      if (themeItem) themeItem.classList.remove("open");
+      if (budgetItem) budgetItem.classList.remove("open");
+
+      if (expandTarget === "budget" && budgetItem) {
+        budgetItem.classList.add("open");
+        setTimeout(() => { if (budgetInput) budgetInput.focus(); }, 80);
+      } else if (expandTarget === "theme" && themeItem) {
+        themeItem.classList.add("open");
+      }
+
+      document.getElementById("settings-modal").classList.add("open");
+    }
+
+    function toggleSettingsSection(secKey) {
+      const itemEl = document.getElementById("settings-item-" + secKey);
+      if (!itemEl) return;
+      const willOpen = !itemEl.classList.contains("open");
+      itemEl.classList.toggle("open", willOpen);
+      if (willOpen && secKey === "budget") {
+        const inp = document.getElementById("settings-budget-input");
+        setTimeout(() => { if (inp) inp.focus(); }, 60);
+      }
+    }
+
+    function closeSettingsModal() {
+      document.getElementById("settings-modal").classList.remove("open");
+    }
+
+    function selectTheme(themeKey) {
+      if (VALID_THEMES.indexOf(themeKey) === -1) return;
+      const user = currentUser;
+      if (!userSettingsMap[user]) userSettingsMap[user] = { theme: themeKey, monthlyBudget: 0 };
+      userSettingsMap[user].theme = themeKey;
+      try {
+        localStorage.setItem("theme_" + user, themeKey);
+      } catch (e) {}
+
+      applyUserTheme(user);
+      startProgress();
+
+      google.script.run
+        .withSuccessHandler(function() {
+          finishProgress();
+        })
+        .withFailureHandler(function(err) {
+          finishProgress();
+          alert("設定儲存失敗：" + err.message);
+        })
+        .saveUserSettings(user, { theme: themeKey });
+    }
+
+    function saveMonthlyBudget() {
+      const user = currentUser;
+      const inp = document.getElementById("settings-budget-input");
+      const rawVal = inp ? inp.value.trim() : "";
+      const parsed = rawVal === "" ? 0 : Math.round(parseFloat(rawVal));
+
+      if (isNaN(parsed) || parsed < 0) {
+        alert("請輸入有效的預算金額（輸入 0 代表不設預算）");
+        return;
+      }
+
+      if (!userSettingsMap[user]) {
+        userSettingsMap[user] = { theme: user === "妤珊" ? "milktea" : "dark", monthlyBudget: 0 };
+      }
+      userSettingsMap[user].monthlyBudget = parsed;
+      try {
+        localStorage.setItem("budget_" + user, String(parsed));
+      } catch (e) {}
+
+      applyUserTheme(user);
+      renderMonthlyBudgetBar();
+
+      const btn = document.getElementById("settings-budget-save-btn");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = "儲存中...";
+      }
+      startProgress();
+
+      google.script.run
+        .withSuccessHandler(function() {
+          finishProgress();
+          if (btn) {
+            btn.disabled = false;
+            btn.innerText = "儲存";
+          }
+          const budgetItem = document.getElementById("settings-item-budget");
+          if (budgetItem) budgetItem.classList.remove("open");
+        })
+        .withFailureHandler(function(err) {
+          finishProgress();
+          if (btn) {
+            btn.disabled = false;
+            btn.innerText = "儲存";
+          }
+          alert("預算儲存失敗：" + err.message);
+        })
+        .saveUserSettings(user, { monthlyBudget: parsed });
+    }
+
+    // ⚡ 第二段載入：點選「月」或往前翻閱幾天時，只快速載入最新 200 筆（涵蓋近兩個月）
+    function loadMonthHistoryFromServer() {
+      if (isLoadingMonthHistory || isMonthHistoryLoaded || isFullHistoryLoaded) return;
+      isLoadingMonthHistory = true;
+      startProgress();
+      google.script.run
+        .withSuccessHandler(function(data) {
+          isLoadingMonthHistory = false;
+          finishProgress();
+          if (data && data.monthlyExpenses) {
+            monthlyExpensesMap = data.monthlyExpenses;
+          }
+          if (data && data.allRecords) {
+            allRecords = data.allRecords;
+            isMonthHistoryLoaded = true;
+            refreshView();
+          }
+        })
+        .withFailureHandler(function() {
+          isLoadingMonthHistory = false;
+          finishProgress();
+        })
+        .getDashboardData({ user: currentUser, limit: 200 });
+    }
+
+    // ⚡ 第三段載入：當點選「年」、搜尋關鍵字或查詢更早歷史時，背景載入完整歷史紀錄
+    function loadFullHistoryFromServer() {
+      if (isLoadingFullHistory || isFullHistoryLoaded) return;
+      isLoadingFullHistory = true;
+      startProgress();
+      google.script.run
+        .withSuccessHandler(function(data) {
+          isLoadingFullHistory = false;
+          finishProgress();
+          if (data && data.monthlyExpenses) {
+            monthlyExpensesMap = data.monthlyExpenses;
+          }
+          if (data && data.allRecords) {
+            allRecords = data.allRecords;
+            isMonthHistoryLoaded = true;
+            isFullHistoryLoaded = true;
+            refreshView();
+          }
+        })
+        .withFailureHandler(function() {
+          isLoadingFullHistory = false;
+          finishProgress();
+        })
+        .getDashboardData({ user: currentUser, all: true });
+    }
+
+    // =====================================================
+    // 🩺 除錯與重複偵測中心操作（點開查看後紅色警告立即消失！）
+    // =====================================================
+    let currentAuditDays = 7;
+
+    function openAuditCenter() {
+      // ✅ 點開查看後，紅色橫幅與紅點立即消失！
+      hasViewedAuditBanner = true;
+      document.getElementById("main-alert-banner").style.display = "none";
+      document.getElementById("audit-badge").style.display = "none";
+      try {
+        if (lastAuditIssueSig) {
+          localStorage.setItem("dismissed_audit_sig", lastAuditIssueSig);
+        }
+      } catch (e) {}
+
+      document.getElementById("audit-modal").classList.add("open");
+      runAuditWithDays(currentAuditDays);
+    }
+
+    function closeAuditModal() {
+      document.getElementById("audit-modal").classList.remove("open");
+    }
+
+    function runAuditWithDays(days) {
+      currentAuditDays = days;
+      document.getElementById("audit-tab-7").className = "audit-tab-btn" + (days === 7 ? " active" : "");
+      document.getElementById("audit-tab-30").className = "audit-tab-btn" + (days === 30 ? " active" : "");
+      document.getElementById("audit-tab-all").className = "audit-tab-btn" + (days === "ALL" ? " active" : "");
+
+      const box = document.getElementById("audit-results-container");
+      box.innerHTML = `<div class="empty-msg">⏳ 正在掃描 ${days === "ALL" ? "全部歷史" : `近 ${days} 天`} 的重複與異常資料...</div>`;
+
+      google.script.run
+        .withSuccessHandler(function(report) {
+          const issues = (report && report.issues) ? report.issues : [];
+          lastAuditIssues = issues;
+
+          // 儲存目前已看過的異常簽名，確保點開查看後紅色警告不再亮起
+          const sig = issues.map(x => `${x.user}_${x.rowIndex}_${x.recordedAt}_${x.amount}`).join("|");
+          lastAuditIssueSig = sig;
+          try {
+            localStorage.setItem("dismissed_audit_sig", sig);
+          } catch (e) {}
+          document.getElementById("audit-badge").style.display = "none";
+          document.getElementById("main-alert-banner").style.display = "none";
+
+          if (issues.length === 0) {
+            box.innerHTML = `
+              <div style="background:rgba(74,140,111,0.12); border:1px solid #4a8c6f; border-radius:12px; padding:20px; text-align:center; color:#386e56;">
+                <div style="font-size:2rem; margin-bottom:6px;">✅</div>
+                <strong style="font-size:0.92rem;">沒有發現任何重複或異常資料！</strong>
+              </div>
+            `;
+            return;
+          }
+
+          let html = `<div style="font-weight:800; font-size:0.85rem; color:#b45309; margin-bottom:8px;">⚠️ 發現 ${issues.length} 筆重複 / 疑似相近消費：</div>`;
+          html += issues.map((item, idx) => `
+            <div class="audit-item">
+              <div class="audit-item-top">
+                <span class="audit-badge-warn">[${escapeHtml(item.user)}] ${escapeHtml(item.type)}</span>
+                <span style="font-size:0.75rem; color:var(--text-muted);">第 ${item.rowIndex} 列</span>
+              </div>
+              <div class="audit-item-desc">${escapeHtml(item.reason)}</div>
+              <div class="audit-item-btns">
+                <button type="button" class="rec-btn-mini" onclick="editAuditItem(${idx})">✏️ 編輯</button>
+                <button type="button" class="rec-btn-mini del" onclick="deleteDuplicateItem(${idx})">🗑️ 刪除此筆</button>
+              </div>
+            </div>
+          `).join("");
+
+          box.innerHTML = html;
+        })
+        .withFailureHandler(function(err) {
+          box.innerHTML = `<div class="empty-msg" style="color:#ef4444;">❌ 掃描失敗：${escapeHtml(err.message)}</div>`;
+        })
+        .scanDuplicatesAndAnomalies(days, currentUser);
+    }
+
+    function editAuditItem(issueIdx) {
+      const item = lastAuditIssues[issueIdx];
+      if (!item) return;
+      closeAuditModal();
+      openEditModalWithRecordObj({
+        user: item.user,
+        rowIndex: item.rowIndex,
+        Account: item.account || "現金",
+        "Account ID": item.accountId || 0,
+        Category: item.category || "食物",
+        Amount: item.amount,
+        "Recorded At": item.recordedAt,
+        note: item.note || ""
+      });
+    }
+
+    function deleteDuplicateItem(issueIdx) {
+      const item = lastAuditIssues[issueIdx];
+      if (!item) return;
+      if (!confirm(`確定要刪除【${item.user}】第 ${item.rowIndex} 列（${item.note} $${item.amount}）的重複紀錄嗎？`)) return;
+
+      startProgress();
+      google.script.run
+        .withSuccessHandler(function() {
+          finishProgress();
+          triggerManualRefresh();
+          runAuditWithDays(currentAuditDays);
+        })
+        .withFailureHandler(function(err) {
+          finishProgress();
+          alert("刪除失敗：" + err.message);
+        })
+        .deleteRecordByRow(item.user, item.rowIndex, {
+          recordedAt: item.recordedAt,
+          amount: item.amount,
+          note: item.note
+        });
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
