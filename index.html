@@ -1368,7 +1368,7 @@
   </div>
 
   <!-- ➕ 右下角固定懸浮新增按鈕 -->
-  <button type="button" class="fab-add-btn" onclick="openAddModal()" title="新增記帳">＋</button>
+  <button type="button" class="fab-add-btn" id="fab-add-btn" onclick="openAddModal()" title="新增記帳">＋</button>
 
   <!-- 個人每月預算進度條（位於誰的記帳與天/月/年之間，點一下可直接改預算） -->
   <div class="monthly-budget-card" id="monthly-budget-card" onclick="openSettingsModal('budget')" title="點此設定每月預算">
@@ -1947,6 +1947,10 @@
 
     // 核心資料計算與畫面渲染
     function refreshView() {
+      const fabBtn = document.getElementById("fab-add-btn");
+      if (fabBtn) {
+        fabBtn.style.display = (currentDimension === "day") ? "flex" : "none";
+      }
       updateTimeDropdownAndNav();
 
       // 1. 篩選出符合 當前使用者 + 當前時間維度 的資料
@@ -2647,6 +2651,7 @@
     }
 
     function openAddModal() {
+      if (currentDimension !== "day") return;
       editingModalMatchCriteria = null;
       editingModalAccountId = 0;
       document.getElementById("modal-heading").innerText = `記一筆帳 (${currentUser})`;
@@ -2657,11 +2662,14 @@
       document.getElementById("form-category").value = "食物";
       document.getElementById("form-account").value = "現金";
 
-      // 預設當前時間
+      // 依當前畫面所在的「天」日期 + 當下紀錄的時分 (HH:mm) 預設時間
       const now = new Date();
-      const tzOffset = now.getTimezoneOffset() * 60000;
-      const localISOTime = (new Date(now.getTime() - tzOffset)).toISOString().slice(0, 16);
-      document.getElementById("form-time").value = localISOTime;
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      const targetDateStr = (/^\d{4}\/\d{2}\/\d{2}$/.test(currentTimeKey))
+        ? currentTimeKey.replace(/\//g, "-")
+        : getTodayString().replace(/\//g, "-");
+      document.getElementById("form-time").value = `${targetDateStr}T${hh}:${mm}`;
 
       document.getElementById("form-del-btn").style.display = "none";
       document.getElementById("edit-modal").classList.add("open");
@@ -2736,7 +2744,10 @@
             closeEditModal();
             saveBtn.disabled = false;
             saveBtn.innerText = "儲存";
-            loadDataFromServer();
+            if (currentDimension === "day" && recordedAt.length >= 10) {
+              currentTimeKey = recordedAt.slice(0, 10);
+            }
+            triggerManualRefresh();
           })
           .withFailureHandler(function(err) {
             finishProgress();
@@ -2751,7 +2762,10 @@
             closeEditModal();
             saveBtn.disabled = false;
             saveBtn.innerText = "儲存";
-            loadDataFromServer();
+            if (currentDimension === "day" && recordedAt.length >= 10) {
+              currentTimeKey = recordedAt.slice(0, 10);
+            }
+            triggerManualRefresh();
           })
           .withFailureHandler(function(err) {
             finishProgress();
@@ -2912,11 +2926,11 @@
       const btn = document.getElementById("btn-refresh");
       btn.classList.add("spinning");
       startProgress();
-      // 三段式載入：搜尋或看「年」載入全部，看「月」載入 200 筆，看「天」只極速撈取最新 15 筆
+      // 三段式載入：搜尋或看「年」載入全部，看「月」或非今日的「天」載入 200 筆，看今日「天」只極速撈取最新 15 筆
       let fetchParams = { user: currentUser, limit: 15 };
       if (searchQuery.length > 0 || currentDimension === "year") {
         fetchParams = { user: currentUser, all: true };
-      } else if (currentDimension === "month") {
+      } else if (currentDimension === "month" || isMonthHistoryLoaded || currentTimeKey !== getTodayString()) {
         fetchParams = { user: currentUser, limit: 200 };
       }
       google.script.run
