@@ -1671,7 +1671,7 @@
               // 若成功抓回儀表板資料，順便快取至瀏覽器本地，讓下次打開 GitHub 網頁 0.01 秒瞬間顯示！
               if (payload.action === "getDashboardData" && resultData && resultData.allRecords) {
                 try {
-                  localStorage.setItem("github_fast_dash_cache_v1", JSON.stringify(resultData));
+                  localStorage.setItem("github_fast_dash_cache_v2", JSON.stringify(resultData));
                 } catch (e) {}
               }
               if (successHandler) successHandler(resultData);
@@ -1822,7 +1822,7 @@
 
       // 1. 先從本地快取 0.01 秒瞬間渲染上次畫面（完全不白畫面等待）
       try {
-        const cachedRaw = localStorage.getItem("github_fast_dash_cache_v1");
+        const cachedRaw = localStorage.getItem("github_fast_dash_cache_v2");
         if (cachedRaw) {
           const cachedData = JSON.parse(cachedRaw);
           if (cachedData && cachedData.monthlyExpenses) {
@@ -1908,11 +1908,21 @@
     }
 
     function switchUser(user) {
+      const isChangingUser = (currentUser !== user);
       currentUser = user;
       document.getElementById("pill-ding").className = "user-pill" + (user === "定成" ? " active-ding" : "");
       document.getElementById("pill-yu").className = "user-pill" + (user === "妤珊" ? " active-yu" : "");
       applyUserTheme(user);
+      if (isChangingUser && allRecords && allRecords.length > 0) {
+        const hasRecordInCurrentPeriod = getFilteredRecords().length > 0;
+        if (!hasRecordInCurrentPeriod) {
+          setDefaultTimeKey();
+        }
+      }
       refreshView();
+      if (!isLockedUser && allRecords.length > 0 && !allRecords.some(r => r.user === user)) {
+        loadDataFromServer();
+      }
     }
 
     function switchDimension(dim) {
@@ -2464,6 +2474,7 @@
       }
 
       allRecords.forEach(r => {
+        if (r.user !== currentUser) return;
         const recDate = String(r["Recorded At"] || "");
         if (currentDimension === "day" && recDate.length >= 10) {
           keySet.add(recDate.slice(0, 10));
@@ -2926,12 +2937,13 @@
       const btn = document.getElementById("btn-refresh");
       btn.classList.add("spinning");
       startProgress();
+      const queryUser = isLockedUser ? currentUser : "";
       // 三段式載入：搜尋或看「年」載入全部，看「月」或非今日的「天」載入 200 筆，看今日「天」只極速撈取最新 15 筆
-      let fetchParams = { user: currentUser, limit: 15 };
+      let fetchParams = { user: queryUser, limit: 15 };
       if (searchQuery.length > 0 || currentDimension === "year") {
-        fetchParams = { user: currentUser, all: true };
+        fetchParams = { user: queryUser, all: true };
       } else if (currentDimension === "month" || isMonthHistoryLoaded || currentTimeKey !== getTodayString()) {
-        fetchParams = { user: currentUser, limit: 200 };
+        fetchParams = { user: queryUser, limit: 200 };
       }
       google.script.run
         .withSuccessHandler(function(data) {
@@ -2960,11 +2972,12 @@
 
     function loadDataFromServer() {
       startProgress();
-      let fetchParams = { user: currentUser, limit: 15 };
+      const queryUser = isLockedUser ? currentUser : "";
+      let fetchParams = { user: queryUser, limit: 15 };
       if (searchQuery.length > 0 || currentDimension === "year") {
-        fetchParams = { user: currentUser, all: true };
+        fetchParams = { user: queryUser, all: true };
       } else if (currentDimension === "month") {
-        fetchParams = { user: currentUser, limit: 200 };
+        fetchParams = { user: queryUser, limit: 200 };
       }
       google.script.run
         .withSuccessHandler(function(data) {
@@ -3172,6 +3185,7 @@
       if (isLoadingMonthHistory || isMonthHistoryLoaded || isFullHistoryLoaded) return;
       isLoadingMonthHistory = true;
       startProgress();
+      const queryUser = isLockedUser ? currentUser : "";
       google.script.run
         .withSuccessHandler(function(data) {
           isLoadingMonthHistory = false;
@@ -3189,7 +3203,7 @@
           isLoadingMonthHistory = false;
           finishProgress();
         })
-        .getDashboardData({ user: currentUser, limit: 200 });
+        .getDashboardData({ user: queryUser, limit: 200 });
     }
 
     // ⚡ 第三段載入：當點選「年」、搜尋關鍵字或查詢更早歷史時，背景載入完整歷史紀錄
@@ -3197,6 +3211,7 @@
       if (isLoadingFullHistory || isFullHistoryLoaded) return;
       isLoadingFullHistory = true;
       startProgress();
+      const queryUser = isLockedUser ? currentUser : "";
       google.script.run
         .withSuccessHandler(function(data) {
           isLoadingFullHistory = false;
@@ -3215,7 +3230,7 @@
           isLoadingFullHistory = false;
           finishProgress();
         })
-        .getDashboardData({ user: currentUser, all: true });
+        .getDashboardData({ user: queryUser, all: true });
     }
 
     // =====================================================
