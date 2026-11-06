@@ -435,16 +435,35 @@
     .cat-chips {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px 12px;
+      gap: 7px 8px;
     }
 
     .cat-chip {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 5px;
       font-size: 0.76rem;
       font-weight: 700;
       cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1.5px solid var(--card-border);
+      background: var(--bg);
+      transition: all 0.18s ease;
+      user-select: none;
+    }
+
+    .cat-chip:active {
+      transform: scale(0.95);
+    }
+
+    .cat-chip.active-filter {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+      transform: translateY(-1px);
+    }
+
+    .cat-chip.dimmed {
+      opacity: 0.42;
     }
 
     .chip-dot {
@@ -509,8 +528,18 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
       margin-bottom: 8px;
       padding: 0 4px;
+    }
+
+    .list-header-left {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-width: 0;
     }
 
     .list-title {
@@ -518,6 +547,42 @@
       font-weight: 800;
       color: var(--text-muted);
       letter-spacing: 0.5px;
+    }
+
+    .active-cat-filter-badge {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1.5px solid var(--accent);
+      background: var(--card-soft);
+      color: var(--text);
+      transition: all 0.15s;
+    }
+
+    .active-cat-filter-badge:active {
+      transform: scale(0.95);
+    }
+
+    .sort-select {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 5px 10px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .sort-select:focus {
+      border-color: var(--accent);
     }
 
     .search-box-wrap {
@@ -1367,7 +1432,16 @@
 
   <!-- 明細列表與搜尋框（位於分類佔比與消費細項正下方） -->
   <div class="list-header">
-    <span class="list-title" id="list-title-text">消費細項</span>
+    <div class="list-header-left">
+      <span class="list-title" id="list-title-text">消費細項</span>
+      <button type="button" class="active-cat-filter-badge" id="active-cat-filter-badge" onclick="clearCategoryFilter()" title="點此取消類別篩選，顯示全部"></button>
+    </div>
+    <select id="sort-order-select" class="sort-select" onchange="onSortOrderChange(this.value)" title="切換消費細項排序方式">
+      <option value="time_desc">時間：近 ➔ 遠</option>
+      <option value="time_asc">時間：遠 ➔ 近</option>
+      <option value="amount_desc">金額：高 ➔ 低</option>
+      <option value="amount_asc">金額：低 ➔ 高</option>
+    </select>
   </div>
   <div class="search-box-wrap">
     <span class="search-icon">🔍</span>
@@ -1421,6 +1495,7 @@
               <option value="台新Richart">台新Richart(5403)</option>
               <option value="全支付">全支付</option>
               <option value="國泰世華信用卡">國泰世華信用卡(7488)</option>
+              <option value="郵局">郵局(14071)</option>
             </select>
           </div>
         </div>
@@ -1575,7 +1650,7 @@
     // （已預設填入您目前使用的 Apps Script 網址，若未來重新部署新網址只需替換下方字串）
     // ============================================================================
     const GAS_WEB_APP_URL = localStorage.getItem("custom_gas_webapp_url") ||
-      "https://script.google.com/macros/s/AKfycbw-II8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
+      "https://script.google.com/macros/s/AKfycbw-lI8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
 
     // 自動將原本 Apps Script 專用的 google.script.run 轉接為標準跨網域 fetch API
     if (typeof window.google === "undefined" || !window.google.script) {
@@ -1641,16 +1716,16 @@
 
     // 10 大分類與專屬圖標與色彩
     const CATEGORY_META = {
-      "食物": { icon: "🍽️", color: "#f97316" },
-      "飲品": { icon: "🥤", color: "#06b6d4" },
-      "交通": { icon: "🛵", color: "#3b82f6" },
-      "居家": { icon: "🛋️", color: "#eab308" },
-      "娛樂": { icon: "🎉", color: "#a855f7" },
-      "消費": { icon: "🛍️", color: "#ec4899" },
-      "3C":   { icon: "📱", color: "#6366f1" },
-      "醫藥": { icon: "💊", color: "#14b8a6" },
-      "其他": { icon: "📦", color: "#64748b" },
-      "收入": { icon: "💰", color: "#22c55e" }
+      "食物": { icon: "🍽️", color: "#ff6b6b" }, // 淺紅
+      "飲品": { icon: "🥤", color: "#15803d" }, // 深綠
+      "交通": { icon: "🛵", color: "#38bdf8" }, // 淺藍
+      "居家": { icon: "🛋️", color: "#4ade80" }, // 淺綠
+      "娛樂": { icon: "🎉", color: "#f97316" }, // 橘色
+      "消費": { icon: "🛍️", color: "#a855f7" }, // 紫色
+      "3C":   { icon: "📱", color: "#1d4ed8" }, // 深藍
+      "醫藥": { icon: "💊", color: "#dc2626" }, // 紅色 (比食物深)
+      "其他": { icon: "📦", color: "#64748b" }, // 灰色
+      "收入": { icon: "💰", color: "#eab308" }  // 黃色
     };
 
     let currentUser = "定成";
@@ -1679,6 +1754,9 @@
     let editingModalMatchCriteria = null;
     let editingModalAccountId = 0;
     let searchQuery = "";
+    let selectedCategoryFilter = ""; // 點擊分類百分比時篩選的類別
+    let currentSortOrder = "time_desc"; // time_desc | time_asc | amount_desc | amount_asc
+    let listRenderLimit = 150;
     let expandedClusters = { exact: false, similar: false };
     let showAllClusterLimit = { exact: 100, similar: 100 };
     let renderedRecordsPool = [];
@@ -1850,15 +1928,15 @@
       const d = String(now.getDate()).padStart(2, "0");
 
       if (dim === "day") {
-        currentTimeKey = currentTimeKey.length >= 10 ? currentTimeKey : `${y}/${m}/${d}`;
+        currentTimeKey = (currentTimeKey !== "ALL" && currentTimeKey.length >= 10) ? currentTimeKey : `${y}/${m}/${d}`;
       } else if (dim === "month") {
-        currentTimeKey = currentTimeKey.slice(0, 7) || `${y}/${m}`;
+        currentTimeKey = (currentTimeKey !== "ALL" && currentTimeKey.length >= 7) ? currentTimeKey.slice(0, 7) : `${y}/${m}`;
         // 點選「月」時，先快速載入近 200 筆（涵蓋近兩個月），不用一次搬全部 5000 筆
         if (!isMonthHistoryLoaded && !isFullHistoryLoaded) {
           loadMonthHistoryFromServer();
         }
       } else if (dim === "year") {
-        currentTimeKey = currentTimeKey.slice(0, 4) || `${y}`;
+        currentTimeKey = currentTimeKey === "ALL" ? "ALL" : (currentTimeKey.slice(0, 4) || `${y}`);
         // 點選「年」時，若尚未載入全部歷史資料，自動於背景完整載入全年份！
         if (!isFullHistoryLoaded) {
           loadFullHistoryFromServer();
@@ -1880,7 +1958,7 @@
         } else if (currentDimension === "month") {
           return recDate.slice(0, 7) === currentTimeKey;
         } else if (currentDimension === "year") {
-          return recDate.slice(0, 4) === currentTimeKey;
+          return currentTimeKey === "ALL" ? true : (recDate.slice(0, 4) === currentTimeKey);
         }
         return false;
       });
@@ -1902,7 +1980,11 @@
       });
 
       // 3. 更新看板數字與個人每月預算進度條
-      const dimLabelMap = { day: "今日支出", month: "本月支出", year: "今年支出" };
+      const dimLabelMap = {
+        day: "今日支出",
+        month: "本月支出",
+        year: currentTimeKey === "ALL" ? "全部支出" : "今年支出"
+      };
       document.getElementById("hero-title").innerText = dimLabelMap[currentDimension] || "當期支出";
       document.getElementById("hero-expense").innerText = "$" + Math.round(totalExpense).toLocaleString();
       document.getElementById("hero-income").innerText = "+$" + Math.round(totalIncome).toLocaleString();
@@ -1989,7 +2071,7 @@
       }
     }
 
-    // 渲染分類佔比條與圖例色塊
+    // 渲染分類佔比條與圖例色塊（點選任一分類可篩選下方消費細項）
     function renderChartSection(catSums, totalExpense) {
       const barBox = document.getElementById("chart-bar");
       const chipsBox = document.getElementById("cat-chips");
@@ -2001,6 +2083,11 @@
       }
       chartSec.style.display = "block";
 
+      // 若目前選取的篩選類別在此期間完全沒有紀錄，自動解除篩選避免空畫面困惑
+      if (selectedCategoryFilter && !catSums[selectedCategoryFilter]) {
+        selectedCategoryFilter = "";
+      }
+
       const sortedCats = Object.keys(catSums).sort((a, b) => catSums[b] - catSums[a]);
 
       let barHtml = "";
@@ -2010,12 +2097,19 @@
         const amt = catSums[cat];
         const pct = ((amt / totalExpense) * 100).toFixed(1);
         const meta = CATEGORY_META[cat] || { icon: "📦", color: "#64748b" };
+        const isSelected = (selectedCategoryFilter === cat);
+        const isDimmed = (selectedCategoryFilter !== "" && !isSelected);
+        const segOpacity = isDimmed ? "0.32" : "1";
+        const chipClass = "cat-chip" + (isSelected ? " active-filter" : (isDimmed ? " dimmed" : ""));
+        const chipStyle = isSelected
+          ? `border-color:${meta.color}; background:${meta.color}26;`
+          : "";
 
-        barHtml += `<div class="bar-seg" style="width:${pct}%; background:${meta.color};" title="${cat}: ${pct}%"></div>`;
+        barHtml += `<div class="bar-seg" style="width:${pct}%; background:${meta.color}; opacity:${segOpacity}; cursor:pointer;" onclick="toggleCategoryFilter('${cat}')" title="點此只看「${cat}」(${pct}%)"></div>`;
         chipsHtml += `
-          <div class="cat-chip">
+          <div class="${chipClass}" style="${chipStyle}" onclick="toggleCategoryFilter('${cat}')" title="點一下只顯示「${cat}」細項（再點一下顯示全部）">
             <span class="chip-dot" style="background:${meta.color};"></span>
-            <span class="chip-name">${meta.icon} ${cat}</span>
+            <span class="chip-name">${cat}</span>
             <span class="chip-val">${pct}% ($${Math.round(amt).toLocaleString()})</span>
           </div>
         `;
@@ -2023,6 +2117,61 @@
 
       barBox.innerHTML = barHtml;
       chipsBox.innerHTML = chipsHtml;
+    }
+
+    // 點擊百分比分類標籤：切換篩選該類別（再點一次恢復顯示全部）
+    function toggleCategoryFilter(cat) {
+      if (selectedCategoryFilter === cat) {
+        selectedCategoryFilter = "";
+      } else {
+        selectedCategoryFilter = cat;
+      }
+      listRenderLimit = 150;
+      refreshView();
+    }
+
+    function clearCategoryFilter() {
+      if (!selectedCategoryFilter) return;
+      selectedCategoryFilter = "";
+      listRenderLimit = 150;
+      refreshView();
+    }
+
+    // 切換消費細項排序順序（時間近->遠 / 遠->近 / 金額高->低 / 低->高）
+    function onSortOrderChange(orderVal) {
+      currentSortOrder = orderVal || "time_desc";
+      listRenderLimit = 150;
+      refreshView();
+    }
+
+    function sortRecordsArray(list) {
+      const arr = list.slice();
+      arr.sort((a, b) => {
+        if (currentSortOrder === "amount_desc") {
+          const diff = (Number(b.Amount) || 0) - (Number(a.Amount) || 0);
+          if (diff !== 0) return diff;
+          return String(b["Recorded At"] || "").localeCompare(String(a["Recorded At"] || ""));
+        } else if (currentSortOrder === "amount_asc") {
+          const diff = (Number(a.Amount) || 0) - (Number(b.Amount) || 0);
+          if (diff !== 0) return diff;
+          return String(b["Recorded At"] || "").localeCompare(String(a["Recorded At"] || ""));
+        } else if (currentSortOrder === "time_asc") {
+          const cmp = String(a["Recorded At"] || "").localeCompare(String(b["Recorded At"] || ""));
+          if (cmp !== 0) return cmp;
+          return (b.rowIndex || 0) - (a.rowIndex || 0);
+        } else {
+          // 預設 time_desc：時間由近到遠
+          const cmp = String(b["Recorded At"] || "").localeCompare(String(a["Recorded At"] || ""));
+          if (cmp !== 0) return cmp;
+          return (a.rowIndex || 0) - (b.rowIndex || 0);
+        }
+      });
+      return arr;
+    }
+
+    function expandListRenderLimit(step) {
+      listRenderLimit = step === "ALL" ? 999999 : (listRenderLimit + (step || 200));
+      refreshView();
     }
 
     // 🔍 搜尋輸入處理與雙群集聚合 (完全相符「晚餐」 vs 類似項目「晚餐...」)
@@ -2080,14 +2229,14 @@
       return `
         <div class="record-card">
           <div class="rec-left" onclick="openEditModal(${poolIdx})">
-            <div class="cat-icon-badge" style="background:${meta.color}22; color:${meta.color};" 
+            <div class="cat-icon-badge" style="background:${meta.color}; color:#ffffff; text-shadow:0 1px 2px rgba(0,0,0,0.28);" 
                  onclick="openCategorySheet(event, ${poolIdx})" title="點一下直接換分類">
               ${meta.icon}
             </div>
             <div class="rec-info">
               <div class="rec-note">${escapeHtml(r.note || r.Category)}</div>
               <div class="rec-meta">
-                <span class="rec-cat-text">${escapeHtml(r.Category)}</span>
+                <span class="rec-cat-text" style="color:${meta.color};">${escapeHtml(r.Category)}</span>
                 <span>•</span>
                 <span>${escapeHtml(timeSub)}</span>
               </div>
@@ -2106,26 +2255,68 @@
       `;
     }
 
-    // 渲染細項列表（若有輸入搜尋關鍵字，切換為「完全相符」與「類似項目...」雙群集模式）
+    // 渲染細項列表（支援分類點選篩選、4 種排序方式、以及搜尋雙群集模式）
     function renderRecordsList(records) {
       const container = document.getElementById("records-container");
       const titleEl = document.getElementById("list-title-text");
+      const badgeEl = document.getElementById("active-cat-filter-badge");
 
       if (searchQuery.length > 0) {
         if (titleEl) titleEl.innerText = `消費細項 — 搜尋「${searchQuery}」`;
+        if (badgeEl) badgeEl.style.display = "none";
         renderSearchClusterView(container, searchQuery);
         return;
       }
 
       if (titleEl) titleEl.innerText = "消費細項";
-      renderedRecordsPool = records.slice();
 
-      if (records.length === 0) {
+      // 1. 若有點選上方某個分類百分比（例如「食物」或「消費」），只篩選該分類的紀錄
+      let displayList = records;
+      if (selectedCategoryFilter) {
+        displayList = records.filter(r => (r.Category || "其他") === selectedCategoryFilter);
+        const meta = CATEGORY_META[selectedCategoryFilter] || { icon: "📦", color: "#64748b" };
+        const catSum = displayList.reduce((acc, r) => acc + (Number(r.Amount) || 0), 0);
+        if (badgeEl) {
+          badgeEl.style.display = "inline-flex";
+          badgeEl.style.borderColor = meta.color;
+          badgeEl.style.background = `${meta.color}24`;
+          badgeEl.innerHTML = `<span>${escapeHtml(selectedCategoryFilter)} (${displayList.length}筆 · $${Math.round(catSum).toLocaleString()})</span><span style="margin-left:3px; opacity:0.8;">✕</span>`;
+        }
+      } else if (badgeEl) {
+        badgeEl.style.display = "none";
+      }
+
+      // 2. 依當前選擇的排序方式排序（時間近到遠 / 遠到近 / 金額高到低 / 低到高）
+      const sortedList = sortRecordsArray(displayList);
+
+      if (sortedList.length === 0) {
+        renderedRecordsPool = [];
         container.innerHTML = `<div class="empty-msg">這段時間沒有記帳紀錄喔～ 🍃</div>`;
         return;
       }
 
-      container.innerHTML = records.map((r, idx) => renderSingleRecordCardHtml(r, idx, false)).join("");
+      // 3. 若在「年」或「月」模式下筆數較多，先渲染前 listRenderLimit 筆以保持極速流暢，並提供展開按鈕
+      const showFullDate = (currentDimension === "year");
+      const visibleList = sortedList.slice(0, listRenderLimit);
+      renderedRecordsPool = visibleList.slice();
+
+      let cardsHtml = visibleList.map((r, idx) => renderSingleRecordCardHtml(r, idx, showFullDate)).join("");
+
+      if (sortedList.length > listRenderLimit) {
+        const remain = sortedList.length - listRenderLimit;
+        cardsHtml += `
+          <div style="display:flex; gap:8px; margin-top:6px;">
+            <button type="button" class="rec-btn-mini" style="flex:1; padding:10px; justify-content:center;" onclick="expandListRenderLimit(200)">
+              👇 再顯示 200 筆（還有 ${remain.toLocaleString()} 筆）
+            </button>
+            <button type="button" class="rec-btn-mini" style="padding:10px 14px; justify-content:center;" onclick="expandListRenderLimit('ALL')">
+              ⚡ 展開全部 (${sortedList.length.toLocaleString()}筆)
+            </button>
+          </div>
+        `;
+      }
+
+      container.innerHTML = cardsHtml;
     }
 
     function renderSearchClusterView(container, query) {
@@ -2134,8 +2325,8 @@
 
       // 搜尋當前使用者的全部歷史紀錄
       const userAll = allRecords.filter(r => r.user === currentUser);
-      const exactList = [];
-      const similarList = [];
+      let exactList = [];
+      let similarList = [];
 
       userAll.forEach(r => {
         const noteText = String(r.note || r.Category || "").trim();
@@ -2146,6 +2337,10 @@
           similarList.push(r);
         }
       });
+
+      // 套用目前的排序方式（時間近到遠 / 遠到近 / 金額高到低 / 低到高）
+      exactList = sortRecordsArray(exactList);
+      similarList = sortRecordsArray(similarList);
 
       const totalCount = exactList.length + similarList.length;
       const exactSum = exactList.reduce((acc, r) => acc + (Number(r.Amount) || 0), 0);
@@ -2258,7 +2453,11 @@
 
       // 收集該維度下所有存在過的時間選項
       const keySet = new Set();
-      keySet.add(currentTimeKey);
+      if (currentTimeKey && currentTimeKey !== "ALL") {
+        keySet.add(currentTimeKey);
+      } else if (currentDimension === "year") {
+        keySet.add(String(new Date().getFullYear()));
+      }
 
       allRecords.forEach(r => {
         const recDate = String(r["Recorded At"] || "");
@@ -2272,6 +2471,11 @@
       });
 
       const sorted = Array.from(keySet).sort().reverse();
+      // 若在「年」模式，在下拉選單最底下加上 ALL（顯示從有記帳以來到現在的全部紀錄）
+      if (currentDimension === "year") {
+        sorted.push("ALL");
+      }
+
       select.innerHTML = sorted.map(k => `<option value="${k}" ${k === currentTimeKey ? "selected" : ""}>${k}</option>`).join("");
 
       // 友善文字：若是今天，標註 (今天)
@@ -2285,6 +2489,7 @@
 
     function onTimeDropdownChange(val) {
       currentTimeKey = val;
+      listRenderLimit = 150;
       refreshView();
     }
 
@@ -2304,7 +2509,11 @@
         if (m < 1) { m = 12; y--; }
         currentTimeKey = `${y}/${String(m).padStart(2, "0")}`;
       } else if (currentDimension === "year") {
-        currentTimeKey = String(parts[0] + direction);
+        if (currentTimeKey === "ALL") {
+          currentTimeKey = String(new Date().getFullYear());
+        } else {
+          currentTimeKey = String(parts[0] + direction);
+        }
       }
 
       // 若往前翻閱較早日期，依三段式策略（15筆 -> 200筆 -> 全部）自動載入更多紀錄
@@ -2369,7 +2578,7 @@
         const meta = CATEGORY_META[cat];
         return `
           <div class="cat-grid-btn" onclick="selectNewCategory('${cat}')">
-            <span class="cat-grid-icon">${meta.icon}</span>
+            <span class="cat-grid-icon" style="background:${meta.color}; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-shadow:0 1px 2px rgba(0,0,0,0.28);">${meta.icon}</span>
             <span class="cat-grid-text">${cat}</span>
           </div>
         `;
@@ -2682,7 +2891,7 @@
         const recDate = String(r["Recorded At"] || "");
         if (currentDimension === "day") return recDate.slice(0, 10) === currentTimeKey;
         if (currentDimension === "month") return recDate.slice(0, 7) === currentTimeKey;
-        if (currentDimension === "year") return recDate.slice(0, 4) === currentTimeKey;
+        if (currentDimension === "year") return currentTimeKey === "ALL" ? true : (recDate.slice(0, 4) === currentTimeKey);
         return false;
       });
     }
