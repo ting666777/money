@@ -5122,9 +5122,8 @@
       const barsHtml = ctx.bars.map(b => {
         const hPx = b.amt === 0 ? 4 : Math.max(12, Math.round((b.amt / maxBarAmt) * 76));
         const isPeak = b.amt === maxBarAmt && b.amt > 0;
-        const clickAttr = (isWeekly && b.fullDate) ? `onclick="jumpToReportDate('${b.fullDate}')" style="cursor:pointer;" title="點此跳到 ${b.fullDate}"` : "";
         return `
-          <div class="rep-bar-col" ${clickAttr}>
+          <div class="rep-bar-col">
             <span class="rep-bar-val">${b.amt > 0 ? "$" + b.amt.toLocaleString() : "0"}</span>
             <div class="rep-bar-fill ${b.amt === 0 ? "zero" : (isPeak ? "peak" : "")}" style="height:${hPx}px;"></div>
             <span class="rep-bar-lbl">${b.lbl}</span>
@@ -5142,7 +5141,7 @@
             if (c.diff < 0) diffTag = `<span class="rep-diff-tag less">▼ -$${Math.abs(c.diff).toLocaleString()}</span>`;
             const currW = c.curr > 0 ? Math.max(4, Math.round((c.curr / maxCatAmt) * 100)) : 0;
             const prevW = c.prev > 0 ? Math.max(4, Math.round((c.prev / maxCatAmt) * 100)) : 0;
-            const isExp = !!expandedReportCats[c.cat];
+            const isExp = !!expandedReportCats["cat_" + c.cat];
 
             const drawerRowsHtml = c.records.length === 0
               ? `<div style="font-size:0.73rem;color:var(--text-muted);padding:2px 4px;">本期無此類別消費（${shortPrevName} $${c.prev.toLocaleString()}）</div>`
@@ -5152,7 +5151,7 @@
                   const noteStr = escapeHtml(r.note || r.Category || "項目");
                   const amtNum = Math.round(Number(r.Amount) || 0);
                   return `
-                    <div class="rep-cat-rec-mini-row" onclick="event.stopPropagation(); jumpToReportDate('${fullD}')" title="點此跳到 ${fullD}">
+                    <div class="rep-cat-rec-mini-row">
                       <div style="display:flex;align-items:center;gap:6px;min-width:0;">
                         <span style="color:var(--text-muted);font-size:0.7rem;flex-shrink:0;">${shortD}</span>
                         <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${noteStr}</span>
@@ -5163,7 +5162,7 @@
                 }).join("");
 
             return `
-              <div class="rep-cat-delta-item ${isExp ? "expanded" : ""}" onclick="toggleReportCatExpand('${c.cat}')">
+              <div class="rep-cat-delta-item ${isExp ? "expanded" : ""}" onclick="toggleReportCatExpand('cat_${c.cat}')">
                 <div class="rep-cat-delta-top">
                   <div class="rep-cat-left">
                     <span class="chip-dot" style="background:${meta.color};"></span>
@@ -5191,14 +5190,33 @@
       const freqDetail = (topFreqCat && topFreqCat.count > 0)
         ? `共 ${topFreqCat.count} 筆・$${topFreqCat.curr.toLocaleString()}`
         : "-";
-      const freqClickAttr = (topFreqCat && topFreqCat.count > 0)
-        ? `onclick="jumpToReportCategory('${topFreqCat.cat}', '${ctx.targetYM}')"`
+      const isFreqExp = !!expandedReportCats["hl_freq"];
+      const freqDrawerHtml = (topFreqCat && topFreqCat.records && topFreqCat.records.length > 0)
+        ? topFreqCat.records.map(r => {
+            const shortD = String(r["Recorded At"] || "").slice(5, 10);
+            const noteStr = escapeHtml(r.note || r.Category || "項目");
+            const amtNum = Math.round(Number(r.Amount) || 0);
+            return `
+              <div class="rep-cat-rec-mini-row">
+                <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                  <span style="color:var(--text-muted);font-size:0.7rem;flex-shrink:0;">${shortD}</span>
+                  <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${noteStr}</span>
+                </div>
+                <span style="font-weight:800;flex-shrink:0;">$${amtNum.toLocaleString()}</span>
+              </div>
+            `;
+          }).join("")
         : "";
 
       const daySumMap = {};
+      const dayRecordsMap = {};
       ctx.currRecs.forEach(r => {
         const d = String(r["Recorded At"] || "").slice(0, 10);
-        if (d) daySumMap[d] = (daySumMap[d] || 0) + (Number(r.Amount) || 0);
+        if (d) {
+          daySumMap[d] = (daySumMap[d] || 0) + (Number(r.Amount) || 0);
+          if (!dayRecordsMap[d]) dayRecordsMap[d] = [];
+          dayRecordsMap[d].push(r);
+        }
       });
       const peakDayEntry = Object.keys(daySumMap)
         .map(d => ({ fullDate: d, amt: Math.round(daySumMap[d]) }))
@@ -5207,7 +5225,8 @@
       let secondBoxLbl = "🔥 單日最高峰";
       let secondBoxTitle = "尚無花費";
       let secondBoxDetail = "$0";
-      let peakClickAttr = "";
+      let peakDrawerHtml = "";
+      const isPeakExp = !!expandedReportCats["hl_peak"];
       if (peakDayEntry && peakDayEntry.amt > 0) {
         const parts = peakDayEntry.fullDate.split("/").map(Number);
         const dObj = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -5215,7 +5234,21 @@
         const wLbl = wNames[dObj.getDay()];
         secondBoxTitle = `${peakDayEntry.fullDate.slice(5)} (週${wLbl})`;
         secondBoxDetail = `單日 $${peakDayEntry.amt.toLocaleString()}`;
-        peakClickAttr = `onclick="jumpToReportDate('${peakDayEntry.fullDate}')"`;
+        const peakRecs = (dayRecordsMap[peakDayEntry.fullDate] || []).slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0));
+        peakDrawerHtml = peakRecs.map(r => {
+          const timePart = String(r["Recorded At"] || "").slice(11, 16) || r.Category || "";
+          const noteStr = escapeHtml(r.note || r.Category || "項目");
+          const amtNum = Math.round(Number(r.Amount) || 0);
+          return `
+            <div class="rep-cat-rec-mini-row">
+              <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                <span style="color:var(--text-muted);font-size:0.7rem;flex-shrink:0;">${escapeHtml(timePart)}</span>
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${noteStr}</span>
+              </div>
+              <span style="font-weight:800;flex-shrink:0;">$${amtNum.toLocaleString()}</span>
+            </div>
+          `;
+        }).join("");
       }
 
       const top3Recs = ctx.currRecs.slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0)).slice(0, 3);
@@ -5225,14 +5258,36 @@
             const fullD = String(r["Recorded At"] || "").slice(0, 10);
             const dShort = fullD.slice(5, 10);
             const noteText = escapeHtml(r.note || r.Category || "未命名項目");
-            return `
-              <div class="rep-top-row rep-clickable-card" onclick="jumpToReportDate('${fullD}')" title="點此跳到 ${fullD}">
-                <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;">
-                  <span class="rep-rank-badge">#${idx + 1}</span>
-                  <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${noteText}</span>
-                  <span style="font-size:0.7rem;color:var(--text-muted);flex-shrink:0;">${dShort}</span>
+            const topKey = "hl_top_" + idx;
+            const isTopExp = !!expandedReportCats[topKey];
+            const sameDayRecs = (dayRecordsMap[fullD] || [r]).slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0));
+            const topDrawerHtml = sameDayRecs.map(dr => {
+              const tStr = String(dr["Recorded At"] || "").slice(5, 16);
+              const catStr = escapeHtml(dr.Category || "其他");
+              const nStr = escapeHtml(dr.note || dr.Category || "項目");
+              const aNum = Math.round(Number(dr.Amount) || 0);
+              return `
+                <div class="rep-cat-rec-mini-row">
+                  <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                    <span style="color:var(--text-muted);font-size:0.68rem;flex-shrink:0;">${tStr} · ${catStr}</span>
+                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nStr}</span>
+                  </div>
+                  <span style="font-weight:800;flex-shrink:0;">$${aNum.toLocaleString()}</span>
                 </div>
-                <span style="font-weight:900;flex-shrink:0;">$${Math.round(Number(r.Amount) || 0).toLocaleString()}</span>
+              `;
+            }).join("");
+
+            return `
+              <div class="rep-cat-delta-item ${isTopExp ? "expanded" : ""}" style="background:var(--bg);border:1px solid var(--card-border);" onclick="toggleReportCatExpand('${topKey}')">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:0.8rem;font-weight:700;">
+                  <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;">
+                    <span class="rep-rank-badge">#${idx + 1}</span>
+                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${noteText}</span>
+                    <span style="font-size:0.7rem;color:var(--text-muted);flex-shrink:0;">${dShort}</span>
+                  </div>
+                  <span style="font-weight:900;flex-shrink:0;">$${Math.round(Number(r.Amount) || 0).toLocaleString()}</span>
+                </div>
+                <div class="rep-cat-records-drawer">${topDrawerHtml}</div>
               </div>
             `;
           }).join("");
@@ -5287,7 +5342,6 @@
         <div class="rep-section-card">
           <div class="rep-sec-title">
             <span>類別花費漲跌對比</span>
-            <span class="rep-sec-sub">點類別可看明細</span>
           </div>
           <div class="rep-cat-delta-list">${catDeltaHtml}</div>
         </div>
@@ -5297,17 +5351,19 @@
             <span>哪裡花最多</span>
           </div>
           <div class="rep-highlights-grid">
-            <div class="rep-mini-stat-box rep-clickable-card" ${freqClickAttr} title="點此查看該類別細項">
+            <div class="rep-mini-stat-box rep-clickable-card" onclick="toggleReportCatExpand('hl_freq')">
               <span class="rep-mini-stat-lbl">🔁 最常消費類別</span>
               <span class="rep-mini-stat-val">${freqTitle}</span>
               <span style="font-size:0.72rem;color:var(--text-muted);">${freqDetail}</span>
             </div>
-            <div class="rep-mini-stat-box rep-clickable-card" ${peakClickAttr} title="點此跳到該日帳務">
+            <div class="rep-mini-stat-box rep-clickable-card" onclick="toggleReportCatExpand('hl_peak')">
               <span class="rep-mini-stat-lbl">${secondBoxLbl}</span>
               <span class="rep-mini-stat-val">${secondBoxTitle}</span>
               <span style="font-size:0.72rem;color:var(--text-muted);">${secondBoxDetail}</span>
             </div>
           </div>
+          ${isFreqExp && freqDrawerHtml ? `<div class="rep-cat-records-drawer" style="display:flex;margin-top:2px;">${freqDrawerHtml}</div>` : ""}
+          ${isPeakExp && peakDrawerHtml ? `<div class="rep-cat-records-drawer" style="display:flex;margin-top:2px;">${peakDrawerHtml}</div>` : ""}
           <div class="rep-top-list">${topItemsHtml}</div>
         </div>
       `;
