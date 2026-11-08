@@ -2931,34 +2931,32 @@
       const barTextEl = document.getElementById("budget-bar-text");
       if (!titleEl || !statusEl || !fillEl || !barTextEl) return;
 
-      titleEl.innerText = `${monthNum}月預算`;
+      titleEl.innerHTML = `${monthNum}月預算 <span style="font-weight:600;color:var(--text-muted);font-size:0.73rem;margin-left:4px;">(日均 $${dailyAvg.toLocaleString()})</span>`;
       statusEl.style.color = "var(--muted)";
 
       if (budget <= 0) {
-        statusEl.innerText = `日均 $${dailyAvg.toLocaleString()}`;
+        statusEl.innerText = "未設上限";
         barTextEl.innerText = "點此設定預算";
         fillEl.style.width = "0%";
         fillEl.style.background = "var(--accent)";
         return;
       }
 
-      // 有設定預算時：計算「今日還剩多少錢可花」= (預算 - 到目前花費) ÷ 本月剩餘天數（含今日）
+      // 有設定預算時：方案 B 左右分置（左邊：11月預算 (日均 $XXX)，右邊：今日還剩 $XXX 可花）
       const remainBudget = budget - monthExpense;
       if (targetMonth === currentRealMonth) {
         const remainingDays = Math.max(1, totalDaysInMonth - todayDay + 1);
         const dailyCanSpend = Math.floor(remainBudget / remainingDays);
         if (remainBudget >= 0) {
-          statusEl.innerText = `今日還剩 $${dailyCanSpend.toLocaleString()} 可花`;
+          statusEl.innerHTML = `<span style="color:var(--text);font-weight:800;">今日還剩 $${dailyCanSpend.toLocaleString()} 可花</span>`;
         } else {
-          statusEl.innerText = `今日還剩 $0 可花 (超支 $${Math.abs(remainBudget).toLocaleString()})`;
-          statusEl.style.color = "#ef4444";
+          statusEl.innerHTML = `<span style="color:#ef4444;font-weight:800;">今日還剩 $0 可花 (超支 $${Math.abs(remainBudget).toLocaleString()})</span>`;
         }
       } else {
         if (remainBudget >= 0) {
-          statusEl.innerText = `結餘 $${remainBudget.toLocaleString()} (日均 $${dailyAvg.toLocaleString()})`;
+          statusEl.innerHTML = `<span style="color:var(--text);font-weight:800;">結餘 $${remainBudget.toLocaleString()}</span>`;
         } else {
-          statusEl.innerText = `超支 $${Math.abs(remainBudget).toLocaleString()} (日均 $${dailyAvg.toLocaleString()})`;
-          statusEl.style.color = "#ef4444";
+          statusEl.innerHTML = `<span style="color:#ef4444;font-weight:800;">超支 $${Math.abs(remainBudget).toLocaleString()}</span>`;
         }
       }
 
