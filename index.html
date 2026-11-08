@@ -156,17 +156,19 @@
       }
     }
 
-    /* 頂部極簡切換列：定成 / 妤珊 + 快捷功能圖標 */
+    /* =========================================================
+       區塊 1：頂部極簡列（切換是誰 / 單人名稱 ＋ 重新整理、除錯、設定）
+       ========================================================= */
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .user-pill-group {
       display: flex;
-      background: var(--card-soft);
+      background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 999px;
       padding: 3px;
@@ -177,34 +179,43 @@
       border: none;
       background: transparent;
       color: var(--text-muted);
-      padding: 6px 16px;
+      padding: 5px 16px;
       border-radius: 999px;
-      font-size: 0.9rem;
-      font-weight: 700;
+      font-size: 0.86rem;
+      font-weight: 800;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
     .user-pill.active-ding {
-      background: var(--pill-active-bg);
+      background: rgba(56, 189, 248, 0.2);
       color: var(--ding);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
     }
 
     .user-pill.active-yu {
-      background: var(--pill-active-bg);
+      background: rgba(244, 114, 182, 0.2);
       color: var(--yu);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    .locked-user-title {
+      display: none;
+      align-items: center;
+      font-size: 0.95rem;
+      font-weight: 900;
+      padding: 5px 14px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
     }
 
     .top-actions {
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
 
     .icon-btn {
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       border: 1px solid var(--card-border);
       background: var(--card);
@@ -212,7 +223,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1rem;
+      font-size: 0.92rem;
       cursor: pointer;
       position: relative;
       box-shadow: 0 2px 5px rgba(74, 59, 50, 0.05);
@@ -264,222 +275,6 @@
       border-radius: 50%;
     }
 
-    /* 📅 時間維度切換：天 (Day) / 月 (Month) / 年 (Year) */
-    .time-dimension-bar {
-      display: flex;
-      background: var(--card-soft);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 4px;
-      margin-bottom: 12px;
-      gap: 4px;
-    }
-
-    .dim-btn {
-      flex: 1;
-      padding: 7px 0;
-      text-align: center;
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-weight: 700;
-      font-size: 0.88rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .dim-btn.active {
-      background: var(--card);
-      color: var(--text);
-      box-shadow: 0 2px 6px rgba(74, 59, 50, 0.1);
-    }
-
-    /* ◀ 2026/11/05 ▶ 時間導航與下拉選單 */
-    .nav-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 6px 10px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 6px rgba(74, 59, 50, 0.04);
-    }
-
-    .nav-arrow {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1.1rem;
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .nav-arrow:active {
-      background: var(--card-soft);
-      color: var(--text);
-    }
-
-    .nav-select-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .nav-select-wrapper select {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      cursor: pointer;
-    }
-
-    .nav-title {
-      font-size: 1rem;
-      font-weight: 800;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .nav-caret {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-    }
-
-    /* 總額大字看板 */
-    .hero-stat {
-      background: var(--hero-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 14px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    }
-
-    .hero-main {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .hero-label {
-      font-size: 0.76rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .hero-amount {
-      font-size: 2rem;
-      font-weight: 900;
-      color: var(--expense);
-      letter-spacing: -0.5px;
-      line-height: 1;
-    }
-
-    .hero-sub {
-      text-align: right;
-    }
-
-    .hero-income {
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--income);
-    }
-
-    .hero-count {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    /* 📊 分類支出佔比長條圖與色塊 */
-    .chart-box {
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 14px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 8px rgba(74, 59, 50, 0.04);
-    }
-
-    .chart-bar {
-      display: flex;
-      height: 10px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: var(--card-soft);
-      margin-bottom: 12px;
-    }
-
-    .bar-seg {
-      height: 100%;
-      transition: width 0.3s ease;
-    }
-
-    .cat-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px 8px;
-    }
-
-    .cat-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.76rem;
-      font-weight: 700;
-      cursor: pointer;
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 1.5px solid var(--card-border);
-      background: var(--bg);
-      transition: all 0.18s ease;
-      user-select: none;
-    }
-
-    .cat-chip:active {
-      transform: scale(0.95);
-    }
-
-    .cat-chip.active-filter {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
-      transform: translateY(-1px);
-    }
-
-    .cat-chip.dimmed {
-      opacity: 0.42;
-    }
-
-    .chip-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    .chip-name {
-      color: var(--text-muted);
-    }
-
-    .chip-val {
-      color: var(--text);
-    }
-
     /* ⚠️ 頂部常駐錯誤與重複警告橫幅 */
     .alert-banner {
       display: none;
@@ -488,7 +283,7 @@
       border-left: 5px solid #c65d47;
       border-radius: 12px;
       padding: 10px 14px;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
       color: #8c3828;
       font-size: 0.84rem;
       cursor: pointer;
@@ -523,148 +318,430 @@
       white-space: nowrap;
     }
 
-    /* 📋 細項列表 (List of Records) 與 🔍 智慧群集搜尋列 */
-    .list-header {
+    /* =========================================================
+       區塊 2：整合總覽區（預算 + 日期/天月年 + 今日支出 + 分類比例）
+       ========================================================= */
+    .block-2-overview-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 11px 13px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    /* 2-1: 緊湊預算條 */
+    .budget-compact-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .budget-compact-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 8px;
-      padding: 0 4px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--text-muted);
     }
 
-    .list-header-left {
+    .budget-compact-track {
+      position: relative;
+      height: 16px;
+      background: var(--card-soft);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+    }
+
+    .budget-compact-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #6366f1, #38bdf8);
+      border-radius: 999px;
+      transition: width 0.3s ease, background 0.25s ease;
+    }
+
+    .budget-compact-text {
+      position: absolute;
+      inset: 0;
       display: flex;
       align-items: center;
-      flex-wrap: wrap;
+      justify-content: center;
+      font-size: 0.69rem;
+      font-weight: 800;
+      color: var(--text);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+
+    /* 2-2: 日期切換 與 天/月/年 同一排 */
+    .date-and-dim-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       gap: 8px;
+      background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      border-radius: 11px;
+      padding: 4px 6px;
+    }
+
+    .date-nav-left {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
       min-width: 0;
     }
 
-    .list-title {
+    .nav-arrow-sm {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
       font-size: 0.85rem;
+      padding: 4px 7px;
+      cursor: pointer;
+      border-radius: 7px;
+    }
+
+    .nav-arrow-sm:active {
+      background: rgba(128, 128, 128, 0.14);
+      color: var(--text);
+    }
+
+    .nav-select-box {
+      position: relative;
+      flex: 1;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .nav-date-text {
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .nav-select-box select {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .dim-segmented-mini {
+      display: flex;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .dim-mini-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 4px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .dim-mini-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    /* 2-3: 今日支出精簡橫列（不顯示收入與筆數） */
+    .expense-summary-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 2px 2px 0 2px;
+    }
+
+    .expense-label {
+      font-size: 0.82rem;
       font-weight: 800;
       color: var(--text-muted);
-      letter-spacing: 0.5px;
+    }
+
+    .expense-amount {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--expense);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    /* 2-4: 分類佔比條與小標籤 */
+    .chart-compact-box {
+      border-top: 1px solid var(--card-border);
+      padding-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .chart-bar {
+      display: flex;
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--card-soft);
+    }
+
+    .bar-seg {
+      height: 100%;
+      transition: width 0.3s ease, opacity 0.2s ease;
+      cursor: pointer;
+    }
+
+    .cat-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .cat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--card-border);
+      background: var(--card-soft);
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .cat-chip:active {
+      transform: scale(0.95);
+    }
+
+    .cat-chip.active-filter {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .cat-chip.dimmed {
+      opacity: 0.38;
+    }
+
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .chip-name {
+      color: var(--text);
+    }
+
+    .chip-val {
+      color: var(--text-muted);
+    }
+
+    /* =========================================================
+       區塊 3：細項區（單行搜尋＋三條線排序選單 ＋ 極簡項目列表）
+       ========================================================= */
+    .block-3-records-section {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    /* 3-1: 單行工具列：類別篩選標籤 + 無提示字搜尋框 + 三條線排序按鈕 */
+    .toolbar-single-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--card-border);
     }
 
     .active-cat-filter-badge {
       display: none;
       align-items: center;
-      gap: 5px;
-      padding: 3px 10px;
+      gap: 4px;
+      padding: 3px 8px;
       border-radius: 999px;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 800;
       cursor: pointer;
-      border: 1.5px solid var(--accent);
+      border: 1px solid var(--accent);
       background: var(--card-soft);
       color: var(--text);
-      transition: all 0.15s;
-    }
-
-    .active-cat-filter-badge:active {
-      transform: scale(0.95);
-    }
-
-    .sort-select {
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 5px 10px;
-      font-size: 0.76rem;
-      font-weight: 800;
-      cursor: pointer;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .sort-select:focus {
-      border-color: var(--accent);
-    }
-
-    .search-box-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 8px 12px;
-      margin-bottom: 12px;
-      gap: 8px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      box-shadow: 0 2px 6px rgba(74, 59, 50, 0.04);
-    }
-
-    .search-box-wrap:focus-within {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(166, 124, 82, 0.18);
-    }
-
-    .search-icon {
-      font-size: 0.95rem;
-      color: var(--text-muted);
+      white-space: nowrap;
       flex-shrink: 0;
     }
 
-    .search-input {
+    .search-inline-box {
+      position: relative;
       flex: 1;
-      background: transparent;
-      border: none;
-      color: var(--text);
-      font-size: 0.92rem;
-      outline: none;
+      min-width: 60px;
+    }
+
+    .search-inline-input {
       width: 100%;
-    }
-
-    .search-input::placeholder {
-      color: var(--text-muted);
-      opacity: 0.75;
-    }
-
-    .search-clear-btn {
+      height: 30px;
       background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0 24px 0 26px;
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 600;
+      outline: none;
+    }
+
+    .search-inline-input:focus {
+      border-color: var(--accent);
+    }
+
+    .search-inline-icon {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.76rem;
+      opacity: 0.65;
+      pointer-events: none;
+    }
+
+    .search-inline-clear {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
       border: none;
+      background: transparent;
       color: var(--text-muted);
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      font-size: 0.75rem;
-      display: flex;
+      font-size: 0.74rem;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 三條線排序按鈕＋點擊彈出文字選單 */
+    .sort-menu-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .sort-lines-btn {
+      width: 32px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background: var(--card-soft);
+      color: var(--text);
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      flex-shrink: 0;
+      transition: all 0.15s;
     }
 
+    .sort-lines-btn:hover,
+    .sort-lines-btn.open {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.16);
+    }
+
+    .sort-dropdown-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 4px;
+      min-width: 145px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 950;
+    }
+
+    .sort-dropdown-menu.open {
+      display: flex;
+    }
+
+    .sort-menu-item {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 7px 10px;
+      border-radius: 7px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .sort-menu-item:hover {
+      background: var(--card-soft);
+      color: var(--text);
+    }
+
+    .sort-menu-item.active {
+      background: rgba(99, 102, 241, 0.16);
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    /* 搜尋群集面板 */
     .search-summary-bar {
       background: var(--card-soft);
       border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 10px 14px;
-      margin-bottom: 10px;
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.84rem;
+      font-size: 0.8rem;
       color: var(--text);
       font-weight: 700;
     }
 
     .cluster-card {
-      background: var(--card);
+      background: var(--bg);
       border: 1px solid var(--card-border);
-      border-radius: 14px;
-      margin-bottom: 10px;
+      border-radius: 12px;
+      margin-bottom: 8px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(74, 59, 50, 0.05);
     }
 
     .cluster-header {
-      padding: 14px;
+      padding: 10px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -683,7 +760,7 @@
     }
 
     .cluster-title {
-      font-size: 1.05rem;
+      font-size: 0.95rem;
       font-weight: 800;
       color: var(--text);
       display: flex;
@@ -700,19 +777,19 @@
     }
 
     .cluster-total {
-      font-size: 1.15rem;
+      font-size: 1rem;
       font-weight: 800;
       color: var(--expense);
     }
 
     .cluster-count {
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       font-weight: 700;
       color: var(--text-muted);
     }
 
     .cluster-arrow {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
       transition: transform 0.2s;
     }
@@ -724,115 +801,134 @@
     .cluster-body {
       display: none;
       border-top: 1px solid var(--card-border);
-      padding: 10px;
-      background: var(--bg);
+      padding: 6px 8px;
+      background: var(--card);
     }
 
     .cluster-body.open {
       display: block;
     }
 
-    .record-card {
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 12px 14px;
-      margin-bottom: 8px;
+    /* 3-2: 超精簡消費項目列表（圖示 + 名稱 + 月/年日期 + 符號動作 + 無負號金額） */
+    .records-list {
       display: flex;
+      flex-direction: column;
+    }
+
+    .record-row-wrap {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    .record-row-wrap:last-child {
+      border-bottom: none;
+    }
+
+    .record-slim-row {
+      display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
-      transition: transform 0.15s, border-color 0.15s;
-      box-shadow: 0 2px 6px rgba(74, 59, 50, 0.04);
+      padding: 6px 2px;
+      gap: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-radius: 8px;
     }
 
-    .record-card:active {
-      transform: scale(0.985);
-      border-color: var(--accent);
+    .record-slim-row:hover {
+      background: rgba(148, 163, 184, 0.05);
     }
 
-    .rec-left {
+    .rec-slim-left {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 9px;
       min-width: 0;
       flex: 1;
     }
 
-    /* 點擊圓形分類圖標直接換分類 */
-    .cat-icon-badge {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+    .cat-icon-sm {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.25rem;
+      font-size: 0.94rem;
       flex-shrink: 0;
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
       cursor: pointer;
-      box-shadow: 0 2px 5px rgba(74, 59, 50, 0.08);
     }
 
-    .rec-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-
-    .rec-note {
-      font-size: 0.98rem;
-      font-weight: 700;
+    .rec-note-text {
+      font-size: 0.88rem;
+      font-weight: 800;
       color: var(--text);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .rec-meta {
-      font-size: 0.74rem;
+    .rec-date-tag {
+      font-size: 0.73rem;
+      font-weight: 700;
       color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rec-slim-right {
       display: flex;
       align-items: center;
       gap: 6px;
-    }
-
-    .rec-cat-text {
-      color: var(--accent);
-      font-weight: 700;
-    }
-
-    .rec-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 5px;
       flex-shrink: 0;
-      margin-left: 8px;
     }
 
-    .rec-amount {
-      font-size: 1.15rem;
-      font-weight: 800;
+    .rec-inline-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .act-icon-xs {
+      width: 26px;
+      height: 26px;
+      border: 1px solid var(--card-border);
+      background: var(--card-soft);
+      color: var(--text-muted);
+      border-radius: 7px;
+      font-size: 0.78rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .act-icon-xs:active {
+      transform: scale(0.93);
+    }
+
+    .act-icon-xs.del:hover {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    .rec-amount-clean {
+      font-size: 0.95rem;
+      font-weight: 900;
       color: var(--text);
+      min-width: 44px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
     }
 
-    .rec-amount.income {
+    .rec-amount-clean.income {
       color: var(--income);
     }
 
-    .rec-account {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-    }
-
-    /* 快捷按鈕列：欠錢、編輯、刪除 */
-    .rec-actions {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      margin-top: 2px;
-    }
-
+    /* 保留除錯中心與展開更多使用的微按鈕 */
     .rec-btn-mini {
       background: var(--bg);
       border: 1px solid var(--card-border);
@@ -854,10 +950,6 @@
 
     .rec-btn-mini.del {
       color: #c65d47;
-    }
-
-    .rec-btn-mini.del:active {
-      background: rgba(198, 93, 71, 0.14);
     }
 
     /* 快速改分類彈出選單 (Sheet Modal) */
@@ -1348,14 +1440,16 @@
   <!-- 🚀 全螢幕流動霓虹光暈外框 (重新整理、編輯、刪除進行時轉動) -->
   <div class="screen-neon-border" id="screen-neon-border"></div>
 
-  <!-- 頂部列：左側使用者標題 ＋ 右側工具按鈕（🔄 重新整理、🩺 除錯偵測、⚙️ 頁面設定） -->
+  <!-- =========================================================
+       區塊 1：頂部列（切換是誰 / 單人名稱 ＋ 重新整理、除錯偵測、頁面設定）
+       ========================================================= -->
   <div class="top-bar">
     <div class="user-pill-group" id="user-toggle-pill-group">
       <button class="user-pill active-ding" id="pill-ding" onclick="switchUser('定成')">定成</button>
       <button class="user-pill" id="pill-yu" onclick="switchUser('妤珊')">妤珊</button>
     </div>
-    <div id="locked-user-title" style="display:none; font-size:1.1rem; font-weight:900; letter-spacing:-0.5px; align-items:center; gap:6px;">
-      <span id="locked-user-name">定成 記帳</span>
+    <div class="locked-user-title" id="locked-user-title">
+      <span id="locked-user-name">定成</span>
     </div>
     <div class="top-actions">
       <button class="icon-btn" id="btn-refresh" onclick="triggerManualRefresh()" title="重新整理最新資料"><span>🔄</span></button>
@@ -1367,44 +1461,10 @@
     </div>
   </div>
 
-  <!-- ➕ 右下角固定懸浮新增按鈕 -->
+  <!-- ➕ 右下角固定懸浮新增按鈕（僅在「天」顯示） -->
   <button type="button" class="fab-add-btn" id="fab-add-btn" onclick="openAddModal()" title="新增記帳">＋</button>
 
-  <!-- 個人每月預算進度條（位於誰的記帳與天/月/年之間，點一下可直接改預算） -->
-  <div class="monthly-budget-card" id="monthly-budget-card" onclick="openSettingsModal('budget')" title="點此設定每月預算">
-    <div class="monthly-budget-top">
-      <span class="monthly-budget-title" id="budget-bar-title">本月預算</span>
-      <span class="monthly-budget-values" id="budget-bar-status">日均 $0</span>
-    </div>
-    <div class="monthly-budget-track">
-      <div class="monthly-budget-fill" id="budget-bar-fill"></div>
-      <span class="monthly-budget-bar-text" id="budget-bar-text">點此設定預算</span>
-    </div>
-  </div>
-
-  <!-- 📅 時間維度切換：天 / 月 / 年 -->
-  <div class="time-dimension-bar">
-    <button class="dim-btn active" id="btn-dim-day" onclick="switchDimension('day')">天</button>
-    <button class="dim-btn" id="btn-dim-month" onclick="switchDimension('month')">月</button>
-    <button class="dim-btn" id="btn-dim-year" onclick="switchDimension('year')">年</button>
-  </div>
-
-  <!-- ◀ 導航列：切換上一期 / 下一期 ＋ 下拉跳轉 -->
-  <div class="nav-bar">
-    <button class="nav-arrow" onclick="navigateStep(-1)" title="上一期">◀</button>
-    <div class="nav-select-wrapper">
-      <div class="nav-title">
-        <span id="nav-label">2026/11/05 (今天)</span>
-        <span class="nav-caret">▼</span>
-      </div>
-      <select id="time-dropdown" onchange="onTimeDropdownChange(this.value)">
-        <!-- 自動填入天/月/年清單 -->
-      </select>
-    </div>
-    <button class="nav-arrow" onclick="navigateStep(1)" title="下一期">▶</button>
-  </div>
-
-  <!-- ⚠️ 頂部常駐錯誤/重複警告橫幅 (點選直接彈窗修復，直到修正完畢才會消失) -->
+  <!-- ⚠️ 頂部常駐錯誤/重複警告橫幅 (點選直接彈窗修復，查看後即消失) -->
   <div class="alert-banner" id="main-alert-banner" onclick="openAuditCenter()">
     <div class="alert-banner-inner">
       <div class="alert-banner-text" id="alert-banner-message">⚠️ 偵測到重複或錯誤資料！</div>
@@ -1412,43 +1472,96 @@
     </div>
   </div>
 
-  <!-- 當期總額看板 -->
-  <div class="hero-stat">
-    <div class="hero-main">
-      <span class="hero-label" id="hero-title">今日支出</span>
-      <span class="hero-amount" id="hero-expense">$0</span>
+  <!-- =========================================================
+       區塊 2：核心總覽卡片（預算 ＋ 日期&天月年 ＋ 今日支出 ＋ 分類比例）
+       ========================================================= -->
+  <div class="block-2-overview-card">
+    <!-- 2-1. 個人每月預算進度條（點一下可直接改預算） -->
+    <div class="budget-compact-row" id="monthly-budget-card" onclick="openSettingsModal('budget')" title="點此設定每月預算">
+      <div class="budget-compact-header">
+        <span id="budget-bar-title">本月預算</span>
+        <span id="budget-bar-status">日均 $0</span>
+      </div>
+      <div class="budget-compact-track">
+        <div class="budget-compact-fill" id="budget-bar-fill"></div>
+        <div class="budget-compact-text" id="budget-bar-text">點此設定預算</div>
+      </div>
     </div>
-    <div class="hero-sub">
-      <div class="hero-income" id="hero-income">+$0</div>
-      <div class="hero-count" id="hero-count">0 筆紀錄</div>
+
+    <!-- 2-2. 日期調整 ＋ 天/月/年 濃縮在同一排 -->
+    <div class="date-and-dim-row">
+      <div class="date-nav-left">
+        <button class="nav-arrow-sm" onclick="navigateStep(-1)" title="上一期">◀</button>
+        <div class="nav-select-box">
+          <span class="nav-date-text">
+            <span id="nav-label">2026/11/08 (今天)</span>
+            <span style="font-size:0.68rem; color:var(--text-muted);">▼</span>
+          </span>
+          <select id="time-dropdown" onchange="onTimeDropdownChange(this.value)"></select>
+        </div>
+        <button class="nav-arrow-sm" onclick="navigateStep(1)" title="下一期">▶</button>
+      </div>
+
+      <div class="dim-segmented-mini">
+        <button class="dim-mini-btn active" id="btn-dim-day" onclick="switchDimension('day')">天</button>
+        <button class="dim-mini-btn" id="btn-dim-month" onclick="switchDimension('month')">月</button>
+        <button class="dim-mini-btn" id="btn-dim-year" onclick="switchDimension('year')">年</button>
+      </div>
+    </div>
+
+    <!-- 2-3. 當期支出精簡橫列（不顯示收入與筆數） -->
+    <div class="expense-summary-row">
+      <span class="expense-label" id="hero-title">今日支出</span>
+      <span class="expense-amount" id="hero-expense">$0</span>
+    </div>
+
+    <!-- 2-4. 支出分類佔比條與無圖示標籤 -->
+    <div class="chart-compact-box" id="chart-section">
+      <div class="chart-bar" id="chart-bar"></div>
+      <div class="cat-chips" id="cat-chips"></div>
     </div>
   </div>
 
-  <!-- 支出分類佔比條與圖例 -->
-  <div class="chart-box" id="chart-section">
-    <div class="chart-bar" id="chart-bar"></div>
-    <div class="cat-chips" id="cat-chips"></div>
-  </div>
-
-  <!-- 明細列表與搜尋框（位於分類佔比與消費細項正下方） -->
-  <div class="list-header">
-    <div class="list-header-left">
-      <span class="list-title" id="list-title-text">消費細項</span>
+  <!-- =========================================================
+       區塊 3：細項區（單行搜尋＋三條線排序選單 ＋ 極簡項目列表）
+       ========================================================= -->
+  <div class="block-3-records-section">
+    <div class="toolbar-single-line">
       <button type="button" class="active-cat-filter-badge" id="active-cat-filter-badge" onclick="clearCategoryFilter()" title="點此取消類別篩選，顯示全部"></button>
+
+      <div class="search-inline-box">
+        <span class="search-inline-icon">🔍</span>
+        <input type="text" id="search-input" class="search-inline-input" placeholder="" oninput="onSearchInput(this.value)">
+        <button type="button" id="search-clear-btn" class="search-inline-clear" style="display:none;" onclick="clearSearchInput()" title="清除搜尋">✕</button>
+      </div>
+
+      <div class="sort-menu-wrap" id="sort-menu-wrap">
+        <button type="button" class="sort-lines-btn" id="btn-sort-lines" onclick="toggleSortMenu(event)" title="排序方式">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <line x1="4" y1="6" x2="20" y2="6"></line>
+            <line x1="4" y1="12" x2="15" y2="12"></line>
+            <line x1="4" y1="18" x2="10" y2="18"></line>
+          </svg>
+        </button>
+        <div class="sort-dropdown-menu" id="sort-dropdown-menu">
+          <button type="button" class="sort-menu-item active" id="sort-opt-time_desc" onclick="selectSortOption('time_desc')">
+            <span>時間：近 ➔ 遠</span><span class="sort-check">✓</span>
+          </button>
+          <button type="button" class="sort-menu-item" id="sort-opt-time_asc" onclick="selectSortOption('time_asc')">
+            <span>時間：遠 ➔ 近</span><span class="sort-check"></span>
+          </button>
+          <button type="button" class="sort-menu-item" id="sort-opt-amount_desc" onclick="selectSortOption('amount_desc')">
+            <span>金額：高 ➔ 低</span><span class="sort-check"></span>
+          </button>
+          <button type="button" class="sort-menu-item" id="sort-opt-amount_asc" onclick="selectSortOption('amount_asc')">
+            <span>金額：低 ➔ 高</span><span class="sort-check"></span>
+          </button>
+        </div>
+      </div>
     </div>
-    <select id="sort-order-select" class="sort-select" onchange="onSortOrderChange(this.value)" title="切換消費細項排序方式">
-      <option value="time_desc">時間：近 ➔ 遠</option>
-      <option value="time_asc">時間：遠 ➔ 近</option>
-      <option value="amount_desc">金額：高 ➔ 低</option>
-      <option value="amount_asc">金額：低 ➔ 高</option>
-    </select>
+
+    <div class="records-list" id="records-container"></div>
   </div>
-  <div class="search-box-wrap">
-    <span class="search-icon">🔍</span>
-    <input type="text" id="search-input" class="search-input" placeholder="搜尋品項" oninput="onSearchInput(this.value)">
-    <button type="button" id="search-clear-btn" class="search-clear-btn" style="display:none;" onclick="clearSearchInput()" title="清除搜尋">✕</button>
-  </div>
-  <div id="records-container"></div>
 
   <!-- 快速點選切換分類 Sheet Modal -->
   <div class="category-picker-overlay" id="category-sheet-overlay" onclick="closeCategorySheet(event)">
@@ -1799,12 +1912,12 @@
       } catch (e) {}
       applyUserTheme(currentUser);
 
-      // 若為專人網址，隱藏切換分頁，顯示個人標題
+      // 若為專人網址，隱藏切換分頁，顯示個人標題（純文字名字，不放表情符號）
       if (isLockedUser) {
         document.getElementById("user-toggle-pill-group").style.display = "none";
         const titleBox = document.getElementById("locked-user-title");
         titleBox.style.display = "flex";
-        document.getElementById("locked-user-name").innerText = `${currentUser} 記帳`;
+        document.getElementById("locked-user-name").innerText = currentUser;
       } else {
         switchUser(currentUser);
       }
@@ -1927,9 +2040,9 @@
 
     function switchDimension(dim) {
       currentDimension = dim;
-      document.getElementById("btn-dim-day").className = "dim-btn" + (dim === "day" ? " active" : "");
-      document.getElementById("btn-dim-month").className = "dim-btn" + (dim === "month" ? " active" : "");
-      document.getElementById("btn-dim-year").className = "dim-btn" + (dim === "year" ? " active" : "");
+      document.getElementById("btn-dim-day").className = "dim-mini-btn" + (dim === "day" ? " active" : "");
+      document.getElementById("btn-dim-month").className = "dim-mini-btn" + (dim === "month" ? " active" : "");
+      document.getElementById("btn-dim-year").className = "dim-mini-btn" + (dim === "year" ? " active" : "");
 
       // 智慧轉換時間 Key
       const now = new Date();
@@ -2001,8 +2114,6 @@
       };
       document.getElementById("hero-title").innerText = dimLabelMap[currentDimension] || "當期支出";
       document.getElementById("hero-expense").innerText = "$" + Math.round(totalExpense).toLocaleString();
-      document.getElementById("hero-income").innerText = "+$" + Math.round(totalIncome).toLocaleString();
-      document.getElementById("hero-count").innerText = `${filtered.length} 筆紀錄`;
       renderMonthlyBudgetBar();
 
       // 4. 更新分類長條圖與圖例
@@ -2095,7 +2206,7 @@
         chartSec.style.display = "none";
         return;
       }
-      chartSec.style.display = "block";
+      chartSec.style.display = "flex";
 
       // 若目前選取的篩選類別在此期間完全沒有紀錄，自動解除篩選避免空畫面困惑
       if (selectedCategoryFilter && !catSums[selectedCategoryFilter]) {
@@ -2151,12 +2262,58 @@
       refreshView();
     }
 
-    // 切換消費細項排序順序（時間近->遠 / 遠->近 / 金額高->低 / 低->高）
-    function onSortOrderChange(orderVal) {
+    // 三條線排序選單開關與選擇處理
+    function toggleSortMenu(e) {
+      if (e) e.stopPropagation();
+      const menu = document.getElementById("sort-dropdown-menu");
+      const btn = document.getElementById("btn-sort-lines");
+      if (!menu || !btn) return;
+      const isOpen = menu.classList.contains("open");
+      if (isOpen) {
+        menu.classList.remove("open");
+        btn.classList.remove("open");
+      } else {
+        menu.classList.add("open");
+        btn.classList.add("open");
+      }
+    }
+
+    function selectSortOption(orderVal) {
       currentSortOrder = orderVal || "time_desc";
+      const allOpts = ["time_desc", "time_asc", "amount_desc", "amount_asc"];
+      allOpts.forEach(opt => {
+        const el = document.getElementById("sort-opt-" + opt);
+        if (!el) return;
+        const chk = el.querySelector(".sort-check");
+        if (opt === currentSortOrder) {
+          el.classList.add("active");
+          if (chk) chk.innerText = "✓";
+        } else {
+          el.classList.remove("active");
+          if (chk) chk.innerText = "";
+        }
+      });
+      const menu = document.getElementById("sort-dropdown-menu");
+      const btn = document.getElementById("btn-sort-lines");
+      if (menu) menu.classList.remove("open");
+      if (btn) btn.classList.remove("open");
       listRenderLimit = 150;
       refreshView();
     }
+
+    function onSortOrderChange(orderVal) {
+      selectSortOption(orderVal);
+    }
+
+    document.addEventListener("click", function(e) {
+      const wrap = document.getElementById("sort-menu-wrap");
+      if (wrap && !wrap.contains(e.target)) {
+        const menu = document.getElementById("sort-dropdown-menu");
+        const btn = document.getElementById("btn-sort-lines");
+        if (menu) menu.classList.remove("open");
+        if (btn) btn.classList.remove("open");
+      }
+    });
 
     function sortRecordsArray(list) {
       const arr = list.slice();
@@ -2229,40 +2386,46 @@
       refreshView();
     }
 
-    function renderSingleRecordCardHtml(r, poolIdx, showFullDate) {
+    function renderSingleRecordCardHtml(r, poolIdx, forceShowDate) {
       const meta = CATEGORY_META[r.Category] || { icon: "📦", color: "#64748b" };
       const isInc = r.Category === "收入";
-      const amtStr = (isInc ? "+" : "-") + "$" + Number(r.Amount).toLocaleString();
-      const amtClass = isInc ? "rec-amount income" : "rec-amount";
-      const rawTime = String(r["Recorded At"] || "");
-      const timeSub = showFullDate ? rawTime : rawTime.slice(5);
+      const amtStr = (isInc ? "+" : "") + "$" + Number(r.Amount).toLocaleString();
+      const amtClass = isInc ? "rec-amount-clean income" : "rec-amount-clean";
+
+      // 當調成「月」或「年」（或跨日搜尋）時，在品項旁顯示日期（天模式不顯示）
+      let dateBadgeHtml = "";
+      if (currentDimension === "month" || currentDimension === "year" || forceShowDate) {
+        const fullDate = String(r["Recorded At"] || "").split(" ")[0]; // YYYY/MM/DD
+        const shortDate = ((currentDimension === "year" && currentTimeKey === "ALL") || forceShowDate)
+          ? fullDate
+          : (fullDate.length >= 10 ? fullDate.slice(5) : fullDate); // MM/DD
+        if (shortDate) {
+          dateBadgeHtml = `<span class="rec-date-tag">${escapeHtml(shortDate)}</span>`;
+        }
+      }
+
       const debtBtnHtml = !isInc
-        ? `<button type="button" class="rec-btn-mini" onclick="event.stopPropagation(); openDebtSplitModal(${poolIdx})">💸 欠錢</button>`
+        ? `<button type="button" class="act-icon-xs" title="欠錢" onclick="event.stopPropagation(); openDebtSplitModal(${poolIdx})">💸</button>`
         : "";
 
       return `
-        <div class="record-card">
-          <div class="rec-left" onclick="openEditModal(${poolIdx})">
-            <div class="cat-icon-badge" style="background:${meta.color}; color:#ffffff; text-shadow:0 1px 2px rgba(0,0,0,0.28);" 
-                 onclick="openCategorySheet(event, ${poolIdx})" title="點一下直接換分類">
-              ${meta.icon}
-            </div>
-            <div class="rec-info">
-              <div class="rec-note">${escapeHtml(r.note || r.Category)}</div>
-              <div class="rec-meta">
-                <span class="rec-cat-text" style="color:${meta.color};">${escapeHtml(r.Category)}</span>
-                <span>•</span>
-                <span>${escapeHtml(timeSub)}</span>
+        <div class="record-row-wrap">
+          <div class="record-slim-row" onclick="openEditModal(${poolIdx})">
+            <div class="rec-slim-left">
+              <div class="cat-icon-sm" style="background:${meta.color};"
+                   onclick="openCategorySheet(event, ${poolIdx})" title="點一下直接換分類">
+                ${meta.icon}
               </div>
+              <span class="rec-note-text">${escapeHtml(r.note || r.Category)}</span>
+              ${dateBadgeHtml}
             </div>
-          </div>
-          <div class="rec-right">
-            <div class="${amtClass}">${amtStr}</div>
-            <div class="rec-account">${escapeHtml(r.Account || "現金")}</div>
-            <div class="rec-actions">
-              ${debtBtnHtml}
-              <button type="button" class="rec-btn-mini" onclick="event.stopPropagation(); openEditModal(${poolIdx})">✏️ 編輯</button>
-              <button type="button" class="rec-btn-mini del" onclick="event.stopPropagation(); quickDeleteRecord(${poolIdx})">🗑️ 刪除</button>
+            <div class="rec-slim-right">
+              <div class="rec-inline-actions" onclick="event.stopPropagation()">
+                ${debtBtnHtml}
+                <button type="button" class="act-icon-xs" title="編輯" onclick="event.stopPropagation(); openEditModal(${poolIdx})">✏️</button>
+                <button type="button" class="act-icon-xs del" title="刪除" onclick="event.stopPropagation(); quickDeleteRecord(${poolIdx})">🗑️</button>
+              </div>
+              <div class="${amtClass}">${amtStr}</div>
             </div>
           </div>
         </div>
@@ -2272,29 +2435,24 @@
     // 渲染細項列表（支援分類點選篩選、4 種排序方式、以及搜尋雙群集模式）
     function renderRecordsList(records) {
       const container = document.getElementById("records-container");
-      const titleEl = document.getElementById("list-title-text");
       const badgeEl = document.getElementById("active-cat-filter-badge");
 
       if (searchQuery.length > 0) {
-        if (titleEl) titleEl.innerText = `消費細項 — 搜尋「${searchQuery}」`;
         if (badgeEl) badgeEl.style.display = "none";
         renderSearchClusterView(container, searchQuery);
         return;
       }
-
-      if (titleEl) titleEl.innerText = "消費細項";
 
       // 1. 若有點選上方某個分類百分比（例如「食物」或「消費」），只篩選該分類的紀錄
       let displayList = records;
       if (selectedCategoryFilter) {
         displayList = records.filter(r => (r.Category || "其他") === selectedCategoryFilter);
         const meta = CATEGORY_META[selectedCategoryFilter] || { icon: "📦", color: "#64748b" };
-        const catSum = displayList.reduce((acc, r) => acc + (Number(r.Amount) || 0), 0);
         if (badgeEl) {
           badgeEl.style.display = "inline-flex";
           badgeEl.style.borderColor = meta.color;
           badgeEl.style.background = `${meta.color}24`;
-          badgeEl.innerHTML = `<span>${escapeHtml(selectedCategoryFilter)} (${displayList.length}筆 · $${Math.round(catSum).toLocaleString()})</span><span style="margin-left:3px; opacity:0.8;">✕</span>`;
+          badgeEl.innerHTML = `<span>${escapeHtml(selectedCategoryFilter)} ✕</span>`;
         }
       } else if (badgeEl) {
         badgeEl.style.display = "none";
@@ -2310,11 +2468,10 @@
       }
 
       // 3. 若在「年」或「月」模式下筆數較多，先渲染前 listRenderLimit 筆以保持極速流暢，並提供展開按鈕
-      const showFullDate = (currentDimension === "year");
       const visibleList = sortedList.slice(0, listRenderLimit);
       renderedRecordsPool = visibleList.slice();
 
-      let cardsHtml = visibleList.map((r, idx) => renderSingleRecordCardHtml(r, idx, showFullDate)).join("");
+      let cardsHtml = visibleList.map((r, idx) => renderSingleRecordCardHtml(r, idx, false)).join("");
 
       if (sortedList.length > listRenderLimit) {
         const remain = sortedList.length - listRenderLimit;
