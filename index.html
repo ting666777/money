@@ -444,6 +444,13 @@
       flex: 1;
       text-align: center;
       cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 7px;
+      transition: background 0.15s ease;
+    }
+
+    .nav-select-box:active {
+      background: rgba(128, 128, 128, 0.14);
     }
 
     .nav-date-text {
@@ -452,17 +459,227 @@
       color: var(--text);
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       white-space: nowrap;
     }
 
-    .nav-select-box select {
-      position: absolute;
+    /* 📅 彈出式行事曆月曆選擇器 (Calendar Picker Modal) */
+    .calendar-picker-overlay {
+      position: fixed;
       inset: 0;
-      opacity: 0;
-      cursor: pointer;
+      background: rgba(15, 23, 42, 0.48);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1050;
+    }
+
+    .calendar-picker-overlay.open {
+      display: flex;
+    }
+
+    .calendar-modal-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
       width: 100%;
-      height: 100%;
+      max-width: 340px;
+      padding: 16px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+      animation: calPopIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes calPopIn {
+      from {
+        opacity: 0;
+        transform: scale(0.94) translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .cal-nav-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      border: 1px solid var(--card-border);
+      background: var(--card-soft);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .cal-nav-btn:active {
+      transform: scale(0.92);
+    }
+
+    .cal-header-title {
+      font-size: 0.96rem;
+      font-weight: 900;
+      color: var(--text);
+      padding: 5px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s;
+    }
+
+    .cal-header-title:hover {
+      background: var(--card-soft);
+    }
+
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .cal-weekday {
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      padding: 4px 0;
+    }
+
+    .cal-days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .cal-day-cell {
+      position: relative;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 800;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.14s ease;
+      font-variant-numeric: tabular-nums;
+      padding: 0;
+    }
+
+    .cal-day-cell:hover {
+      background: var(--card-soft);
+    }
+
+    .cal-day-cell:active {
+      transform: scale(0.92);
+    }
+
+    .cal-day-cell.other-month {
+      color: var(--text-muted);
+      opacity: 0.35;
+    }
+
+    .cal-day-cell.is-today {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .cal-day-cell.selected {
+      background: var(--accent) !important;
+      color: #ffffff !important;
+      border-color: var(--accent) !important;
+      box-shadow: 0 3px 10px rgba(99, 102, 241, 0.35);
+    }
+
+    .cal-has-rec-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--expense);
+      margin-top: 2px;
+    }
+
+    .cal-day-cell.selected .cal-has-rec-dot {
+      background: #ffffff;
+    }
+
+    .cal-months-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 4px 0;
+    }
+
+    .cal-month-cell {
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      background: var(--card-soft);
+      color: var(--text);
+      font-size: 0.86rem;
+      font-weight: 800;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .cal-month-cell:active {
+      transform: scale(0.95);
+    }
+
+    .cal-month-cell.selected {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .cal-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .cal-footer-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 9px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1px solid var(--card-border);
+      background: var(--card-soft);
+      color: var(--text);
+      text-align: center;
+    }
+
+    .cal-footer-btn.primary {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--accent);
+      color: var(--text);
     }
 
     .dim-segmented-mini {
@@ -1480,6 +1697,412 @@
       border-radius: 50%;
       border: 1px solid rgba(128, 128, 128, 0.35);
     }
+
+    /* =========================================================
+       📊 週報 / 月報消費對比分析 Modal 樣式
+       ========================================================= */
+    .report-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.68);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1500;
+      padding: 12px;
+    }
+
+    .report-modal-overlay.open {
+      display: flex;
+    }
+
+    .report-modal-box {
+      width: 100%;
+      max-width: 450px;
+      max-height: 88vh;
+      overflow-y: auto;
+      background: var(--card);
+      border: 1.5px solid var(--card-border);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.48);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .report-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .report-title-grp {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: 900;
+    }
+
+    .report-seg-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      border-radius: 11px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .report-seg-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+      padding: 7px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .report-seg-btn.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+
+    .report-period-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      gap: 6px;
+    }
+
+    .rep-hero-card {
+      background: var(--card-soft);
+      border: 1.5px solid var(--card-border);
+      border-radius: 15px;
+      padding: 13px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .rep-hero-top {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .rep-hero-label {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .rep-hero-amt {
+      font-size: 1.7rem;
+      font-weight: 900;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rep-delta-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .rep-delta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .rep-delta-pill.up {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+
+    .rep-delta-pill.down {
+      background: rgba(34, 197, 94, 0.15);
+      color: #16a34a;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+    }
+
+    body[data-theme="dark"] .rep-delta-pill.up,
+    body[data-theme="cyberpunk"] .rep-delta-pill.up {
+      color: #f87171;
+    }
+
+    body[data-theme="dark"] .rep-delta-pill.down,
+    body[data-theme="cyberpunk"] .rep-delta-pill.down {
+      color: #4ade80;
+    }
+
+    .rep-sub-compare {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .rep-insight-banner {
+      background: var(--bg);
+      border-left: 3.5px solid var(--accent);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .rep-section-card {
+      background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .rep-sec-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .rep-sec-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .rep-bar-chart {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 108px;
+      padding-top: 18px;
+      gap: 6px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .rep-bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+
+    .rep-bar-val {
+      font-size: 0.64rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .rep-bar-fill {
+      width: 100%;
+      max-width: 26px;
+      border-radius: 6px 6px 2px 2px;
+      background: var(--accent);
+      opacity: 0.75;
+      transition: height 0.25s ease;
+      min-height: 4px;
+    }
+
+    .rep-bar-fill.peak {
+      background: #f97316;
+      opacity: 1;
+      box-shadow: 0 0 10px rgba(249, 115, 22, 0.38);
+    }
+
+    .rep-bar-fill.zero {
+      background: rgba(148, 163, 184, 0.22);
+      height: 4px !important;
+    }
+
+    .rep-bar-lbl {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      padding-top: 4px;
+    }
+
+    .rep-cat-delta-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .rep-cat-delta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .rep-cat-delta-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 800;
+    }
+
+    .rep-cat-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rep-cat-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rep-diff-tag {
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 6px;
+      min-width: 68px;
+      text-align: right;
+    }
+
+    .rep-diff-tag.more {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.13);
+    }
+
+    .rep-diff-tag.less {
+      color: #16a34a;
+      background: rgba(34, 197, 94, 0.13);
+    }
+
+    body[data-theme="dark"] .rep-diff-tag.more,
+    body[data-theme="cyberpunk"] .rep-diff-tag.more {
+      color: #f87171;
+    }
+
+    body[data-theme="dark"] .rep-diff-tag.less,
+    body[data-theme="cyberpunk"] .rep-diff-tag.less {
+      color: #4ade80;
+    }
+
+    .rep-diff-tag.same {
+      color: var(--text-muted);
+      background: rgba(148, 163, 184, 0.12);
+    }
+
+    .rep-dual-bar-track {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .rep-bar-curr {
+      height: 6px;
+      border-radius: 4px;
+    }
+
+    .rep-bar-prev {
+      height: 4px;
+      border-radius: 4px;
+      background: rgba(148, 163, 184, 0.35);
+    }
+
+    .rep-highlights-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .rep-mini-stat-box {
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: 11px;
+      padding: 9px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .rep-mini-stat-lbl {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .rep-mini-stat-val {
+      font-size: 0.86rem;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .rep-top-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .rep-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: 9px;
+      padding: 7px 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      gap: 8px;
+    }
+
+    .rep-rank-badge {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: rgba(99, 102, 241, 0.18);
+      color: var(--accent);
+      font-size: 0.72rem;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body data-theme="dark">
@@ -1487,7 +2110,7 @@
   <div class="screen-neon-border" id="screen-neon-border"></div>
 
   <!-- =========================================================
-       區塊 1：頂部列（切換是誰 / 單人名稱 ＋ 重新整理、除錯偵測、頁面設定）
+       區塊 1：頂部列（切換是誰 / 單人名稱 ＋ 財報分析、重新整理、除錯偵測、頁面設定）
        ========================================================= -->
   <div class="top-bar">
     <div class="user-pill-group" id="user-toggle-pill-group">
@@ -1498,6 +2121,13 @@
       <span id="locked-user-name">定成</span>
     </div>
     <div class="top-actions">
+      <button class="icon-btn" onclick="openReportModal('weekly')" title="週報 / 月報消費比較分析">
+        <svg viewBox="0 0 24 24">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+      </button>
       <button class="icon-btn" id="btn-refresh" onclick="triggerManualRefresh()" title="重新整理最新資料">
         <span>
           <svg viewBox="0 0 24 24">
@@ -1557,12 +2187,12 @@
           <button class="nav-arrow-sm" onclick="navigateStep(-1)" title="上一期">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
-          <div class="nav-select-box">
+          <div class="nav-select-box" onclick="openCalendarPicker(event)" title="點此打開行事曆選擇日期">
             <span class="nav-date-text">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.75;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               <span id="nav-label">2026/11/08 (今天)</span>
               <span style="font-size:0.68rem; color:var(--text-muted);">▼</span>
             </span>
-            <select id="time-dropdown" onchange="onTimeDropdownChange(this.value)"></select>
           </div>
           <button class="nav-arrow-sm" onclick="navigateStep(1)" title="下一期">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -1633,6 +2263,52 @@
       </div>
 
       <div class="records-list" id="records-container"></div>
+    </div>
+  </div>
+
+  <!-- 📅 彈出式行事曆月曆選擇器 Modal -->
+  <div class="calendar-picker-overlay" id="calendar-picker-overlay" onclick="closeCalendarPicker(event)">
+    <div class="calendar-modal-card" onclick="event.stopPropagation()">
+      <div class="cal-header">
+        <button type="button" class="cal-nav-btn" id="cal-prev-btn" onclick="calStepHeader(-1)" title="上一頁">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <div class="cal-header-title" id="cal-header-title" onclick="toggleCalHeaderView()" title="點擊快速切換月份/年份">
+          2026年 11月
+        </div>
+        <button type="button" class="cal-nav-btn" id="cal-next-btn" onclick="calStepHeader(1)" title="下一頁">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+      <div id="cal-body-container"></div>
+      <div class="cal-footer">
+        <button type="button" class="cal-footer-btn primary" id="cal-today-btn" onclick="jumpCalendarToToday()">回到今天</button>
+        <button type="button" class="cal-footer-btn" onclick="closeCalendarPicker()">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📊 週報 / 月報消費對比分析 Modal（點選右上角柱狀圖按鈕開啟） -->
+  <div class="report-modal-overlay" id="report-modal-overlay" onclick="if(event.target===this) closeReportModal()">
+    <div class="report-modal-box" onclick="event.stopPropagation()">
+      <div class="report-header-row">
+        <div class="report-title-grp">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span id="rep-modal-user-title">定成・消費回顧與對比</span>
+        </div>
+        <button type="button" class="icon-btn" style="width:30px;height:30px;" onclick="closeReportModal()">✕</button>
+      </div>
+
+      <div class="report-seg-tabs">
+        <button type="button" class="report-seg-btn active" id="rep-tab-weekly" onclick="switchReportTab('weekly')">📅 週報比較</button>
+        <button type="button" class="report-seg-btn" id="rep-tab-monthly" onclick="switchReportTab('monthly')">🗓️ 月報結算</button>
+      </div>
+
+      <div id="report-modal-body" style="display:flex; flex-direction:column; gap:12px;"></div>
     </div>
   </div>
 
@@ -2199,6 +2875,12 @@
 
       // 5. 更新細項列表
       renderRecordsList(filtered);
+
+      // 6. 若週報/月報彈窗正在開啟中，同步即時更新圖表
+      const repOverlay = document.getElementById("report-modal-overlay");
+      if (repOverlay && repOverlay.classList.contains("open")) {
+        renderReportModal();
+      }
     }
 
     // 渲染個人每月預算進度條（位於誰的記帳與天/月/年之間）
@@ -2211,6 +2893,7 @@
       const parts = targetMonth.split("/");
       const yearNum = parseInt(parts[0], 10) || new Date().getFullYear();
       const monthNum = parseInt(parts[1], 10) || (new Date().getMonth() + 1);
+      const totalDaysInMonth = new Date(yearNum, monthNum, 0).getDate() || 30;
 
       let monthExpense = 0;
       const hasCachedMonth = (monthlyExpensesMap && monthlyExpensesMap[currentUser] && monthlyExpensesMap[currentUser][targetMonth] !== undefined);
@@ -2231,10 +2914,11 @@
 
       // 計算當月平均日花費：若是當月則除以今天幾號；若是過去月份則除以該月總天數
       let elapsedDays = 1;
+      const todayDay = Math.max(1, parseInt(todayStr.slice(8, 10), 10) || new Date().getDate());
       if (targetMonth === currentRealMonth) {
-        elapsedDays = Math.max(1, parseInt(todayStr.slice(8, 10), 10) || new Date().getDate());
+        elapsedDays = todayDay;
       } else {
-        elapsedDays = new Date(yearNum, monthNum, 0).getDate() || 30;
+        elapsedDays = totalDaysInMonth;
       }
       const dailyAvg = Math.round(monthExpense / elapsedDays);
 
@@ -2248,14 +2932,34 @@
       if (!titleEl || !statusEl || !fillEl || !barTextEl) return;
 
       titleEl.innerText = `${monthNum}月預算`;
-      statusEl.innerText = `日均 $${dailyAvg.toLocaleString()}`;
       statusEl.style.color = "var(--muted)";
 
       if (budget <= 0) {
+        statusEl.innerText = `日均 $${dailyAvg.toLocaleString()}`;
         barTextEl.innerText = "點此設定預算";
         fillEl.style.width = "0%";
         fillEl.style.background = "var(--accent)";
         return;
+      }
+
+      // 有設定預算時：計算「今日還剩多少錢可花」= (預算 - 到目前花費) ÷ 本月剩餘天數（含今日）
+      const remainBudget = budget - monthExpense;
+      if (targetMonth === currentRealMonth) {
+        const remainingDays = Math.max(1, totalDaysInMonth - todayDay + 1);
+        const dailyCanSpend = Math.floor(remainBudget / remainingDays);
+        if (remainBudget >= 0) {
+          statusEl.innerText = `今日還剩 $${dailyCanSpend.toLocaleString()} 可花`;
+        } else {
+          statusEl.innerText = `今日還剩 $0 可花 (超支 $${Math.abs(remainBudget).toLocaleString()})`;
+          statusEl.style.color = "#ef4444";
+        }
+      } else {
+        if (remainBudget >= 0) {
+          statusEl.innerText = `結餘 $${remainBudget.toLocaleString()} (日均 $${dailyAvg.toLocaleString()})`;
+        } else {
+          statusEl.innerText = `超支 $${Math.abs(remainBudget).toLocaleString()} (日均 $${dailyAvg.toLocaleString()})`;
+          statusEl.style.color = "#ef4444";
+        }
       }
 
       const pctRaw = (monthExpense / budget) * 100;
@@ -2701,46 +3405,291 @@
       container.innerHTML = html;
     }
 
-    // 更新時間導航標籤與下拉選單
+    // 更新時間導航標籤
     function updateTimeDropdownAndNav() {
-      const select = document.getElementById("time-dropdown");
       const label = document.getElementById("nav-label");
-
-      // 收集該維度下所有存在過的時間選項
-      const keySet = new Set();
-      if (currentTimeKey && currentTimeKey !== "ALL") {
-        keySet.add(currentTimeKey);
-      } else if (currentDimension === "year") {
-        keySet.add(String(new Date().getFullYear()));
-      }
-
-      allRecords.forEach(r => {
-        if (r.user !== currentUser) return;
-        const recDate = String(r["Recorded At"] || "");
-        if (currentDimension === "day" && recDate.length >= 10) {
-          keySet.add(recDate.slice(0, 10));
-        } else if (currentDimension === "month" && recDate.length >= 7) {
-          keySet.add(recDate.slice(0, 7));
-        } else if (currentDimension === "year" && recDate.length >= 4) {
-          keySet.add(recDate.slice(0, 4));
-        }
-      });
-
-      const sorted = Array.from(keySet).sort().reverse();
-      // 若在「年」模式，在下拉選單最底下加上 ALL（顯示從有記帳以來到現在的全部紀錄）
-      if (currentDimension === "year") {
-        sorted.push("ALL");
-      }
-
-      select.innerHTML = sorted.map(k => `<option value="${k}" ${k === currentTimeKey ? "selected" : ""}>${k}</option>`).join("");
-
-      // 友善文字：若是今天，標註 (今天)
       const todayStr = getTodayString();
       let displayLabel = currentTimeKey;
       if (currentDimension === "day" && currentTimeKey === todayStr) {
         displayLabel += " (今天)";
+      } else if (currentDimension === "year" && currentTimeKey === "ALL") {
+        displayLabel = "全部年份 (ALL)";
       }
-      label.innerText = displayLabel;
+      if (label) label.innerText = displayLabel;
+
+      const calOverlay = document.getElementById("calendar-picker-overlay");
+      if (calOverlay && calOverlay.classList.contains("open")) {
+        renderCalendarPicker();
+      }
+    }
+
+    // =====================================================
+    // 📅 彈出式行事曆月曆選擇器 (支援 天月曆 / 月份宮格 / 年份宮格)
+    // =====================================================
+    let calViewYear = new Date().getFullYear();
+    let calViewMonth = new Date().getMonth() + 1; // 1 ~ 12
+    let calSubMode = "day"; // 'day' | 'month' | 'year'
+
+    function openCalendarPicker(e) {
+      if (e) e.stopPropagation();
+      const now = new Date();
+      const parts = String(currentTimeKey || "").split("/").map(Number);
+
+      if (currentDimension === "day") {
+        calViewYear = parts[0] || now.getFullYear();
+        calViewMonth = parts[1] || (now.getMonth() + 1);
+        calSubMode = "day";
+        if (!isMonthHistoryLoaded) {
+          loadMonthHistoryFromServer();
+        }
+      } else if (currentDimension === "month") {
+        calViewYear = parts[0] || now.getFullYear();
+        calViewMonth = parts[1] || (now.getMonth() + 1);
+        calSubMode = "month";
+        if (!isMonthHistoryLoaded) {
+          loadMonthHistoryFromServer();
+        }
+      } else {
+        calViewYear = (currentTimeKey !== "ALL" && parts[0]) ? parts[0] : now.getFullYear();
+        calSubMode = "year";
+        if (!isFullHistoryLoaded) {
+          loadFullHistoryFromServer();
+        }
+      }
+
+      const todayBtn = document.getElementById("cal-today-btn");
+      if (todayBtn) {
+        todayBtn.innerText = currentDimension === "day" ? "回到今天" : (currentDimension === "month" ? "回到本月" : "回到今年");
+      }
+
+      renderCalendarPicker();
+      document.getElementById("calendar-picker-overlay").classList.add("open");
+    }
+
+    function closeCalendarPicker(e) {
+      document.getElementById("calendar-picker-overlay").classList.remove("open");
+    }
+
+    function toggleCalHeaderView() {
+      if (calSubMode === "day") {
+        calSubMode = "month";
+      } else if (calSubMode === "month") {
+        calSubMode = "year";
+      } else if (currentDimension === "day") {
+        calSubMode = "day";
+      } else if (currentDimension === "month") {
+        calSubMode = "month";
+      }
+      renderCalendarPicker();
+    }
+
+    function calStepHeader(dir) {
+      if (calSubMode === "day") {
+        calViewMonth += dir;
+        if (calViewMonth > 12) {
+          calViewMonth = 1;
+          calViewYear++;
+        } else if (calViewMonth < 1) {
+          calViewMonth = 12;
+          calViewYear--;
+        }
+        // 若往前翻到更早月份，自動補載入歷史紀錄以利顯示消費圓點
+        if (dir < 0 && !isFullHistoryLoaded) {
+          loadFullHistoryFromServer();
+        }
+      } else if (calSubMode === "month") {
+        calViewYear += dir;
+        if (dir < 0 && !isFullHistoryLoaded) {
+          loadFullHistoryFromServer();
+        }
+      } else if (calSubMode === "year") {
+        calViewYear += dir * 6;
+      }
+      renderCalendarPicker();
+    }
+
+    function renderCalendarPicker() {
+      const titleEl = document.getElementById("cal-header-title");
+      const bodyEl = document.getElementById("cal-body-container");
+      if (!titleEl || !bodyEl) return;
+
+      // 收集目前使用者有紀錄的日期、月份、年份集合（用來在月曆上點亮小圓點）
+      const activeDaySet = new Set();
+      const activeMonthSet = new Set();
+      const activeYearSet = new Set();
+      allRecords.forEach(r => {
+        if (r.user !== currentUser) return;
+        const dStr = String(r["Recorded At"] || "");
+        if (dStr.length >= 10) activeDaySet.add(dStr.slice(0, 10));
+        if (dStr.length >= 7) activeMonthSet.add(dStr.slice(0, 7));
+        if (dStr.length >= 4) activeYearSet.add(dStr.slice(0, 4));
+      });
+
+      const todayStr = getTodayString();
+
+      if (calSubMode === "day") {
+        const ymPrefix = `${calViewYear}/${String(calViewMonth).padStart(2, "0")}`;
+        titleEl.innerHTML = `<span>${calViewYear}年 ${calViewMonth}月</span><span style="font-size:0.7rem; color:var(--text-muted);">▼</span>`;
+
+        const firstDayWeek = new Date(calViewYear, calViewMonth - 1, 1).getDay(); // 0(日) ~ 6(六)
+        const daysInMonth = new Date(calViewYear, calViewMonth, 0).getDate();
+        const prevMonthDays = new Date(calViewYear, calViewMonth - 1, 0).getDate();
+
+        const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+        let html = `<div class="cal-weekdays">${weekdays.map(w => `<div class="cal-weekday">${w}</div>`).join("")}</div>`;
+        html += `<div class="cal-days-grid">`;
+
+        // 上個月底補齊格
+        for (let i = firstDayWeek - 1; i >= 0; i--) {
+          const dNum = prevMonthDays - i;
+          let py = calViewYear;
+          let pm = calViewMonth - 1;
+          if (pm < 1) { pm = 12; py--; }
+          const fullKey = `${py}/${String(pm).padStart(2, "0")}/${String(dNum).padStart(2, "0")}`;
+          const hasDot = activeDaySet.has(fullKey);
+          html += `
+            <button type="button" class="cal-day-cell other-month" onclick="selectCalendarDate('${fullKey}')">
+              <span>${dNum}</span>
+              ${hasDot ? `<span class="cal-has-rec-dot"></span>` : ""}
+            </button>
+          `;
+        }
+
+        // 本月 1 ~ daysInMonth
+        for (let d = 1; d <= daysInMonth; d++) {
+          const fullKey = `${ymPrefix}/${String(d).padStart(2, "0")}`;
+          const isSelected = (currentDimension === "day" && currentTimeKey === fullKey);
+          const isToday = (fullKey === todayStr);
+          const hasDot = activeDaySet.has(fullKey);
+          const cls = "cal-day-cell" + (isSelected ? " selected" : "") + (isToday ? " is-today" : "");
+          html += `
+            <button type="button" class="${cls}" onclick="selectCalendarDate('${fullKey}')">
+              <span>${d}</span>
+              ${hasDot ? `<span class="cal-has-rec-dot"></span>` : ""}
+            </button>
+          `;
+        }
+
+        // 下個月初補齊格（補滿 7 的倍數）
+        const totalCells = firstDayWeek + daysInMonth;
+        const remainCells = (7 - (totalCells % 7)) % 7;
+        for (let n = 1; n <= remainCells; n++) {
+          let ny = calViewYear;
+          let nm = calViewMonth + 1;
+          if (nm > 12) { nm = 1; ny++; }
+          const fullKey = `${ny}/${String(nm).padStart(2, "0")}/${String(n).padStart(2, "0")}`;
+          const hasDot = activeDaySet.has(fullKey);
+          html += `
+            <button type="button" class="cal-day-cell other-month" onclick="selectCalendarDate('${fullKey}')">
+              <span>${n}</span>
+              ${hasDot ? `<span class="cal-has-rec-dot"></span>` : ""}
+            </button>
+          `;
+        }
+
+        html += `</div>`;
+        bodyEl.innerHTML = html;
+      } else if (calSubMode === "month") {
+        titleEl.innerHTML = `<span>${calViewYear}年</span><span style="font-size:0.7rem; color:var(--text-muted);">▼</span>`;
+        let html = `<div class="cal-months-grid">`;
+        for (let m = 1; m <= 12; m++) {
+          const ymKey = `${calViewYear}/${String(m).padStart(2, "0")}`;
+          const isSel = (currentDimension === "month" && currentTimeKey === ymKey) ||
+                        (currentDimension === "day" && calViewMonth === m && String(currentTimeKey).startsWith(ymKey));
+          const hasDot = activeMonthSet.has(ymKey);
+          html += `
+            <button type="button" class="cal-month-cell ${isSel ? "selected" : ""}" onclick="selectCalendarMonth(${calViewYear}, ${m})">
+              <span>${m}月</span>
+              ${hasDot ? `<span class="cal-has-rec-dot" style="${isSel ? "background:#fff;" : ""}"></span>` : ""}
+            </button>
+          `;
+        }
+        html += `</div>`;
+        bodyEl.innerHTML = html;
+      } else {
+        titleEl.innerHTML = `<span>選擇年份</span>`;
+        const curY = new Date().getFullYear();
+        const yearSet = new Set([curY, calViewYear, calViewYear - 1, calViewYear - 2, calViewYear - 3, calViewYear + 1]);
+        activeYearSet.forEach(y => { if (Number(y)) yearSet.add(Number(y)); });
+        const sortedYears = Array.from(yearSet).sort((a, b) => b - a);
+
+        let html = `<div class="cal-months-grid">`;
+        sortedYears.forEach(y => {
+          const yKey = String(y);
+          const isSel = (currentDimension === "year" && currentTimeKey === yKey) ||
+                        (currentDimension !== "year" && calViewYear === y);
+          const hasDot = activeYearSet.has(yKey);
+          html += `
+            <button type="button" class="cal-month-cell ${isSel ? "selected" : ""}" onclick="selectCalendarYear('${yKey}')">
+              <span>${y}年</span>
+              ${hasDot ? `<span class="cal-has-rec-dot" style="${isSel ? "background:#fff;" : ""}"></span>` : ""}
+            </button>
+          `;
+        });
+        html += `</div>`;
+        if (currentDimension === "year") {
+          const isAllSel = (currentTimeKey === "ALL");
+          html += `
+            <button type="button" class="cal-month-cell ${isAllSel ? "selected" : ""}" style="width:100%; margin-top:8px; height:40px;" onclick="selectCalendarYear('ALL')">
+              <span>ALL（顯示全部年份紀錄）</span>
+            </button>
+          `;
+        }
+        bodyEl.innerHTML = html;
+      }
+    }
+
+    function selectCalendarDate(dateKey) {
+      currentTimeKey = dateKey;
+      listRenderLimit = 150;
+      closeCalendarPicker();
+
+      // 若選取較早日期且尚未載入完整歷史，自動向後端補齊歷史紀錄
+      if (!isFullHistoryLoaded && allRecords.length > 0) {
+        const oldestLoaded = String(allRecords[allRecords.length - 1]["Recorded At"] || "").slice(0, 10);
+        if (oldestLoaded && currentTimeKey <= oldestLoaded) {
+          loadFullHistoryFromServer();
+        }
+      }
+      refreshView();
+    }
+
+    function selectCalendarMonth(year, month) {
+      if (currentDimension === "day") {
+        // 在「天」模式下從月份選擇器點選某個月，回到該月的月曆檢視
+        calViewYear = year;
+        calViewMonth = month;
+        calSubMode = "day";
+        if (!isFullHistoryLoaded) loadFullHistoryFromServer();
+        renderCalendarPicker();
+        return;
+      }
+      currentTimeKey = `${year}/${String(month).padStart(2, "0")}`;
+      listRenderLimit = 150;
+      closeCalendarPicker();
+      if (!isFullHistoryLoaded) loadFullHistoryFromServer();
+      refreshView();
+    }
+
+    function selectCalendarYear(yearKey) {
+      if (currentDimension !== "year" && yearKey !== "ALL") {
+        calViewYear = Number(yearKey);
+        calSubMode = "month";
+        renderCalendarPicker();
+        return;
+      }
+      currentTimeKey = String(yearKey);
+      listRenderLimit = 150;
+      closeCalendarPicker();
+      if (!isFullHistoryLoaded) loadFullHistoryFromServer();
+      refreshView();
+    }
+
+    function jumpCalendarToToday() {
+      setDefaultTimeKey();
+      listRenderLimit = 150;
+      closeCalendarPicker();
+      refreshView();
     }
 
     function onTimeDropdownChange(val) {
@@ -2835,6 +3784,8 @@
 
       function isAnyOverlayOpen() {
         return (
+          document.getElementById("calendar-picker-overlay").classList.contains("open") ||
+          document.getElementById("report-modal-overlay").classList.contains("open") ||
           document.getElementById("category-sheet-overlay").classList.contains("open") ||
           document.getElementById("edit-modal").classList.contains("open") ||
           document.getElementById("split-debt-modal").classList.contains("open") ||
@@ -3732,6 +4683,432 @@
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+    }
+
+    // =====================================================
+    // 📊 週報 / 月報消費比較分析引擎（方式 A：點選右上角按鈕才載入與顯示）
+    // =====================================================
+    let currentReportTab = "weekly"; // "weekly" | "monthly"
+    let reportWeekOffset = 0;        // 0=本週, -1=上週, -2=前週...
+    let reportMonthOffset = 0;       // 0=本月, -1=上月...
+
+    function openReportModal(tab) {
+      if (tab) currentReportTab = tab;
+      reportWeekOffset = 0;
+      reportMonthOffset = 0;
+      document.getElementById("rep-tab-weekly").className = "report-seg-btn" + (currentReportTab === "weekly" ? " active" : "");
+      document.getElementById("rep-tab-monthly").className = "report-seg-btn" + (currentReportTab === "monthly" ? " active" : "");
+      document.getElementById("report-modal-overlay").classList.add("open");
+
+      // 若尚未載入近兩個月或完整歷史資料，自動在背景補齊以確保週報/月報比較完整
+      if (!isMonthHistoryLoaded && !isFullHistoryLoaded) {
+        loadMonthHistoryFromServer();
+      }
+      renderReportModal();
+    }
+
+    function closeReportModal() {
+      document.getElementById("report-modal-overlay").classList.remove("open");
+    }
+
+    function switchReportTab(tab) {
+      currentReportTab = tab;
+      document.getElementById("rep-tab-weekly").className = "report-seg-btn" + (tab === "weekly" ? " active" : "");
+      document.getElementById("rep-tab-monthly").className = "report-seg-btn" + (tab === "monthly" ? " active" : "");
+      renderReportModal();
+    }
+
+    function stepReportPeriod(dir) {
+      if (currentReportTab === "weekly") {
+        reportWeekOffset = Math.min(0, reportWeekOffset + dir);
+      } else {
+        reportMonthOffset = Math.min(0, reportMonthOffset + dir);
+      }
+      if (!isFullHistoryLoaded) {
+        loadFullHistoryFromServer();
+      }
+      renderReportModal();
+    }
+
+    function formatYMD(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}/${m}/${day}`;
+    }
+
+    function formatMD(d) {
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${m}/${day}`;
+    }
+
+    function getWeekRangeByOffset(offsetWeeks) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const dow = today.getDay();
+      const diffToMon = (dow === 0 ? -6 : 1 - dow);
+      const mon = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diffToMon + (offsetWeeks * 7));
+      const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+      return { mon, sun, today };
+    }
+
+    function renderReportModal() {
+      const titleEl = document.getElementById("rep-modal-user-title");
+      if (titleEl) titleEl.innerText = `${currentUser}・消費回顧與對比`;
+      const body = document.getElementById("report-modal-body");
+      if (!body) return;
+
+      const userExpRecords = allRecords.filter(r => r.user === currentUser && r.Category !== "收入" && (Number(r.Amount) || 0) > 0);
+
+      if (currentReportTab === "weekly") {
+        const currRange = getWeekRangeByOffset(reportWeekOffset);
+        const prevRange = getWeekRangeByOffset(reportWeekOffset - 1);
+        const currStartStr = formatYMD(currRange.mon);
+        const currEndStr = formatYMD(currRange.sun);
+        const prevStartStr = formatYMD(prevRange.mon);
+        const prevEndStr = formatYMD(prevRange.sun);
+
+        const currRecs = userExpRecords.filter(r => {
+          const d = String(r["Recorded At"] || "").slice(0, 10);
+          return d >= currStartStr && d <= currEndStr;
+        });
+        const prevRecs = userExpRecords.filter(r => {
+          const d = String(r["Recorded At"] || "").slice(0, 10);
+          return d >= prevStartStr && d <= prevEndStr;
+        });
+
+        const currTotal = Math.round(currRecs.reduce((s, r) => s + (Number(r.Amount) || 0), 0));
+        const prevTotal = Math.round(prevRecs.reduce((s, r) => s + (Number(r.Amount) || 0), 0));
+
+        let sum4W = 0;
+        let count4W = 0;
+        for (let w = 1; w <= 4; w++) {
+          const wr = getWeekRangeByOffset(reportWeekOffset - w);
+          const ws = formatYMD(wr.mon);
+          const we = formatYMD(wr.sun);
+          const wSum = userExpRecords.reduce((s, r) => {
+            const d = String(r["Recorded At"] || "").slice(0, 10);
+            return (d >= ws && d <= we) ? s + (Number(r.Amount) || 0) : s;
+          }, 0);
+          if (wSum > 0) {
+            sum4W += wSum;
+            count4W++;
+          }
+        }
+        const avg4Weeks = count4W > 0 ? Math.round(sum4W / count4W) : prevTotal;
+
+        const dayNames = ["一", "二", "三", "四", "五", "六", "日"];
+        const todayStr = formatYMD(currRange.today);
+        let noSpendDays = 0;
+        let elapsedDaysInWeek = 0;
+        const dailyBars = [];
+
+        for (let i = 0; i < 7; i++) {
+          const dObj = new Date(currRange.mon.getFullYear(), currRange.mon.getMonth(), currRange.mon.getDate() + i);
+          const dStr = formatYMD(dObj);
+          const dSum = Math.round(currRecs.reduce((s, r) => String(r["Recorded At"] || "").slice(0, 10) === dStr ? s + (Number(r.Amount) || 0) : s, 0));
+          dailyBars.push({ lbl: dayNames[i], dateStr: formatMD(dObj), amt: dSum });
+          if (dStr <= todayStr) {
+            elapsedDaysInWeek++;
+            if (dSum === 0) noSpendDays++;
+          }
+        }
+        if (elapsedDaysInWeek < 1) elapsedDaysInWeek = 1;
+
+        renderReportContent(body, {
+          isWeekly: true,
+          periodTitle: `${reportWeekOffset === 0 ? "本週" : (reportWeekOffset === -1 ? "上週" : `前 ${Math.abs(reportWeekOffset)} 週`)} (${formatMD(currRange.mon)} ～ ${formatMD(currRange.sun)})`,
+          canNext: reportWeekOffset < 0,
+          currTotal,
+          prevTotal,
+          avg4Weeks,
+          dailyAvg: Math.round(currTotal / elapsedDaysInWeek),
+          noSpendDays,
+          bars: dailyBars,
+          currRecs,
+          prevRecs
+        });
+      } else {
+        const now = new Date();
+        const targetDate = new Date(now.getFullYear(), now.getMonth() + reportMonthOffset, 1);
+        const prevDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 1);
+
+        const currYM = `${targetDate.getFullYear()}/${String(targetDate.getMonth() + 1).padStart(2, "0")}`;
+        const prevYM = `${prevDate.getFullYear()}/${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+
+        const currRecs = userExpRecords.filter(r => String(r["Recorded At"] || "").slice(0, 7) === currYM);
+        const prevRecs = userExpRecords.filter(r => String(r["Recorded At"] || "").slice(0, 7) === prevYM);
+
+        const currTotal = Math.round(currRecs.reduce((s, r) => s + (Number(r.Amount) || 0), 0));
+        const prevTotal = Math.round(prevRecs.reduce((s, r) => s + (Number(r.Amount) || 0), 0));
+
+        const totalDaysInMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate() || 30;
+        const elapsedDays = (reportMonthOffset === 0) ? Math.max(1, now.getDate()) : totalDaysInMonth;
+        const userCfg = userSettingsMap[currentUser] || {};
+        const budget = Number(userCfg.monthlyBudget) || 0;
+
+        const weekBuckets = [
+          { lbl: "1~7日", amt: 0 },
+          { lbl: "8~14日", amt: 0 },
+          { lbl: "15~21日", amt: 0 },
+          { lbl: "22~28日", amt: 0 },
+          { lbl: "29日~", amt: 0 }
+        ];
+        currRecs.forEach(r => {
+          const dayNum = parseInt(String(r["Recorded At"] || "").slice(8, 10), 10) || 1;
+          const idx = Math.min(4, Math.floor((dayNum - 1) / 7));
+          weekBuckets[idx].amt += (Number(r.Amount) || 0);
+        });
+        weekBuckets.forEach(b => { b.amt = Math.round(b.amt); });
+
+        renderReportContent(body, {
+          isWeekly: false,
+          periodTitle: `${targetDate.getFullYear()}年 ${targetDate.getMonth() + 1}月`,
+          canNext: reportMonthOffset < 0,
+          currTotal,
+          prevTotal,
+          budget,
+          dailyAvg: Math.round(currTotal / elapsedDays),
+          bars: weekBuckets,
+          currRecs,
+          prevRecs
+        });
+      }
+    }
+
+    function renderReportContent(body, ctx) {
+      const isWeekly = ctx.isWeekly;
+      const diff = ctx.currTotal - ctx.prevTotal;
+      const pct = ctx.prevTotal > 0 ? ((Math.abs(diff) / ctx.prevTotal) * 100).toFixed(1) : "0.0";
+      const isUp = diff > 0;
+      const deltaClass = isUp ? "up" : "down";
+      const prevName = isWeekly ? "上週" : "上月";
+      const deltaLabel = ctx.prevTotal === 0
+        ? `${prevName}無紀錄`
+        : (isUp
+          ? `▲ 比${prevName}多 $${diff.toLocaleString()} (+${pct}%)`
+          : `▼ 比${prevName}省 $${Math.abs(diff).toLocaleString()} (-${pct}%)`);
+
+      const subCompareHtml = isWeekly
+        ? `上週 $${ctx.prevTotal.toLocaleString()} ｜ 近4週均 $${(ctx.avg4Weeks || 0).toLocaleString()}`
+        : (ctx.budget > 0
+          ? `上月 $${ctx.prevTotal.toLocaleString()} ｜ 月預算 $${ctx.budget.toLocaleString()}`
+          : `上月 $${ctx.prevTotal.toLocaleString()}`);
+
+      const catSet = new Set();
+      const currCatMap = {};
+      const prevCatMap = {};
+      const currCatCount = {};
+
+      ctx.currRecs.forEach(r => {
+        const c = r.Category || "其他";
+        catSet.add(c);
+        currCatMap[c] = (currCatMap[c] || 0) + (Number(r.Amount) || 0);
+        currCatCount[c] = (currCatCount[c] || 0) + 1;
+      });
+      ctx.prevRecs.forEach(r => {
+        const c = r.Category || "其他";
+        catSet.add(c);
+        prevCatMap[c] = (prevCatMap[c] || 0) + (Number(r.Amount) || 0);
+      });
+
+      const catDeltaList = Array.from(catSet).map(cat => ({
+        cat,
+        curr: Math.round(currCatMap[cat] || 0),
+        prev: Math.round(prevCatMap[cat] || 0),
+        diff: Math.round((currCatMap[cat] || 0) - (prevCatMap[cat] || 0)),
+        count: currCatCount[cat] || 0
+      })).sort((a, b) => (b.curr - a.curr) || (b.prev - a.prev));
+
+      let insightHtml = "";
+      if (ctx.currTotal === 0 && ctx.prevTotal === 0) {
+        insightHtml = isLoadingMonthHistory || isLoadingFullHistory
+          ? "⏳ 正在從雲端載入歷史紀錄計算中..."
+          : "目前這個區間尚無消費紀錄。";
+      } else {
+        const parts = [];
+        if (ctx.prevTotal > 0) {
+          if (diff <= 0) {
+            parts.push(`${isWeekly ? "本週" : "本月"}比${prevName}少花 <b>$${Math.abs(diff).toLocaleString()} (-${pct}%)</b> 🎉`);
+          } else {
+            parts.push(`${isWeekly ? "本週" : "本月"}比${prevName}多花 <b>$${diff.toLocaleString()} (+${pct}%)</b> ⚠️`);
+          }
+        } else {
+          parts.push(`${isWeekly ? "本週" : "本月"}累積花費 <b>$${ctx.currTotal.toLocaleString()}</b>`);
+        }
+
+        const mostSaved = catDeltaList.slice().sort((a, b) => a.diff - b.diff)[0];
+        const mostGrown = catDeltaList.slice().sort((a, b) => b.diff - a.diff)[0];
+        if (mostSaved && mostSaved.diff < 0) {
+          parts.push(`省最多的是「<b>${mostSaved.cat} (-$${Math.abs(mostSaved.diff).toLocaleString()})</b>」`);
+        }
+        if (mostGrown && mostGrown.diff > 0) {
+          parts.push(`增加最多的是「<b>${mostGrown.cat} (+$${mostGrown.diff.toLocaleString()})</b>」`);
+        }
+        if (!isWeekly && ctx.budget > 0) {
+          const rem = ctx.budget - ctx.currTotal;
+          parts.push(rem >= 0 ? `距離月預算還剩 <b>$${rem.toLocaleString()}</b>` : `已超出月預算 <b>$${Math.abs(rem).toLocaleString()}</b>`);
+        }
+        insightHtml = parts.join("；") + "。";
+      }
+
+      const maxBarAmt = Math.max(...ctx.bars.map(b => b.amt), 1);
+      const barsHtml = ctx.bars.map(b => {
+        const hPx = b.amt === 0 ? 4 : Math.max(12, Math.round((b.amt / maxBarAmt) * 76));
+        const isPeak = b.amt === maxBarAmt && b.amt > 0;
+        return `
+          <div class="rep-bar-col">
+            <span class="rep-bar-val">${b.amt > 0 ? "$" + b.amt.toLocaleString() : "0"}</span>
+            <div class="rep-bar-fill ${b.amt === 0 ? "zero" : (isPeak ? "peak" : "")}" style="height:${hPx}px;"></div>
+            <span class="rep-bar-lbl">${b.lbl}</span>
+          </div>
+        `;
+      }).join("");
+
+      const maxCatAmt = Math.max(...catDeltaList.map(c => Math.max(c.curr, c.prev)), 1);
+      const catDeltaHtml = catDeltaList.length === 0
+        ? `<div style="text-align:center;color:var(--text-muted);font-size:0.8rem;padding:8px;">尚無分類消費資料</div>`
+        : catDeltaList.map(c => {
+            const meta = CATEGORY_META[c.cat] || { icon: "📦", color: "#64748b" };
+            let diffTag = `<span class="rep-diff-tag same">持平 $0</span>`;
+            if (c.diff > 0) diffTag = `<span class="rep-diff-tag more">▲ +$${c.diff.toLocaleString()}</span>`;
+            if (c.diff < 0) diffTag = `<span class="rep-diff-tag less">▼ -$${Math.abs(c.diff).toLocaleString()}</span>`;
+            const currW = c.curr > 0 ? Math.max(4, Math.round((c.curr / maxCatAmt) * 100)) : 0;
+            const prevW = c.prev > 0 ? Math.max(4, Math.round((c.prev / maxCatAmt) * 100)) : 0;
+            return `
+              <div class="rep-cat-delta-item">
+                <div class="rep-cat-delta-top">
+                  <div class="rep-cat-left">
+                    <span>${meta.icon}</span>
+                    <span>${c.cat}</span>
+                    <span style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">(${prevName} $${c.prev.toLocaleString()})</span>
+                  </div>
+                  <div class="rep-cat-right">
+                    <span>$${c.curr.toLocaleString()}</span>
+                    ${diffTag}
+                  </div>
+                </div>
+                <div class="rep-dual-bar-track">
+                  <div class="rep-bar-curr" style="width:${currW}%; background:${meta.color};"></div>
+                  <div class="rep-bar-prev" style="width:${prevW}%;"></div>
+                </div>
+              </div>
+            `;
+          }).join("");
+
+      const topFreqCat = catDeltaList.slice().sort((a, b) => b.count - a.count)[0];
+      const freqTitle = (topFreqCat && topFreqCat.count > 0)
+        ? `${(CATEGORY_META[topFreqCat.cat] || { icon: "📦" }).icon} ${topFreqCat.cat}`
+        : "尚無紀錄";
+      const freqDetail = (topFreqCat && topFreqCat.count > 0)
+        ? `共 ${topFreqCat.count} 筆・合計 $${topFreqCat.curr.toLocaleString()}`
+        : "-";
+
+      let secondBoxLbl = isWeekly ? "🔥 單日最高峰" : "🏆 月預算狀態";
+      let secondBoxTitle = "-";
+      let secondBoxDetail = "-";
+      if (isWeekly) {
+        const peakBar = ctx.bars.slice().sort((a, b) => b.amt - a.amt)[0];
+        if (peakBar && peakBar.amt > 0) {
+          secondBoxTitle = `週${peakBar.lbl} (${peakBar.dateStr})`;
+          secondBoxDetail = `單日花費 $${peakBar.amt.toLocaleString()}`;
+        } else {
+          secondBoxTitle = "本週尚無花費";
+          secondBoxDetail = "$0";
+        }
+      } else {
+        if (ctx.budget > 0) {
+          const pctUsed = Math.round((ctx.currTotal / ctx.budget) * 100);
+          const rem = ctx.budget - ctx.currTotal;
+          secondBoxTitle = `已用 ${pctUsed}%`;
+          secondBoxDetail = rem >= 0 ? `剩餘 $${rem.toLocaleString()}` : `超支 $${Math.abs(rem).toLocaleString()}`;
+        } else {
+          const peakW = ctx.bars.slice().sort((a, b) => b.amt - a.amt)[0];
+          secondBoxTitle = peakW && peakW.amt > 0 ? peakW.lbl : "-";
+          secondBoxDetail = peakW && peakW.amt > 0 ? `最高週 $${peakW.amt.toLocaleString()}` : "未設定月預算";
+        }
+      }
+
+      const top3Recs = ctx.currRecs.slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0)).slice(0, 3);
+      const topItemsHtml = top3Recs.length === 0
+        ? `<div style="text-align:center;color:var(--text-muted);font-size:0.78rem;padding:6px;">尚無單筆消費排行</div>`
+        : top3Recs.map((r, idx) => {
+            const meta = CATEGORY_META[r.Category] || { icon: "📦", color: "#64748b" };
+            const dShort = String(r["Recorded At"] || "").slice(5, 10);
+            const noteText = escapeHtml(r.note || r.Category || "未命名項目");
+            return `
+              <div class="rep-top-row">
+                <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;">
+                  <span class="rep-rank-badge">#${idx + 1}</span>
+                  <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${meta.icon} ${noteText}</span>
+                  <span style="font-size:0.7rem;color:var(--text-muted);flex-shrink:0;">${dShort}</span>
+                </div>
+                <span style="font-weight:900;flex-shrink:0;">$${Math.round(Number(r.Amount) || 0).toLocaleString()}</span>
+              </div>
+            `;
+          }).join("");
+
+      body.innerHTML = `
+        <div class="report-period-nav">
+          <button type="button" class="nav-arrow-sm" onclick="stepReportPeriod(-1)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <span>${ctx.periodTitle}</span>
+          <button type="button" class="nav-arrow-sm" onclick="stepReportPeriod(1)" ${ctx.canNext ? "" : "disabled style='opacity:0.3;pointer-events:none;'"}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+
+        <div class="rep-hero-card">
+          <div class="rep-hero-top">
+            <div>
+              <div class="rep-hero-label">${isWeekly ? "當週總支出" : "當月總支出"}（日均 $${ctx.dailyAvg.toLocaleString()}）</div>
+              <div class="rep-hero-amt">$${ctx.currTotal.toLocaleString()}</div>
+            </div>
+            <div class="rep-delta-stack">
+              <span class="rep-delta-pill ${deltaClass}">${deltaLabel}</span>
+              <span class="rep-sub-compare">${subCompareHtml}</span>
+            </div>
+          </div>
+          <div class="rep-insight-banner">💡 ${insightHtml}</div>
+        </div>
+
+        <div class="rep-section-card">
+          <div class="rep-sec-title">
+            <span>📊 ${isWeekly ? "週一 ～ 週日 花費分佈" : "當月各週花費節奏"}</span>
+            <span class="rep-sec-sub">${isWeekly ? `零花費日：${ctx.noSpendDays} 天 🌱` : "橘色為最高峰區間"}</span>
+          </div>
+          <div class="rep-bar-chart">${barsHtml}</div>
+        </div>
+
+        <div class="rep-section-card">
+          <div class="rep-sec-title">
+            <span>⚖️ 類別花費漲跌對比</span>
+            <span class="rep-sec-sub">彩條=本期 ／ 灰條=${prevName}</span>
+          </div>
+          <div class="rep-cat-delta-list">${catDeltaHtml}</div>
+        </div>
+
+        <div class="rep-section-card">
+          <div class="rep-sec-title">
+            <span>🔍 哪裡花最多？（高頻習慣 & Top 3 大筆消費）</span>
+          </div>
+          <div class="rep-highlights-grid">
+            <div class="rep-mini-stat-box">
+              <span class="rep-mini-stat-lbl">🔁 最常消費類別</span>
+              <span class="rep-mini-stat-val">${freqTitle}</span>
+              <span style="font-size:0.72rem;color:var(--text-muted);">${freqDetail}</span>
+            </div>
+            <div class="rep-mini-stat-box">
+              <span class="rep-mini-stat-lbl">${secondBoxLbl}</span>
+              <span class="rep-mini-stat-val">${secondBoxTitle}</span>
+              <span style="font-size:0.72rem;color:var(--text-muted);">${secondBoxDetail}</span>
+            </div>
+          </div>
+          <div class="rep-top-list">${topItemsHtml}</div>
+        </div>
+      `;
     }
   </script>
 </body>
