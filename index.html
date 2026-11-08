@@ -163,7 +163,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 14px;
+      padding: 2px 0;
     }
 
     .user-pill-group {
@@ -179,7 +180,7 @@
       border: none;
       background: transparent;
       color: var(--text-muted);
-      padding: 5px 16px;
+      padding: 6px 16px;
       border-radius: 999px;
       font-size: 0.86rem;
       font-weight: 800;
@@ -202,7 +203,7 @@
       align-items: center;
       font-size: 0.95rem;
       font-weight: 900;
-      padding: 5px 14px;
+      padding: 6px 16px;
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 999px;
@@ -210,12 +211,12 @@
 
     .top-actions {
       display: flex;
-      gap: 6px;
+      gap: 8px;
     }
 
     .icon-btn {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border: 1px solid var(--card-border);
       background: var(--card);
@@ -227,6 +228,18 @@
       cursor: pointer;
       position: relative;
       box-shadow: 0 2px 5px rgba(74, 59, 50, 0.05);
+      transition: all 0.18s ease;
+    }
+
+    .icon-btn svg {
+      width: 17px;
+      height: 17px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: block;
     }
 
     .icon-btn:active {
@@ -241,7 +254,9 @@
     }
 
     .icon-btn.spinning span {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       animation: spin-glyph 0.8s linear infinite;
     }
 
@@ -283,7 +298,7 @@
       border-left: 5px solid #c65d47;
       border-radius: 12px;
       padding: 10px 14px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       color: #8c3828;
       font-size: 0.84rem;
       cursor: pointer;
@@ -318,6 +333,12 @@
       white-space: nowrap;
     }
 
+    /* 左右滑動動態舞台 */
+    .swipe-stage {
+      will-change: transform, opacity;
+      touch-action: pan-y;
+    }
+
     /* =========================================================
        區塊 2：整合總覽區（預算 + 日期/天月年 + 今日支出 + 分類比例）
        ========================================================= */
@@ -325,19 +346,20 @@
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 11px 13px;
-      margin-bottom: 10px;
+      padding: 15px 16px;
+      margin-bottom: 14px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 14px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
-    /* 2-1: 緊湊預算條 */
+    /* 2-1: 預算進度條（適度放寬上下距離） */
     .budget-compact-row {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 7px;
+      padding: 2px 0 4px 0;
       cursor: pointer;
     }
 
@@ -345,14 +367,14 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.74rem;
+      font-size: 0.78rem;
       font-weight: 700;
       color: var(--text-muted);
     }
 
     .budget-compact-track {
       position: relative;
-      height: 16px;
+      height: 20px;
       background: var(--card-soft);
       border-radius: 999px;
       overflow: hidden;
@@ -373,7 +395,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.69rem;
+      font-size: 0.72rem;
       font-weight: 800;
       color: var(--text);
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -388,7 +410,7 @@
       background: var(--card-soft);
       border: 1px solid var(--card-border);
       border-radius: 11px;
-      padding: 4px 6px;
+      padding: 6px 8px;
     }
 
     .date-nav-left {
@@ -404,9 +426,12 @@
       border: none;
       color: var(--text-muted);
       font-size: 0.85rem;
-      padding: 4px 7px;
+      padding: 5px 8px;
       cursor: pointer;
       border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .nav-arrow-sm:active {
@@ -422,7 +447,7 @@
     }
 
     .nav-date-text {
-      font-size: 0.86rem;
+      font-size: 0.88rem;
       font-weight: 800;
       color: var(--text);
       display: inline-flex;
@@ -454,9 +479,9 @@
       border: none;
       background: transparent;
       color: var(--text-muted);
-      font-size: 0.75rem;
+      font-size: 0.76rem;
       font-weight: 800;
-      padding: 4px 9px;
+      padding: 5px 10px;
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.15s;
@@ -472,17 +497,17 @@
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      padding: 2px 2px 0 2px;
+      padding: 4px 2px 2px 2px;
     }
 
     .expense-label {
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       font-weight: 800;
       color: var(--text-muted);
     }
 
     .expense-amount {
-      font-size: 1.5rem;
+      font-size: 1.55rem;
       font-weight: 900;
       color: var(--expense);
       letter-spacing: -0.5px;
@@ -492,15 +517,15 @@
     /* 2-4: 分類佔比條與小標籤 */
     .chart-compact-box {
       border-top: 1px solid var(--card-border);
-      padding-top: 8px;
+      padding-top: 12px;
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 10px;
     }
 
     .chart-bar {
       display: flex;
-      height: 8px;
+      height: 9px;
       border-radius: 999px;
       overflow: hidden;
       background: var(--card-soft);
@@ -515,17 +540,17 @@
     .cat-chips {
       display: flex;
       flex-wrap: wrap;
-      gap: 5px;
+      gap: 6px;
     }
 
     .cat-chip {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      font-size: 0.72rem;
+      gap: 5px;
+      font-size: 0.74rem;
       font-weight: 700;
       cursor: pointer;
-      padding: 3px 8px;
+      padding: 4px 9px;
       border-radius: 999px;
       border: 1px solid var(--card-border);
       background: var(--card-soft);
@@ -567,7 +592,7 @@
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 10px 12px;
+      padding: 13px 14px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
@@ -575,9 +600,9 @@
     .toolbar-single-line {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 6px;
-      padding-bottom: 8px;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 11px;
       border-bottom: 1px solid var(--card-border);
     }
 
@@ -585,9 +610,9 @@
       display: none;
       align-items: center;
       gap: 4px;
-      padding: 3px 8px;
+      padding: 4px 9px;
       border-radius: 999px;
-      font-size: 0.72rem;
+      font-size: 0.73rem;
       font-weight: 800;
       cursor: pointer;
       border: 1px solid var(--accent);
@@ -605,13 +630,13 @@
 
     .search-inline-input {
       width: 100%;
-      height: 30px;
+      height: 34px;
       background: var(--card-soft);
       border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 0 24px 0 26px;
+      border-radius: 9px;
+      padding: 0 26px 0 30px;
       color: var(--text);
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       font-weight: 600;
       outline: none;
     }
@@ -622,23 +647,26 @@
 
     .search-inline-icon {
       position: absolute;
-      left: 8px;
+      left: 9px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 0.76rem;
-      opacity: 0.65;
+      color: var(--text-muted);
+      opacity: 0.75;
       pointer-events: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .search-inline-clear {
       position: absolute;
-      right: 6px;
+      right: 7px;
       top: 50%;
       transform: translateY(-50%);
       border: none;
       background: transparent;
       color: var(--text-muted);
-      font-size: 0.74rem;
+      font-size: 0.76rem;
       cursor: pointer;
       display: none;
       align-items: center;
@@ -652,9 +680,9 @@
     }
 
     .sort-lines-btn {
-      width: 32px;
-      height: 30px;
-      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
       border: 1px solid var(--card-border);
       background: var(--card-soft);
       color: var(--text);
@@ -809,10 +837,11 @@
       display: block;
     }
 
-    /* 3-2: 超精簡消費項目列表（圖示 + 名稱 + 月/年日期 + 符號動作 + 無負號金額） */
+    /* 3-2: 消費項目列表（適度放寬上下距離 + 質感 SVG 動作按鈕） */
     .records-list {
       display: flex;
       flex-direction: column;
+      gap: 2px;
     }
 
     .record-row-wrap {
@@ -827,11 +856,11 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 2px;
-      gap: 8px;
+      padding: 9px 4px;
+      gap: 10px;
       cursor: pointer;
       transition: background 0.15s;
-      border-radius: 8px;
+      border-radius: 9px;
     }
 
     .record-slim-row:hover {
@@ -841,19 +870,19 @@
     .rec-slim-left {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 10px;
       min-width: 0;
       flex: 1;
     }
 
     .cat-icon-sm {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.94rem;
+      font-size: 0.96rem;
       flex-shrink: 0;
       color: #ffffff;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
@@ -861,7 +890,7 @@
     }
 
     .rec-note-text {
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       font-weight: 800;
       color: var(--text);
       white-space: nowrap;
@@ -870,7 +899,7 @@
     }
 
     .rec-date-tag {
-      font-size: 0.73rem;
+      font-size: 0.74rem;
       font-weight: 700;
       color: var(--text-muted);
       white-space: nowrap;
@@ -881,45 +910,62 @@
     .rec-slim-right {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       flex-shrink: 0;
     }
 
     .rec-inline-actions {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
     }
 
     .act-icon-xs {
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       border: 1px solid var(--card-border);
       background: var(--card-soft);
       color: var(--text-muted);
-      border-radius: 7px;
-      font-size: 0.78rem;
+      border-radius: 8px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: all 0.15s;
+      padding: 0;
+    }
+
+    .act-icon-xs svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: block;
+    }
+
+    .act-icon-xs:hover {
+      color: var(--text);
+      border-color: var(--accent);
     }
 
     .act-icon-xs:active {
-      transform: scale(0.93);
+      transform: scale(0.92);
     }
 
     .act-icon-xs.del:hover {
+      color: #ef4444;
       border-color: #ef4444;
       background: rgba(239, 68, 68, 0.12);
     }
 
     .rec-amount-clean {
-      font-size: 0.95rem;
+      font-size: 0.96rem;
       font-weight: 900;
       color: var(--text);
-      min-width: 44px;
+      min-width: 46px;
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
@@ -1452,12 +1498,27 @@
       <span id="locked-user-name">定成</span>
     </div>
     <div class="top-actions">
-      <button class="icon-btn" id="btn-refresh" onclick="triggerManualRefresh()" title="重新整理最新資料"><span>🔄</span></button>
+      <button class="icon-btn" id="btn-refresh" onclick="triggerManualRefresh()" title="重新整理最新資料">
+        <span>
+          <svg viewBox="0 0 24 24">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+            <polyline points="21 3 21 9 15 9"></polyline>
+          </svg>
+        </span>
+      </button>
       <button class="icon-btn" onclick="openAuditCenter()" title="除錯與重複偵測">
-        🩺
+        <svg viewBox="0 0 24 24">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          <polyline points="8 12 10.5 12 12 9 14 15 15.5 12 17 12"></polyline>
+        </svg>
         <span class="badge-dot" id="audit-badge" style="display:none;"></span>
       </button>
-      <button class="icon-btn" onclick="openSettingsModal()" title="頁面設定">⚙️</button>
+      <button class="icon-btn" onclick="openSettingsModal()" title="頁面設定">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -1472,95 +1533,107 @@
     </div>
   </div>
 
-  <!-- =========================================================
-       區塊 2：核心總覽卡片（預算 ＋ 日期&天月年 ＋ 今日支出 ＋ 分類比例）
-       ========================================================= -->
-  <div class="block-2-overview-card">
-    <!-- 2-1. 個人每月預算進度條（點一下可直接改預算） -->
-    <div class="budget-compact-row" id="monthly-budget-card" onclick="openSettingsModal('budget')" title="點此設定每月預算">
-      <div class="budget-compact-header">
-        <span id="budget-bar-title">本月預算</span>
-        <span id="budget-bar-status">日均 $0</span>
+  <!-- 左右滑動動態舞台 -->
+  <div id="swipe-stage" class="swipe-stage">
+    <!-- =========================================================
+         區塊 2：核心總覽卡片（預算 ＋ 日期&天月年 ＋ 今日支出 ＋ 分類比例）
+         ========================================================= -->
+    <div class="block-2-overview-card">
+      <!-- 2-1. 個人每月預算進度條（點一下可直接改預算） -->
+      <div class="budget-compact-row" id="monthly-budget-card" onclick="openSettingsModal('budget')" title="點此設定每月預算">
+        <div class="budget-compact-header">
+          <span id="budget-bar-title">本月預算</span>
+          <span id="budget-bar-status">日均 $0</span>
+        </div>
+        <div class="budget-compact-track">
+          <div class="budget-compact-fill" id="budget-bar-fill"></div>
+          <div class="budget-compact-text" id="budget-bar-text">點此設定預算</div>
+        </div>
       </div>
-      <div class="budget-compact-track">
-        <div class="budget-compact-fill" id="budget-bar-fill"></div>
-        <div class="budget-compact-text" id="budget-bar-text">點此設定預算</div>
+
+      <!-- 2-2. 日期調整 ＋ 天/月/年 濃縮在同一排 -->
+      <div class="date-and-dim-row">
+        <div class="date-nav-left">
+          <button class="nav-arrow-sm" onclick="navigateStep(-1)" title="上一期">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <div class="nav-select-box">
+            <span class="nav-date-text">
+              <span id="nav-label">2026/11/08 (今天)</span>
+              <span style="font-size:0.68rem; color:var(--text-muted);">▼</span>
+            </span>
+            <select id="time-dropdown" onchange="onTimeDropdownChange(this.value)"></select>
+          </div>
+          <button class="nav-arrow-sm" onclick="navigateStep(1)" title="下一期">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+
+        <div class="dim-segmented-mini">
+          <button class="dim-mini-btn active" id="btn-dim-day" onclick="switchDimension('day')">天</button>
+          <button class="dim-mini-btn" id="btn-dim-month" onclick="switchDimension('month')">月</button>
+          <button class="dim-mini-btn" id="btn-dim-year" onclick="switchDimension('year')">年</button>
+        </div>
+      </div>
+
+      <!-- 2-3. 當期支出精簡橫列（不顯示收入與筆數） -->
+      <div class="expense-summary-row">
+        <span class="expense-label" id="hero-title">今日支出</span>
+        <span class="expense-amount" id="hero-expense">$0</span>
+      </div>
+
+      <!-- 2-4. 支出分類佔比條與無圖示標籤 -->
+      <div class="chart-compact-box" id="chart-section">
+        <div class="chart-bar" id="chart-bar"></div>
+        <div class="cat-chips" id="cat-chips"></div>
       </div>
     </div>
 
-    <!-- 2-2. 日期調整 ＋ 天/月/年 濃縮在同一排 -->
-    <div class="date-and-dim-row">
-      <div class="date-nav-left">
-        <button class="nav-arrow-sm" onclick="navigateStep(-1)" title="上一期">◀</button>
-        <div class="nav-select-box">
-          <span class="nav-date-text">
-            <span id="nav-label">2026/11/08 (今天)</span>
-            <span style="font-size:0.68rem; color:var(--text-muted);">▼</span>
+    <!-- =========================================================
+         區塊 3：細項區（單行搜尋＋三條線排序選單 ＋ 極簡項目列表）
+         ========================================================= -->
+    <div class="block-3-records-section">
+      <div class="toolbar-single-line">
+        <button type="button" class="active-cat-filter-badge" id="active-cat-filter-badge" onclick="clearCategoryFilter()" title="點此取消類別篩選，顯示全部"></button>
+
+        <div class="search-inline-box">
+          <span class="search-inline-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
           </span>
-          <select id="time-dropdown" onchange="onTimeDropdownChange(this.value)"></select>
+          <input type="text" id="search-input" class="search-inline-input" placeholder="" oninput="onSearchInput(this.value)">
+          <button type="button" id="search-clear-btn" class="search-inline-clear" style="display:none;" onclick="clearSearchInput()" title="清除搜尋">✕</button>
         </div>
-        <button class="nav-arrow-sm" onclick="navigateStep(1)" title="下一期">▶</button>
-      </div>
 
-      <div class="dim-segmented-mini">
-        <button class="dim-mini-btn active" id="btn-dim-day" onclick="switchDimension('day')">天</button>
-        <button class="dim-mini-btn" id="btn-dim-month" onclick="switchDimension('month')">月</button>
-        <button class="dim-mini-btn" id="btn-dim-year" onclick="switchDimension('year')">年</button>
-      </div>
-    </div>
-
-    <!-- 2-3. 當期支出精簡橫列（不顯示收入與筆數） -->
-    <div class="expense-summary-row">
-      <span class="expense-label" id="hero-title">今日支出</span>
-      <span class="expense-amount" id="hero-expense">$0</span>
-    </div>
-
-    <!-- 2-4. 支出分類佔比條與無圖示標籤 -->
-    <div class="chart-compact-box" id="chart-section">
-      <div class="chart-bar" id="chart-bar"></div>
-      <div class="cat-chips" id="cat-chips"></div>
-    </div>
-  </div>
-
-  <!-- =========================================================
-       區塊 3：細項區（單行搜尋＋三條線排序選單 ＋ 極簡項目列表）
-       ========================================================= -->
-  <div class="block-3-records-section">
-    <div class="toolbar-single-line">
-      <button type="button" class="active-cat-filter-badge" id="active-cat-filter-badge" onclick="clearCategoryFilter()" title="點此取消類別篩選，顯示全部"></button>
-
-      <div class="search-inline-box">
-        <span class="search-inline-icon">🔍</span>
-        <input type="text" id="search-input" class="search-inline-input" placeholder="" oninput="onSearchInput(this.value)">
-        <button type="button" id="search-clear-btn" class="search-inline-clear" style="display:none;" onclick="clearSearchInput()" title="清除搜尋">✕</button>
-      </div>
-
-      <div class="sort-menu-wrap" id="sort-menu-wrap">
-        <button type="button" class="sort-lines-btn" id="btn-sort-lines" onclick="toggleSortMenu(event)" title="排序方式">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-            <line x1="4" y1="6" x2="20" y2="6"></line>
-            <line x1="4" y1="12" x2="15" y2="12"></line>
-            <line x1="4" y1="18" x2="10" y2="18"></line>
-          </svg>
-        </button>
-        <div class="sort-dropdown-menu" id="sort-dropdown-menu">
-          <button type="button" class="sort-menu-item active" id="sort-opt-time_desc" onclick="selectSortOption('time_desc')">
-            <span>時間：近 ➔ 遠</span><span class="sort-check">✓</span>
+        <div class="sort-menu-wrap" id="sort-menu-wrap">
+          <button type="button" class="sort-lines-btn" id="btn-sort-lines" onclick="toggleSortMenu(event)" title="排序方式">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+              <line x1="4" y1="6" x2="20" y2="6"></line>
+              <line x1="4" y1="12" x2="15" y2="12"></line>
+              <line x1="4" y1="18" x2="10" y2="18"></line>
+            </svg>
           </button>
-          <button type="button" class="sort-menu-item" id="sort-opt-time_asc" onclick="selectSortOption('time_asc')">
-            <span>時間：遠 ➔ 近</span><span class="sort-check"></span>
-          </button>
-          <button type="button" class="sort-menu-item" id="sort-opt-amount_desc" onclick="selectSortOption('amount_desc')">
-            <span>金額：高 ➔ 低</span><span class="sort-check"></span>
-          </button>
-          <button type="button" class="sort-menu-item" id="sort-opt-amount_asc" onclick="selectSortOption('amount_asc')">
-            <span>金額：低 ➔ 高</span><span class="sort-check"></span>
-          </button>
+          <div class="sort-dropdown-menu" id="sort-dropdown-menu">
+            <button type="button" class="sort-menu-item active" id="sort-opt-time_desc" onclick="selectSortOption('time_desc')">
+              <span>時間：近 ➔ 遠</span><span class="sort-check">✓</span>
+            </button>
+            <button type="button" class="sort-menu-item" id="sort-opt-time_asc" onclick="selectSortOption('time_asc')">
+              <span>時間：遠 ➔ 近</span><span class="sort-check"></span>
+            </button>
+            <button type="button" class="sort-menu-item" id="sort-opt-amount_desc" onclick="selectSortOption('amount_desc')">
+              <span>金額：高 ➔ 低</span><span class="sort-check"></span>
+            </button>
+            <button type="button" class="sort-menu-item" id="sort-opt-amount_asc" onclick="selectSortOption('amount_asc')">
+              <span>金額：低 ➔ 高</span><span class="sort-check"></span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="records-list" id="records-container"></div>
+      <div class="records-list" id="records-container"></div>
+    </div>
   </div>
 
   <!-- 快速點選切換分類 Sheet Modal -->
@@ -1614,7 +1687,9 @@
         </div>
 
         <div class="form-btn-group">
-          <button type="button" class="btn-del" id="form-del-btn" style="display:none;" onclick="handleDeleteCurrentRecord()">🗑️</button>
+          <button type="button" class="btn-del" id="form-del-btn" style="display:none; align-items:center; justify-content:center;" onclick="handleDeleteCurrentRecord()" title="刪除">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+          </button>
           <button type="button" class="btn-cancel" onclick="closeEditModal()">取消</button>
           <button type="submit" class="btn-submit" id="form-save-btn">儲存</button>
         </div>
@@ -1641,10 +1716,13 @@
     </div>
   </div>
 
-  <!-- ⚙️ 頁面設定 Modal -->
+  <!-- 頁面設定 Modal -->
   <div class="edit-modal-overlay" id="settings-modal" onclick="closeSettingsModal(event)">
     <div class="edit-modal" onclick="event.stopPropagation()">
-      <h3 style="margin-bottom:14px; font-size:1.1rem;" id="settings-modal-heading">⚙️ 頁面設定</h3>
+      <h3 style="margin-bottom:14px; font-size:1.1rem; display:flex; align-items:center; gap:7px;" id="settings-modal-heading">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <span>頁面設定</span>
+      </h3>
 
       <div class="settings-accordion">
         <!-- 欄位 1：背景樣式顏色（點開才展開 5 種色系選項） -->
@@ -1730,12 +1808,12 @@
     </div>
   </div>
 
-  <!-- 🩺 除錯與重複偵測中心 Modal -->
+  <!-- 除錯與重複偵測中心 Modal -->
   <div class="audit-modal-overlay" id="audit-modal" onclick="closeAuditModal(event)">
     <div class="audit-modal-card" onclick="event.stopPropagation()">
       <div class="audit-header">
-        <h3 style="font-size:1.05rem; font-weight:800; display:flex; align-items:center; gap:6px;">
-          <span>🩺</span>
+        <h3 style="font-size:1.05rem; font-weight:800; display:flex; align-items:center; gap:7px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="8 12 10.5 12 12 9 14 15 15.5 12 17 12"></polyline></svg>
           <span>除錯與重複偵測中心</span>
         </h3>
         <button type="button" class="icon-btn" style="width:30px; height:30px; font-size:0.9rem;" onclick="closeAuditModal()">✕</button>
@@ -2405,7 +2483,9 @@
       }
 
       const debtBtnHtml = !isInc
-        ? `<button type="button" class="act-icon-xs" title="欠錢" onclick="event.stopPropagation(); openDebtSplitModal(${poolIdx})">💸</button>`
+        ? `<button type="button" class="act-icon-xs" title="欠錢" onclick="event.stopPropagation(); openDebtSplitModal(${poolIdx})">
+             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M14.8 9A2 2 0 0 0 13 8h-2a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4h-2a2 2 0 0 1-1.8-1"></path><line x1="12" y1="6" x2="12" y2="18"></line></svg>
+           </button>`
         : "";
 
       return `
@@ -2422,8 +2502,12 @@
             <div class="rec-slim-right">
               <div class="rec-inline-actions" onclick="event.stopPropagation()">
                 ${debtBtnHtml}
-                <button type="button" class="act-icon-xs" title="編輯" onclick="event.stopPropagation(); openEditModal(${poolIdx})">✏️</button>
-                <button type="button" class="act-icon-xs del" title="刪除" onclick="event.stopPropagation(); quickDeleteRecord(${poolIdx})">🗑️</button>
+                <button type="button" class="act-icon-xs" title="編輯" onclick="event.stopPropagation(); openEditModal(${poolIdx})">
+                  <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                </button>
+                <button type="button" class="act-icon-xs del" title="刪除" onclick="event.stopPropagation(); quickDeleteRecord(${poolIdx})">
+                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+                </button>
               </div>
               <div class="${amtClass}">${amtStr}</div>
             </div>
@@ -2665,8 +2749,8 @@
       refreshView();
     }
 
-    // 導航切換：上一期 (-1) 或 下一期 (+1)
-    function navigateStep(direction) {
+    // 實際更新時間與重繪畫面
+    function applyNavigateStep(direction) {
       const parts = currentTimeKey.split("/").map(Number);
       if (currentDimension === "day") {
         const d = new Date(parts[0], parts[1] - 1, parts[2] + direction);
@@ -2702,41 +2786,165 @@
       refreshView();
     }
 
-    // 📱 手勢向左/向右滑動切換
+    let isAnimatingSwipe = false;
+
+    // 導航切換：上一期 (-1) 或 下一期 (+1)，附帶流暢水平滑頁動畫
+    function navigateStep(direction) {
+      const stage = document.getElementById("swipe-stage");
+      if (!stage || isAnimatingSwipe) {
+        applyNavigateStep(direction);
+        return;
+      }
+      isAnimatingSwipe = true;
+      // direction === 1 (下一天)：畫面往左滑出 (-64px)，新畫面從右側 (+64px) 滑入
+      // direction === -1 (上一天)：畫面往右滑出 (+64px)，新畫面從左側 (-64px) 滑入
+      const outX = direction > 0 ? -64 : 64;
+      const inX = direction > 0 ? 64 : -64;
+
+      stage.style.transition = "transform 0.14s cubic-bezier(0.4, 0, 1, 1), opacity 0.14s ease";
+      stage.style.transform = `translate3d(${outX}px, 0, 0)`;
+      stage.style.opacity = "0.18";
+
+      setTimeout(function() {
+        applyNavigateStep(direction);
+        stage.style.transition = "none";
+        stage.style.transform = `translate3d(${inX}px, 0, 0)`;
+        stage.style.opacity = "0.18";
+        void stage.offsetWidth; // 強制瀏覽器重繪以觸發下一段滑入動畫
+
+        stage.style.transition = "transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease";
+        stage.style.transform = "translate3d(0, 0, 0)";
+        stage.style.opacity = "1";
+
+        setTimeout(function() {
+          stage.style.transition = "";
+          stage.style.transform = "";
+          stage.style.opacity = "";
+          isAnimatingSwipe = false;
+        }, 250);
+      }, 135);
+    }
+
+    // 📱 手勢向左/向右跟手拖曳與動態滑頁切換
     function bindSwipeGestures() {
       let touchStartX = 0;
       let touchStartY = 0;
       let touchStartTime = 0;
+      let isDraggingHorizontal = false;
+      let directionLocked = false;
+
+      function isAnyOverlayOpen() {
+        return (
+          document.getElementById("category-sheet-overlay").classList.contains("open") ||
+          document.getElementById("edit-modal").classList.contains("open") ||
+          document.getElementById("split-debt-modal").classList.contains("open") ||
+          document.getElementById("settings-modal").classList.contains("open") ||
+          document.getElementById("audit-modal").classList.contains("open")
+        );
+      }
 
       document.addEventListener("touchstart", function(e) {
-        if (!e.touches || e.touches.length === 0) return;
+        if (!e.touches || e.touches.length !== 1 || isAnimatingSwipe || isAnyOverlayOpen()) return;
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : "";
+        if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         touchStartTime = Date.now();
+        isDraggingHorizontal = false;
+        directionLocked = false;
+      }, { passive: true });
+
+      document.addEventListener("touchmove", function(e) {
+        if (!e.touches || e.touches.length !== 1 || isAnimatingSwipe || !touchStartTime) return;
+        const dx = e.touches[0].clientX - touchStartX;
+        const dy = e.touches[0].clientY - touchStartY;
+
+        if (!directionLocked) {
+          if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+          directionLocked = true;
+          isDraggingHorizontal = Math.abs(dx) > Math.abs(dy) * 1.15;
+        }
+
+        if (!isDraggingHorizontal) return;
+        const stage = document.getElementById("swipe-stage");
+        if (!stage) return;
+
+        // 讓畫面即時跟著手指水平滑動（帶柔順阻尼感）
+        const dampedX = Math.max(-130, Math.min(130, dx * 0.52));
+        const fade = Math.max(0.45, 1 - Math.abs(dampedX) / 240);
+        stage.style.transition = "none";
+        stage.style.transform = `translate3d(${dampedX}px, 0, 0)`;
+        stage.style.opacity = String(fade);
       }, { passive: true });
 
       document.addEventListener("touchend", function(e) {
-        if (!e.changedTouches || e.changedTouches.length === 0) return;
-        const deltaX = e.changedTouches[0].clientX - touchStartX;
-        const deltaY = e.changedTouches[0].clientY - touchStartY;
+        if (!touchStartTime) return;
+        const stage = document.getElementById("swipe-stage");
+        const endTouch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+        const deltaX = endTouch ? (endTouch.clientX - touchStartX) : 0;
+        const deltaY = endTouch ? (endTouch.clientY - touchStartY) : 0;
         const elapsed = Date.now() - touchStartTime;
+        const wasHorizontal = isDraggingHorizontal;
+        touchStartTime = 0;
+        isDraggingHorizontal = false;
+        directionLocked = false;
 
-        // 若開啟了 Modal 或 Sheet 則不觸發切換
-        if (document.getElementById("category-sheet-overlay").classList.contains("open") ||
-            document.getElementById("edit-modal").classList.contains("open") ||
-            document.getElementById("split-debt-modal").classList.contains("open") ||
-            document.getElementById("settings-modal").classList.contains("open") ||
-            document.getElementById("audit-modal").classList.contains("open")) {
+        if (isAnyOverlayOpen()) {
+          if (stage) {
+            stage.style.transition = "";
+            stage.style.transform = "";
+            stage.style.opacity = "";
+          }
           return;
         }
 
-        // 判斷是否為水平滑動：滑動時間 < 600ms、水平位移 > 40px、且水平位移明顯大於垂直位移
-        if (elapsed < 600 && Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
-          if (deltaX < 0) {
-            navigateStep(1);  // 往左滑切到後一天/後一月
-          } else {
-            navigateStep(-1); // 往右滑切到前一天/前一月
+        const triggered = wasHorizontal && (
+          Math.abs(deltaX) > 52 ||
+          (elapsed < 450 && Math.abs(deltaX) > 34 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2)
+        );
+
+        if (triggered) {
+          const direction = deltaX < 0 ? 1 : -1;
+          if (!stage) {
+            applyNavigateStep(direction);
+            return;
           }
+          isAnimatingSwipe = true;
+          const outX = direction > 0 ? -95 : 95;
+          const inX = direction > 0 ? 75 : -75;
+
+          stage.style.transition = "transform 0.13s cubic-bezier(0.4, 0, 1, 1), opacity 0.13s ease";
+          stage.style.transform = `translate3d(${outX}px, 0, 0)`;
+          stage.style.opacity = "0.12";
+
+          setTimeout(function() {
+            applyNavigateStep(direction);
+            stage.style.transition = "none";
+            stage.style.transform = `translate3d(${inX}px, 0, 0)`;
+            stage.style.opacity = "0.15";
+            void stage.offsetWidth;
+
+            stage.style.transition = "transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease";
+            stage.style.transform = "translate3d(0, 0, 0)";
+            stage.style.opacity = "1";
+
+            setTimeout(function() {
+              stage.style.transition = "";
+              stage.style.transform = "";
+              stage.style.opacity = "";
+              isAnimatingSwipe = false;
+            }, 250);
+          }, 125);
+        } else if (stage && wasHorizontal) {
+          // 未達切換門檻時，平滑彈回原位
+          stage.style.transition = "transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease";
+          stage.style.transform = "translate3d(0, 0, 0)";
+          stage.style.opacity = "1";
+          setTimeout(function() {
+            stage.style.transition = "";
+            stage.style.transform = "";
+            stage.style.opacity = "";
+          }, 210);
         }
       }, { passive: true });
     }
@@ -2870,7 +3078,7 @@
       const isoFormat = rawTime.replace(/\//g, "-").replace(" ", "T").slice(0, 16);
       document.getElementById("form-time").value = isoFormat;
 
-      document.getElementById("form-del-btn").style.display = "block";
+      document.getElementById("form-del-btn").style.display = "inline-flex";
       document.getElementById("edit-modal").classList.add("open");
     }
 
@@ -2957,20 +3165,21 @@
       if (!rowIndex || !confirm("確定要刪除這筆記帳紀錄嗎？")) return;
 
       const delBtn = document.getElementById("form-del-btn");
+      const trashSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>';
       delBtn.innerText = "刪除中...";
       delBtn.disabled = true;
       startProgress();
 
       google.script.run
         .withSuccessHandler(function() {
-          delBtn.innerText = "🗑️";
+          delBtn.innerHTML = trashSvg;
           delBtn.disabled = false;
           closeEditModal();
           triggerManualRefresh();
         })
         .withFailureHandler(function(err) {
           finishProgress();
-          delBtn.innerText = "🗑️";
+          delBtn.innerHTML = trashSvg;
           delBtn.disabled = false;
           alert("刪除失敗：" + err.message);
         })
@@ -3456,8 +3665,14 @@
               </div>
               <div class="audit-item-desc">${escapeHtml(item.reason)}</div>
               <div class="audit-item-btns">
-                <button type="button" class="rec-btn-mini" onclick="editAuditItem(${idx})">✏️ 編輯</button>
-                <button type="button" class="rec-btn-mini del" onclick="deleteDuplicateItem(${idx})">🗑️ 刪除此筆</button>
+                <button type="button" class="rec-btn-mini" onclick="editAuditItem(${idx})">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                  <span>編輯</span>
+                </button>
+                <button type="button" class="rec-btn-mini del" onclick="deleteDuplicateItem(${idx})">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+                  <span>刪除此筆</span>
+                </button>
               </div>
             </div>
           `).join("");
