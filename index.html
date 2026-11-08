@@ -2126,6 +2126,10 @@
       display: flex;
       flex-direction: column;
       position: relative;
+      touch-action: none;
+      cursor: crosshair;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .rep-curve-svg {
@@ -4942,6 +4946,9 @@
       renderReportModal();
     }
 
+    let isReportCurveDragging = false;
+    let lastScrubbedDayIdx = -1;
+
     function toggleReportBarDay(dateStr) {
       const targetKey = "bar_" + dateStr;
       const isCurrentlyOpen = !!expandedReportCats[targetKey];
@@ -4952,7 +4959,131 @@
       if (!isCurrentlyOpen) {
         expandedReportCats[targetKey] = true;
       }
+      lastScrubbedDayIdx = -1;
       renderReportModal();
+    }
+
+    function onReportCurvePointerDown(e) {
+      isReportCurveDragging = true;
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+      handleReportCurvePointer(e, true);
+    }
+
+    function onReportCurvePointerMove(e) {
+      // 支援滑鼠靠過去（hover）或按壓拖曳（drag / scrub）
+      handleReportCurvePointer(e, false);
+    }
+
+    function onReportCurvePointerUp(e) {
+      isReportCurveDragging = false;
+      try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (_) {}
+    }
+
+    function handleReportCurvePointer(e, isClick) {
+      if (!window.reportCurrentCtx || window.reportCurrentCtx.isWeekly) return;
+      const container = document.getElementById("rep-curve-chart-container");
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      if (rect.width <= 0) return;
+
+      const relX = e.clientX - rect.left;
+      const W = 340;
+      const pLeft = 8;
+      const pRight = 8;
+      const cW = W - pLeft - pRight;
+      
+      const svgX = (relX / rect.width) * W;
+      const ratio = (svgX - pLeft) / cW;
+      const N = window.reportCurrentCtx.bars.length;
+      const rawIdx = Math.round(ratio * (N - 1));
+      const dayIdx = Math.max(0, Math.min(N - 1, rawIdx));
+
+      if (isClick && dayIdx === lastScrubbedDayIdx) {
+        toggleReportBarDay(window.reportCurrentCtx.bars[dayIdx].fullDate);
+        lastScrubbedDayIdx = -1;
+        return;
+      }
+
+      if (dayIdx !== lastScrubbedDayIdx || isClick) {
+        lastScrubbedDayIdx = dayIdx;
+        selectReportDayByIndex(dayIdx);
+      }
+    }
+
+    function selectReportDayByIndex(dayIdx) {
+      const ctx = window.reportCurrentCtx;
+      if (!ctx || !ctx.bars || !ctx.bars[dayIdx]) return;
+      const b = ctx.bars[dayIdx];
+      const targetKey = "bar_" + b.fullDate;
+
+      Object.keys(expandedReportCats).forEach(k => {
+        if (k.startsWith("bar_")) delete expandedReportCats[k];
+      });
+      expandedReportCats[targetKey] = true;
+
+      const cursorGroup = document.getElementById("rep-curve-interactive-cursor");
+      const drawerContainer = document.getElementById("rep-chart-active-drawer");
+
+      if (cursorGroup && drawerContainer) {
+        const W = 340;
+        const H = 100;
+        const pLeft = 8;
+        const pRight = 8;
+        const pTop = 16;
+        const pBottom = 16;
+        const cW = W - pLeft - pRight;
+        const cH = H - pTop - pBottom;
+        const N = ctx.bars.length;
+        const maxBarAmt = Math.max(...ctx.bars.map(x => x.amt), 1);
+
+        const x = pLeft + (dayIdx * cW) / Math.max(1, N - 1);
+        const ratio = maxBarAmt > 0 ? (b.amt / maxBarAmt) : 0;
+        const y = pTop + cH - (ratio * cH);
+
+        const badgeX = Math.max(26, Math.min(W - 26, x));
+        const badgeY = Math.max(11, y - 8);
+        const valStr = b.amt > 0 ? (b.amt >= 10000 ? "$" + (b.amt / 1000).toFixed(1) + "k" : "$" + b.amt.toLocaleString()) : "$0";
+
+        cursorGroup.style.display = "block";
+        cursorGroup.innerHTML = `
+          <line x1="${x.toFixed(1)}" y1="${pTop - 4}" x2="${x.toFixed(1)}" y2="${(pTop + cH).toFixed(1)}" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="2.5,2.5" />
+          <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="var(--card)" stroke="var(--accent)" stroke-width="2.5" />
+          <g transform="translate(${badgeX.toFixed(1)}, ${badgeY.toFixed(1)})">
+            <rect x="-22" y="-12" width="44" height="15" rx="4" fill="var(--accent)" />
+            <text x="0" y="-1.5" text-anchor="middle" font-size="9" font-weight="800" fill="#ffffff">${valStr}</text>
+          </g>
+        `;
+
+        const dayRecordsMap = window.reportDayRecordsMap || {};
+        const dayRecs = (dayRecordsMap[b.fullDate] || []).slice().sort((p, q) => (Number(q.Amount) || 0) - (Number(p.Amount) || 0));
+        const dayRows = dayRecs.length === 0
+          ? `<div style="font-size:0.73rem;color:var(--text-muted);padding:4px 6px;">當日無支出紀錄</div>`
+          : dayRecs.map(r => {
+              const tStr = String(r["Recorded At"] || "").slice(11, 16) || r.Category || "";
+              const nStr = escapeHtml(r.note || r.Category || "項目");
+              const aNum = Math.round(Number(r.Amount) || 0);
+              return `
+                <div class="rep-cat-rec-mini-row">
+                  <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                    <span style="color:var(--text-muted);font-size:0.7rem;flex-shrink:0;">${escapeHtml(tStr)}</span>
+                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nStr}</span>
+                  </div>
+                  <span style="font-weight:800;flex-shrink:0;">$${aNum.toLocaleString()}</span>
+                </div>
+              `;
+            }).join("");
+
+        drawerContainer.style.display = "flex";
+        drawerContainer.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.76rem;font-weight:800;color:var(--text);">
+            <span>${b.fullDate}${b.wLbl ? " (" + b.wLbl + ")" : ""}</span>
+            <span style="color:var(--expense);font-weight:900;">$${(b.amt || 0).toLocaleString()}</span>
+          </div>
+          ${dayRows}
+        `;
+      } else {
+        renderReportModal();
+      }
     }
 
     function formatYAxis(amt) {
@@ -5255,9 +5386,13 @@
           ? (ctx.budget - ctx.currTotal >= 0 ? `預算剩 $${(ctx.budget - ctx.currTotal).toLocaleString()}` : `超支 $${Math.abs(ctx.budget - ctx.currTotal).toLocaleString()}`)
           : "未設定預算");
 
+      window.reportCurrentCtx = ctx;
+      window.reportDayRecordsMap = dayRecordsMap;
+      window.reportDaySumMap = daySumMap;
+
       // 找出當前被選取的單一日期（支援週報長條與月報曲線單選點擊）
       const maxBarAmt = Math.max(...ctx.bars.map(b => b.amt), 1);
-      let activeBarDrawerHtml = "";
+      let activeBarDrawerContent = "";
       const activeBarDayKey = Object.keys(expandedReportCats).find(k => k.startsWith("bar_") && expandedReportCats[k]);
       if (activeBarDayKey) {
         const activeDateStr = activeBarDayKey.replace("bar_", "");
@@ -5284,14 +5419,12 @@
               `;
             }).join("");
 
-        activeBarDrawerHtml = `
-          <div class="rep-cat-records-drawer" style="display:flex;margin-top:8px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.76rem;font-weight:800;color:var(--text);">
-              <span>${activeBarObj.fullDate}${activeBarObj.wLbl ? " (" + activeBarObj.wLbl + ")" : ""}</span>
-              <span style="color:var(--expense);font-weight:900;">$${(activeBarObj.amt || 0).toLocaleString()}</span>
-            </div>
-            ${dayRows}
+        activeBarDrawerContent = `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.76rem;font-weight:800;color:var(--text);width:100%;">
+            <span>${activeBarObj.fullDate}${activeBarObj.wLbl ? " (" + activeBarObj.wLbl + ")" : ""}</span>
+            <span style="color:var(--expense);font-weight:900;">$${(activeBarObj.amt || 0).toLocaleString()}</span>
           </div>
+          ${dayRows}
         `;
       }
 
@@ -5347,51 +5480,50 @@
         }
         const areaD = `${pathD} L ${points[points.length - 1].x.toFixed(1)} ${(pTop + cH).toFixed(1)} L ${points[0].x.toFixed(1)} ${(pTop + cH).toFixed(1)} Z`;
 
-        const colW = cW / Math.max(1, N - 1);
-        let overlayPointsHtml = "";
-        let hitRectsHtml = "";
-
-        points.forEach((pt) => {
-          const isSelected = !!expandedReportCats["bar_" + pt.b.fullDate];
-          const isPeak = pt.b.amt === maxBarAmt && pt.b.amt > 0;
-
-          if (isSelected) {
-            overlayPointsHtml += `
-              <line x1="${pt.x.toFixed(1)}" y1="${pTop - 4}" x2="${pt.x.toFixed(1)}" y2="${(pTop + cH).toFixed(1)}" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="2.5,2.5" />
-              <circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="4.5" fill="var(--card)" stroke="var(--accent)" stroke-width="2.5" />
-            `;
-            const badgeX = Math.max(26, Math.min(W - 26, pt.x));
-            const badgeY = Math.max(11, pt.y - 8);
-            const valStr = pt.b.amt >= 10000 ? "$" + (pt.b.amt / 1000).toFixed(1) + "k" : "$" + pt.b.amt.toLocaleString();
-            overlayPointsHtml += `
-              <g transform="translate(${badgeX.toFixed(1)}, ${badgeY.toFixed(1)})">
-                <rect x="-22" y="-12" width="44" height="15" rx="4" fill="var(--accent)" />
-                <text x="0" y="-1.5" text-anchor="middle" font-size="9" font-weight="800" fill="#ffffff">${valStr}</text>
-              </g>
-            `;
-          } else if (isPeak) {
-            overlayPointsHtml += `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="3" fill="#f97316" />`;
-          } else if (pt.b.isToday) {
-            overlayPointsHtml += `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="3" fill="var(--accent)" />`;
-          }
-
-          const hx = (pt.x - colW / 2).toFixed(1);
-          hitRectsHtml += `
-            <rect x="${hx}" y="0" width="${colW.toFixed(1)}" height="${H}" fill="transparent" cursor="pointer" onclick="toggleReportBarDay('${pt.b.fullDate}')">
-              <title>${pt.b.fullDate}: $${pt.b.amt.toLocaleString()}</title>
-            </rect>
+        // 浮動指示點與標籤
+        let cursorDisplay = "display:none;";
+        let cursorContent = "";
+        const activeBarIdx = activeBarDayKey ? ctx.bars.findIndex(b => "bar_" + b.fullDate === activeBarDayKey) : -1;
+        if (activeBarIdx >= 0) {
+          const pt = points[activeBarIdx];
+          cursorDisplay = "display:block;";
+          const badgeX = Math.max(26, Math.min(W - 26, pt.x));
+          const badgeY = Math.max(11, pt.y - 8);
+          const valStr = pt.b.amt > 0 ? (pt.b.amt >= 10000 ? "$" + (pt.b.amt / 1000).toFixed(1) + "k" : "$" + pt.b.amt.toLocaleString()) : "$0";
+          cursorContent = `
+            <line x1="${pt.x.toFixed(1)}" y1="${pTop - 4}" x2="${pt.x.toFixed(1)}" y2="${(pTop + cH).toFixed(1)}" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="2.5,2.5" />
+            <circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="4.5" fill="var(--card)" stroke="var(--accent)" stroke-width="2.5" />
+            <g transform="translate(${badgeX.toFixed(1)}, ${badgeY.toFixed(1)})">
+              <rect x="-22" y="-12" width="44" height="15" rx="4" fill="var(--accent)" />
+              <text x="0" y="-1.5" text-anchor="middle" font-size="9" font-weight="800" fill="#ffffff">${valStr}</text>
+            </g>
           `;
+        }
+
+        // 靜態峰值與今日指示點
+        let staticPointsHtml = "";
+        points.forEach((pt) => {
+          const isPeak = pt.b.amt === maxBarAmt && pt.b.amt > 0;
+          if (isPeak) {
+            staticPointsHtml += `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="3" fill="#f97316" />`;
+          } else if (pt.b.isToday) {
+            staticPointsHtml += `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="3" fill="var(--accent)" />`;
+          }
         });
 
-        // X 軸日期刻度
+        // X 軸日期刻度（若今日離標準刻度差距小於等於 1 天，如 9 號離 10 號太近，則刪除綠色今日刻度避免遮蔽）
         const isCurM = (reportMonthOffset === 0);
         const tNum = (new Date()).getDate();
-        const tickSet = new Set([1, 5, 10, 15, 20, 25, N]);
-        if (isCurM && tNum >= 1 && tNum <= N) tickSet.add(tNum);
+        const standardTicks = [1, 5, 10, 15, 20, 25, N];
+        const tickSet = new Set(standardTicks);
+        const isTooClose = standardTicks.some(k => k !== tNum && Math.abs(k - tNum) <= 1);
+        if (isCurM && tNum >= 1 && tNum <= N && !isTooClose) {
+          tickSet.add(tNum);
+        }
         const sortedTicks = Array.from(tickSet).sort((a, b) => a - b);
         const xTicksHtml = sortedTicks.map(dNum => {
           const pct = (((dNum - 1) / Math.max(1, N - 1)) * 100).toFixed(1);
-          const isT = isCurM && (dNum === tNum);
+          const isT = isCurM && (dNum === tNum) && !isTooClose;
           const lbl = isT ? `${dNum}(今)` : (dNum === 1 || dNum === N ? dNum + "日" : String(dNum));
           return `<span class="${isT ? 'today-marker' : ''}" style="left:${pct}%;">${lbl}</span>`;
         }).join("");
@@ -5403,7 +5535,11 @@
               <span>$${formatYAxis(Math.round(maxBarAmt / 2))}</span>
               <span>$0</span>
             </div>
-            <div class="rep-curve-chart-container">
+            <div class="rep-curve-chart-container" id="rep-curve-chart-container"
+                 onpointerdown="onReportCurvePointerDown(event)"
+                 onpointermove="onReportCurvePointerMove(event)"
+                 onpointerup="onReportCurvePointerUp(event)"
+                 onpointercancel="onReportCurvePointerUp(event)">
               <svg viewBox="0 0 ${W} ${H}" class="rep-curve-svg" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="repMonthlyGrad" x1="0" y1="0" x2="0" y2="1">
@@ -5416,8 +5552,8 @@
                 <line x1="${pLeft}" y1="${pTop + cH}" x2="${W - pRight}" y2="${pTop + cH}" stroke="var(--card-border)" stroke-width="1" />
                 <path d="${areaD}" fill="url(#repMonthlyGrad)" />
                 <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                ${overlayPointsHtml}
-                ${hitRectsHtml}
+                ${staticPointsHtml}
+                <g id="rep-curve-interactive-cursor" style="${cursorDisplay}">${cursorContent}</g>
               </svg>
               <div class="rep-curve-x-axis">${xTicksHtml}</div>
             </div>
@@ -5478,10 +5614,10 @@
             `;
           }).join("");
 
-      // 高頻習慣王 & 單日最高峰（保留表情符號，點擊原地展開下拉式明細）
+      // 最常消費類別 & 單日最高峰（移除表情符號，點擊原地展開下拉式明細）
       const topFreqCat = catDeltaList.slice().sort((a, b) => b.count - a.count)[0];
       const freqTitle = (topFreqCat && topFreqCat.count > 0)
-        ? `${(CATEGORY_META[topFreqCat.cat] || { icon: "📦" }).icon} ${topFreqCat.cat}`
+        ? topFreqCat.cat
         : "尚無紀錄";
       const freqDetail = (topFreqCat && topFreqCat.count > 0)
         ? `共 ${topFreqCat.count} 筆・$${topFreqCat.curr.toLocaleString()}`
@@ -5509,7 +5645,7 @@
         .map(d => ({ fullDate: d, amt: Math.round(daySumMap[d]) }))
         .sort((a, b) => b.amt - a.amt)[0];
 
-      let secondBoxLbl = "🔥 單日最高峰";
+      let secondBoxLbl = "單日最高峰";
       let secondBoxTitle = "尚無花費";
       let secondBoxDetail = "$0";
       let peakDrawerHtml = "";
@@ -5623,10 +5759,11 @@
         <div class="rep-section-card">
           <div class="rep-sec-title">
             <span>${isWeekly ? "週一 ～ 週日 花費分佈" : "當月每日花費分佈"}</span>
-            <span class="rep-sec-sub">${isWeekly ? "點擊長條看當日" : "點擊曲線看當日"}</span>
           </div>
           ${chartHtml}
-          ${activeBarDrawerHtml}
+          <div id="rep-chart-active-drawer" class="rep-cat-records-drawer" style="${activeBarDrawerContent ? 'display:flex;' : 'display:none;'}margin-top:8px;">
+            ${activeBarDrawerContent}
+          </div>
         </div>
 
         <div class="rep-section-card">
@@ -5642,7 +5779,7 @@
           </div>
           <div class="rep-highlights-grid">
             <div class="rep-mini-stat-box rep-clickable-card" onclick="toggleReportCatExpand('hl_freq')">
-              <span class="rep-mini-stat-lbl">🔁 最常消費類別</span>
+              <span class="rep-mini-stat-lbl">最常消費類別</span>
               <span class="rep-mini-stat-val">${freqTitle}</span>
               <span style="font-size:0.72rem;color:var(--text-muted);">${freqDetail}</span>
             </div>
