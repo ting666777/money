@@ -2019,10 +2019,20 @@
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
-      height: 108px;
+      height: 112px;
       padding-top: 18px;
       gap: 6px;
       border-bottom: 1px solid var(--card-border);
+    }
+
+    .rep-bar-chart.monthly-daily {
+      justify-content: flex-start;
+      overflow-x: auto;
+      overflow-y: hidden;
+      gap: 5px;
+      padding-bottom: 6px;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
     }
 
     .rep-bar-col {
@@ -2033,14 +2043,36 @@
       height: 100%;
       justify-content: flex-end;
       gap: 4px;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 2px 1px 0;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+
+    .rep-bar-col:hover,
+    .rep-bar-col.active-bar {
+      background: var(--bg);
+    }
+
+    .rep-bar-col.active-bar {
+      box-shadow: inset 0 0 0 1.5px var(--accent);
+    }
+
+    .rep-bar-chart.monthly-daily .rep-bar-col {
+      flex: 0 0 34px;
+      min-width: 34px;
     }
 
     .rep-bar-val {
-      font-size: 0.64rem;
+      font-size: 0.62rem;
       font-weight: 700;
       color: var(--text-muted);
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
+    }
+
+    .rep-bar-val.dim {
+      opacity: 0.35;
     }
 
     .rep-bar-fill {
@@ -2051,6 +2083,10 @@
       opacity: 0.75;
       transition: height 0.25s ease;
       min-height: 4px;
+    }
+
+    .rep-bar-chart.monthly-daily .rep-bar-fill {
+      max-width: 20px;
     }
 
     .rep-bar-fill.peak {
@@ -2064,11 +2100,24 @@
       height: 4px !important;
     }
 
+    .rep-bar-fill.future {
+      background: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(148, 163, 184, 0.15) 2px, rgba(148, 163, 184, 0.15) 4px);
+      height: 4px !important;
+    }
+
     .rep-bar-lbl {
       font-size: 0.7rem;
       font-weight: 800;
       color: var(--text-muted);
       padding-top: 4px;
+    }
+
+    .rep-bar-col.today .rep-bar-lbl {
+      color: var(--accent);
+      font-weight: 900;
+      background: rgba(99, 102, 241, 0.14);
+      padding: 1px 4px;
+      border-radius: 4px;
     }
 
     .rep-cat-delta-list {
@@ -4964,7 +5013,8 @@
           const dObj = new Date(currRange.mon.getFullYear(), currRange.mon.getMonth(), currRange.mon.getDate() + i);
           const dStr = formatYMD(dObj);
           const dSum = Math.round(currRecs.reduce((s, r) => String(r["Recorded At"] || "").slice(0, 10) === dStr ? s + (Number(r.Amount) || 0) : s, 0));
-          dailyBars.push({ lbl: dayNames[i], dateStr: formatMD(dObj), fullDate: dStr, amt: dSum });
+          const isToday = (reportWeekOffset === 0 && dStr === todayStr);
+          dailyBars.push({ lbl: dayNames[i], dateStr: formatMD(dObj), fullDate: dStr, amt: dSum, isToday });
         }
 
         const isPartialWeek = (reportWeekOffset === 0 && elapsedDaysInWeek < 7);
@@ -5021,19 +5071,23 @@
         const userCfg = userSettingsMap[currentUser] || {};
         const budget = Number(userCfg.monthlyBudget) || 0;
 
-        const weekBuckets = [
-          { lbl: "1~7日", amt: 0 },
-          { lbl: "8~14日", amt: 0 },
-          { lbl: "15~21日", amt: 0 },
-          { lbl: "22~28日", amt: 0 },
-          { lbl: "29日~", amt: 0 }
-        ];
-        currRecs.forEach(r => {
-          const dayNum = parseInt(String(r["Recorded At"] || "").slice(8, 10), 10) || 1;
-          const idx = Math.min(4, Math.floor((dayNum - 1) / 7));
-          weekBuckets[idx].amt += (Number(r.Amount) || 0);
-        });
-        weekBuckets.forEach(b => { b.amt = Math.round(b.amt); });
+        // 當月每日 (1日 ~ 28/30/31日) 花費分佈
+        const dailyBars = [];
+        const isCurrentMonth = (reportMonthOffset === 0);
+        const todayNum = now.getDate();
+        for (let d = 1; d <= totalDaysInMonth; d++) {
+          const dStr = `${currYM}/${String(d).padStart(2, "0")}`;
+          const dSum = Math.round(currRecs.reduce((s, r) => String(r["Recorded At"] || "").slice(0, 10) === dStr ? s + (Number(r.Amount) || 0) : s, 0));
+          const isToday = isCurrentMonth && (d === todayNum);
+          dailyBars.push({
+            lbl: isToday ? "今" : `${d}`,
+            dayNum: d,
+            fullDate: dStr,
+            amt: dSum,
+            isToday,
+            isFuture: isCurrentMonth && (d > todayNum)
+          });
+        }
 
         renderReportContent(body, {
           isWeekly: false,
@@ -5046,7 +5100,7 @@
           prevTotal,
           budget,
           dailyAvg: Math.round(currTotal / elapsedDays),
-          bars: weekBuckets,
+          bars: dailyBars,
           currRecs,
           prevRecs
         });
@@ -5070,6 +5124,19 @@
           ? `▲ +$${diff.toLocaleString()} (+${pct}%)`
           : `▼ -$${Math.abs(diff).toLocaleString()} (-${pct}%)`);
 
+      // 每日消費彙整地圖（供柱狀圖點擊與單日最高峰使用）
+      const daySumMap = {};
+      const dayRecordsMap = {};
+      ctx.currRecs.forEach(r => {
+        const d = String(r["Recorded At"] || "").slice(0, 10);
+        if (d) {
+          daySumMap[d] = (daySumMap[d] || 0) + (Number(r.Amount) || 0);
+          if (!dayRecordsMap[d]) dayRecordsMap[d] = [];
+          dayRecordsMap[d].push(r);
+        }
+      });
+
+      // 各類別本期 vs 上期統計
       const catSet = new Set();
       const currCatMap = {};
       const prevCatMap = {};
@@ -5099,6 +5166,7 @@
         records: (currCatRecords[cat] || []).slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0))
       })).sort((a, b) => (b.curr - a.curr) || (b.prev - a.prev));
 
+      // 找出增加最多與減少最多的類別（用於第一區塊圖像化小卡）
       const mostGrown = catDeltaList.slice().sort((a, b) => b.diff - a.diff)[0];
       const mostSaved = catDeltaList.slice().sort((a, b) => a.diff - b.diff)[0];
       const swingUpHtml = (mostGrown && mostGrown.diff > 0)
@@ -5118,19 +5186,67 @@
           ? (ctx.budget - ctx.currTotal >= 0 ? `預算剩 $${(ctx.budget - ctx.currTotal).toLocaleString()}` : `超支 $${Math.abs(ctx.budget - ctx.currTotal).toLocaleString()}`)
           : "未設定預算");
 
+      // 柱狀圖 HTML（支援點擊長條原地展開當日消費明細抽屜）
       const maxBarAmt = Math.max(...ctx.bars.map(b => b.amt), 1);
+      let activeBarDrawerHtml = "";
+
       const barsHtml = ctx.bars.map(b => {
         const hPx = b.amt === 0 ? 4 : Math.max(12, Math.round((b.amt / maxBarAmt) * 76));
         const isPeak = b.amt === maxBarAmt && b.amt > 0;
+        const barKey = "bar_" + b.fullDate;
+        const isBarExp = !!expandedReportCats[barKey];
+
+        if (isBarExp) {
+          const dayRecs = (dayRecordsMap[b.fullDate] || []).slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0));
+          const dayRows = dayRecs.length === 0
+            ? `<div style="font-size:0.73rem;color:var(--text-muted);padding:4px 6px;">當日無支出紀錄</div>`
+            : dayRecs.map(r => {
+                const tStr = String(r["Recorded At"] || "").slice(11, 16) || r.Category || "";
+                const nStr = escapeHtml(r.note || r.Category || "項目");
+                const aNum = Math.round(Number(r.Amount) || 0);
+                return `
+                  <div class="rep-cat-rec-mini-row">
+                    <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                      <span style="color:var(--text-muted);font-size:0.7rem;flex-shrink:0;">${escapeHtml(tStr)}</span>
+                      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nStr}</span>
+                    </div>
+                    <span style="font-weight:800;flex-shrink:0;">$${aNum.toLocaleString()}</span>
+                  </div>
+                `;
+              }).join("");
+
+          activeBarDrawerHtml = `
+            <div class="rep-cat-records-drawer" style="display:flex;margin-top:8px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.76rem;font-weight:800;color:var(--text);">
+                <span>📅 ${b.fullDate} 消費明細</span>
+                <span style="color:var(--expense);">$${b.amt.toLocaleString()}</span>
+              </div>
+              ${dayRows}
+            </div>
+          `;
+        }
+
+        const valText = b.amt > 0
+          ? (b.amt >= 10000 ? "$" + (b.amt / 1000).toFixed(1) + "k" : "$" + b.amt.toLocaleString())
+          : "-";
+
+        let fillClass = "";
+        if (b.amt === 0) {
+          fillClass = b.isFuture ? "future" : "zero";
+        } else if (isPeak) {
+          fillClass = "peak";
+        }
+
         return `
-          <div class="rep-bar-col">
-            <span class="rep-bar-val">${b.amt > 0 ? "$" + b.amt.toLocaleString() : "0"}</span>
-            <div class="rep-bar-fill ${b.amt === 0 ? "zero" : (isPeak ? "peak" : "")}" style="height:${hPx}px;"></div>
+          <div class="rep-bar-col ${b.isToday ? "today" : ""} ${isBarExp ? "active-bar" : ""}" onclick="toggleReportCatExpand('${barKey}')" title="${b.fullDate}: $${b.amt.toLocaleString()}">
+            <span class="rep-bar-val ${b.amt === 0 ? "dim" : ""}">${valText}</span>
+            <div class="rep-bar-fill ${fillClass}" style="height:${hPx}px;"></div>
             <span class="rep-bar-lbl">${b.lbl}</span>
           </div>
         `;
       }).join("");
 
+      // 類別漲跌比較 HTML（移除類別表情符號，點擊類別可展開查看該類別的消費明細）
       const maxCatAmt = Math.max(...catDeltaList.map(c => Math.max(c.curr, c.prev)), 1);
       const catDeltaHtml = catDeltaList.length === 0
         ? `<div style="text-align:center;color:var(--text-muted);font-size:0.8rem;padding:8px;">尚無分類消費資料</div>`
@@ -5183,6 +5299,7 @@
             `;
           }).join("");
 
+      // 高頻習慣王 & 單日最高峰（保留表情符號，點擊原地展開下拉式明細）
       const topFreqCat = catDeltaList.slice().sort((a, b) => b.count - a.count)[0];
       const freqTitle = (topFreqCat && topFreqCat.count > 0)
         ? `${(CATEGORY_META[topFreqCat.cat] || { icon: "📦" }).icon} ${topFreqCat.cat}`
@@ -5208,16 +5325,7 @@
           }).join("")
         : "";
 
-      const daySumMap = {};
-      const dayRecordsMap = {};
-      ctx.currRecs.forEach(r => {
-        const d = String(r["Recorded At"] || "").slice(0, 10);
-        if (d) {
-          daySumMap[d] = (daySumMap[d] || 0) + (Number(r.Amount) || 0);
-          if (!dayRecordsMap[d]) dayRecordsMap[d] = [];
-          dayRecordsMap[d].push(r);
-        }
-      });
+      // 找出本期單日最高峰（點擊原地展開當天所有消費明細）
       const peakDayEntry = Object.keys(daySumMap)
         .map(d => ({ fullDate: d, amt: Math.round(daySumMap[d]) }))
         .sort((a, b) => b.amt - a.amt)[0];
@@ -5251,6 +5359,7 @@
         }).join("");
       }
 
+      // Top 3 單筆最高消費（去掉類別表情符號，點擊原地展開下拉明細）
       const top3Recs = ctx.currRecs.slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0)).slice(0, 3);
       const topItemsHtml = top3Recs.length === 0
         ? `<div style="text-align:center;color:var(--text-muted);font-size:0.78rem;padding:6px;">尚無單筆消費排行</div>`
@@ -5334,9 +5443,11 @@
 
         <div class="rep-section-card">
           <div class="rep-sec-title">
-            <span>${isWeekly ? "週一 ～ 週日 花費分佈" : "當月各週花費節奏"}</span>
+            <span>${isWeekly ? "週一 ～ 週日 花費分佈" : "當月每日花費分佈"}</span>
+            <span class="rep-sec-sub">${isWeekly ? "點擊長條看當日" : "左右滑動 · 點擊看當日"}</span>
           </div>
-          <div class="rep-bar-chart">${barsHtml}</div>
+          <div class="rep-bar-chart ${isWeekly ? "" : "monthly-daily"}" id="rep-bar-chart-container">${barsHtml}</div>
+          ${activeBarDrawerHtml}
         </div>
 
         <div class="rep-section-card">
@@ -5367,6 +5478,19 @@
           <div class="rep-top-list">${topItemsHtml}</div>
         </div>
       `;
+
+      // 若為月報，自動平滑滾動到「今日」或「最高峰日」方便檢視
+      if (!isWeekly) {
+        setTimeout(() => {
+          const chartEl = document.getElementById("rep-bar-chart-container");
+          if (chartEl) {
+            const targetCol = chartEl.querySelector(".rep-bar-col.today") || chartEl.querySelector(".rep-bar-col.active-bar") || chartEl.querySelector(".rep-bar-col.peak");
+            if (targetCol) {
+              chartEl.scrollLeft = targetCol.offsetLeft - (chartEl.clientWidth / 2) + (targetCol.clientWidth / 2);
+            }
+          }
+        }, 50);
+      }
     }
   </script>
 </body>
