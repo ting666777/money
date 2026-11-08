@@ -2025,16 +2025,6 @@
       border-bottom: 1px solid var(--card-border);
     }
 
-    .rep-bar-chart.monthly-daily {
-      justify-content: flex-start;
-      overflow-x: auto;
-      overflow-y: hidden;
-      gap: 5px;
-      padding-bottom: 6px;
-      scrollbar-width: thin;
-      -webkit-overflow-scrolling: touch;
-    }
-
     .rep-bar-col {
       flex: 1;
       display: flex;
@@ -2056,11 +2046,6 @@
 
     .rep-bar-col.active-bar {
       box-shadow: inset 0 0 0 1.5px var(--accent);
-    }
-
-    .rep-bar-chart.monthly-daily .rep-bar-col {
-      flex: 0 0 34px;
-      min-width: 34px;
     }
 
     .rep-bar-val {
@@ -2085,10 +2070,6 @@
       min-height: 4px;
     }
 
-    .rep-bar-chart.monthly-daily .rep-bar-fill {
-      max-width: 20px;
-    }
-
     .rep-bar-fill.peak {
       background: #f97316;
       opacity: 1;
@@ -2097,11 +2078,6 @@
 
     .rep-bar-fill.zero {
       background: rgba(148, 163, 184, 0.22);
-      height: 4px !important;
-    }
-
-    .rep-bar-fill.future {
-      background: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(148, 163, 184, 0.15) 2px, rgba(148, 163, 184, 0.15) 4px);
       height: 4px !important;
     }
 
@@ -2118,6 +2094,74 @@
       background: rgba(99, 102, 241, 0.14);
       padding: 1px 4px;
       border-radius: 4px;
+    }
+
+    /* 月報 SVG 曲線走勢圖與 Y 軸樣式 */
+    .rep-curve-card-wrapper {
+      display: flex;
+      align-items: stretch;
+      gap: 6px;
+      padding: 6px 0 4px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .rep-y-axis {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 44px;
+      min-width: 44px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      padding-bottom: 22px;
+      padding-top: 10px;
+    }
+
+    .rep-curve-chart-container {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .rep-curve-svg {
+      width: 100%;
+      height: 105px;
+      overflow: visible;
+      display: block;
+    }
+
+    .rep-curve-x-axis {
+      position: relative;
+      height: 18px;
+      margin-top: 4px;
+      width: 100%;
+    }
+
+    .rep-curve-x-axis span {
+      position: absolute;
+      transform: translateX(-50%);
+      font-size: 0.64rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .rep-curve-x-axis span:first-child {
+      transform: translateX(0);
+    }
+
+    .rep-curve-x-axis span:last-child {
+      transform: translateX(-100%);
+    }
+
+    .rep-curve-x-axis span.today-marker {
+      color: var(--accent);
+      font-weight: 900;
     }
 
     .rep-cat-delta-list {
@@ -4898,6 +4942,27 @@
       renderReportModal();
     }
 
+    function toggleReportBarDay(dateStr) {
+      const targetKey = "bar_" + dateStr;
+      const isCurrentlyOpen = !!expandedReportCats[targetKey];
+      // 清除其他長條/日期的選取狀態，保持單選
+      Object.keys(expandedReportCats).forEach(k => {
+        if (k.startsWith("bar_")) delete expandedReportCats[k];
+      });
+      if (!isCurrentlyOpen) {
+        expandedReportCats[targetKey] = true;
+      }
+      renderReportModal();
+    }
+
+    function formatYAxis(amt) {
+      if (!amt || amt <= 0) return "0";
+      if (amt >= 1000000) return (amt / 1000000).toFixed(1) + "M";
+      if (amt >= 100000) return Math.round(amt / 1000) + "k";
+      if (amt >= 10000) return (amt / 1000).toFixed(1) + "k";
+      return amt.toLocaleString();
+    }
+
     // 點擊單日最高峰或 Top 1~3 項目 -> 關閉財報並直接跳到「那一天」
     function jumpToReportDate(dateYMD) {
       if (!dateYMD || dateYMD.length < 10) return;
@@ -5008,13 +5073,14 @@
         }
         const avg4Weeks = count4W > 0 ? Math.round(sum4W / count4W) : prevTotal;
 
+        // 週一～週日 7 天柱狀圖
         const dailyBars = [];
         for (let i = 0; i < 7; i++) {
           const dObj = new Date(currRange.mon.getFullYear(), currRange.mon.getMonth(), currRange.mon.getDate() + i);
           const dStr = formatYMD(dObj);
           const dSum = Math.round(currRecs.reduce((s, r) => String(r["Recorded At"] || "").slice(0, 10) === dStr ? s + (Number(r.Amount) || 0) : s, 0));
           const isToday = (reportWeekOffset === 0 && dStr === todayStr);
-          dailyBars.push({ lbl: dayNames[i], dateStr: formatMD(dObj), fullDate: dStr, amt: dSum, isToday });
+          dailyBars.push({ lbl: dayNames[i], wLbl: "週" + dayNames[i], dateStr: formatMD(dObj), fullDate: dStr, amt: dSum, isToday });
         }
 
         const isPartialWeek = (reportWeekOffset === 0 && elapsedDaysInWeek < 7);
@@ -5075,12 +5141,15 @@
         const dailyBars = [];
         const isCurrentMonth = (reportMonthOffset === 0);
         const todayNum = now.getDate();
+        const wNames = ["日", "一", "二", "三", "四", "五", "六"];
         for (let d = 1; d <= totalDaysInMonth; d++) {
+          const dObj = new Date(targetDate.getFullYear(), targetDate.getMonth(), d);
           const dStr = `${currYM}/${String(d).padStart(2, "0")}`;
           const dSum = Math.round(currRecs.reduce((s, r) => String(r["Recorded At"] || "").slice(0, 10) === dStr ? s + (Number(r.Amount) || 0) : s, 0));
           const isToday = isCurrentMonth && (d === todayNum);
           dailyBars.push({
             lbl: isToday ? "今" : `${d}`,
+            wLbl: "週" + wNames[dObj.getDay()],
             dayNum: d,
             fullDate: dStr,
             amt: dSum,
@@ -5186,65 +5255,175 @@
           ? (ctx.budget - ctx.currTotal >= 0 ? `預算剩 $${(ctx.budget - ctx.currTotal).toLocaleString()}` : `超支 $${Math.abs(ctx.budget - ctx.currTotal).toLocaleString()}`)
           : "未設定預算");
 
-      // 柱狀圖 HTML（支援點擊長條原地展開當日消費明細抽屜）
+      // 找出當前被選取的單一日期（支援週報長條與月報曲線單選點擊）
       const maxBarAmt = Math.max(...ctx.bars.map(b => b.amt), 1);
       let activeBarDrawerHtml = "";
+      const activeBarDayKey = Object.keys(expandedReportCats).find(k => k.startsWith("bar_") && expandedReportCats[k]);
+      if (activeBarDayKey) {
+        const activeDateStr = activeBarDayKey.replace("bar_", "");
+        const activeBarObj = ctx.bars.find(b => b.fullDate === activeDateStr) || {
+          fullDate: activeDateStr,
+          amt: Math.round(daySumMap[activeDateStr] || 0)
+        };
+        const dayRecs = (dayRecordsMap[activeDateStr] || []).slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0));
 
-      const barsHtml = ctx.bars.map(b => {
-        const hPx = b.amt === 0 ? 4 : Math.max(12, Math.round((b.amt / maxBarAmt) * 76));
-        const isPeak = b.amt === maxBarAmt && b.amt > 0;
-        const barKey = "bar_" + b.fullDate;
-        const isBarExp = !!expandedReportCats[barKey];
-
-        if (isBarExp) {
-          const dayRecs = (dayRecordsMap[b.fullDate] || []).slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0));
-          const dayRows = dayRecs.length === 0
-            ? `<div style="font-size:0.73rem;color:var(--text-muted);padding:4px 6px;">當日無支出紀錄</div>`
-            : dayRecs.map(r => {
-                const tStr = String(r["Recorded At"] || "").slice(11, 16) || r.Category || "";
-                const nStr = escapeHtml(r.note || r.Category || "項目");
-                const aNum = Math.round(Number(r.Amount) || 0);
-                return `
-                  <div class="rep-cat-rec-mini-row">
-                    <div style="display:flex;align-items:center;gap:6px;min-width:0;">
-                      <span style="color:var(--text-muted);font-size:0.7rem;flex-shrink:0;">${escapeHtml(tStr)}</span>
-                      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nStr}</span>
-                    </div>
-                    <span style="font-weight:800;flex-shrink:0;">$${aNum.toLocaleString()}</span>
+        const dayRows = dayRecs.length === 0
+          ? `<div style="font-size:0.73rem;color:var(--text-muted);padding:4px 6px;">當日無支出紀錄</div>`
+          : dayRecs.map(r => {
+              const tStr = String(r["Recorded At"] || "").slice(11, 16) || r.Category || "";
+              const nStr = escapeHtml(r.note || r.Category || "項目");
+              const aNum = Math.round(Number(r.Amount) || 0);
+              return `
+                <div class="rep-cat-rec-mini-row">
+                  <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                    <span style="color:var(--text-muted);font-size:0.7rem;flex-shrink:0;">${escapeHtml(tStr)}</span>
+                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nStr}</span>
                   </div>
-                `;
-              }).join("");
+                  <span style="font-weight:800;flex-shrink:0;">$${aNum.toLocaleString()}</span>
+                </div>
+              `;
+            }).join("");
 
-          activeBarDrawerHtml = `
-            <div class="rep-cat-records-drawer" style="display:flex;margin-top:8px;">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.76rem;font-weight:800;color:var(--text);">
-                <span>📅 ${b.fullDate} 消費明細</span>
-                <span style="color:var(--expense);">$${b.amt.toLocaleString()}</span>
-              </div>
-              ${dayRows}
+        activeBarDrawerHtml = `
+          <div class="rep-cat-records-drawer" style="display:flex;margin-top:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.76rem;font-weight:800;color:var(--text);">
+              <span>${activeBarObj.fullDate}${activeBarObj.wLbl ? " (" + activeBarObj.wLbl + ")" : ""}</span>
+              <span style="color:var(--expense);font-weight:900;">$${(activeBarObj.amt || 0).toLocaleString()}</span>
             </div>
-          `;
-        }
-
-        const valText = b.amt > 0
-          ? (b.amt >= 10000 ? "$" + (b.amt / 1000).toFixed(1) + "k" : "$" + b.amt.toLocaleString())
-          : "-";
-
-        let fillClass = "";
-        if (b.amt === 0) {
-          fillClass = b.isFuture ? "future" : "zero";
-        } else if (isPeak) {
-          fillClass = "peak";
-        }
-
-        return `
-          <div class="rep-bar-col ${b.isToday ? "today" : ""} ${isBarExp ? "active-bar" : ""}" onclick="toggleReportCatExpand('${barKey}')" title="${b.fullDate}: $${b.amt.toLocaleString()}">
-            <span class="rep-bar-val ${b.amt === 0 ? "dim" : ""}">${valText}</span>
-            <div class="rep-bar-fill ${fillClass}" style="height:${hPx}px;"></div>
-            <span class="rep-bar-lbl">${b.lbl}</span>
+            ${dayRows}
           </div>
         `;
-      }).join("");
+      }
+
+      // 圖表 HTML：週報使用週一～週日 7 天柱狀圖；月報使用全月 1..30/31 日平滑曲線走勢圖 + 左側 Y 軸金額
+      let chartHtml = "";
+      if (isWeekly) {
+        const barsHtml = ctx.bars.map(b => {
+          const hPx = b.amt === 0 ? 4 : Math.max(12, Math.round((b.amt / maxBarAmt) * 76));
+          const isPeak = b.amt === maxBarAmt && b.amt > 0;
+          const barKey = "bar_" + b.fullDate;
+          const isBarExp = !!expandedReportCats[barKey];
+
+          const valText = b.amt > 0
+            ? (b.amt >= 10000 ? "$" + (b.amt / 1000).toFixed(1) + "k" : "$" + b.amt.toLocaleString())
+            : "-";
+
+          return `
+            <div class="rep-bar-col ${b.isToday ? "today" : ""} ${isBarExp ? "active-bar" : ""}" onclick="toggleReportBarDay('${b.fullDate}')" title="${b.fullDate}: $${b.amt.toLocaleString()}">
+              <span class="rep-bar-val ${b.amt === 0 ? "dim" : ""}">${valText}</span>
+              <div class="rep-bar-fill ${b.amt === 0 ? "zero" : (isPeak ? "peak" : "")}" style="height:${hPx}px;"></div>
+              <span class="rep-bar-lbl">${b.lbl}</span>
+            </div>
+          `;
+        }).join("");
+
+        chartHtml = `<div class="rep-bar-chart" id="rep-bar-chart-container">${barsHtml}</div>`;
+      } else {
+        const W = 340;
+        const H = 100;
+        const pLeft = 8;
+        const pRight = 8;
+        const pTop = 16;
+        const pBottom = 16;
+        const cW = W - pLeft - pRight;
+        const cH = H - pTop - pBottom;
+        const N = ctx.bars.length;
+
+        const points = ctx.bars.map((b, idx) => {
+          const x = pLeft + (idx * cW) / Math.max(1, N - 1);
+          const ratio = maxBarAmt > 0 ? (b.amt / maxBarAmt) : 0;
+          const y = pTop + cH - (ratio * cH);
+          return { x, y, b };
+        });
+
+        let pathD = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+        for (let i = 0; i < points.length - 1; i++) {
+          const p0 = points[i];
+          const p1 = points[i + 1];
+          const mx = (p0.x + p1.x) / 2;
+          const cpY0 = Math.min(pTop + cH, Math.max(pTop, p0.y));
+          const cpY1 = Math.min(pTop + cH, Math.max(pTop, p1.y));
+          pathD += ` C ${mx.toFixed(1)} ${cpY0.toFixed(1)}, ${mx.toFixed(1)} ${cpY1.toFixed(1)}, ${p1.x.toFixed(1)} ${p1.y.toFixed(1)}`;
+        }
+        const areaD = `${pathD} L ${points[points.length - 1].x.toFixed(1)} ${(pTop + cH).toFixed(1)} L ${points[0].x.toFixed(1)} ${(pTop + cH).toFixed(1)} Z`;
+
+        const colW = cW / Math.max(1, N - 1);
+        let overlayPointsHtml = "";
+        let hitRectsHtml = "";
+
+        points.forEach((pt) => {
+          const isSelected = !!expandedReportCats["bar_" + pt.b.fullDate];
+          const isPeak = pt.b.amt === maxBarAmt && pt.b.amt > 0;
+
+          if (isSelected) {
+            overlayPointsHtml += `
+              <line x1="${pt.x.toFixed(1)}" y1="${pTop - 4}" x2="${pt.x.toFixed(1)}" y2="${(pTop + cH).toFixed(1)}" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="2.5,2.5" />
+              <circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="4.5" fill="var(--card)" stroke="var(--accent)" stroke-width="2.5" />
+            `;
+            const badgeX = Math.max(26, Math.min(W - 26, pt.x));
+            const badgeY = Math.max(11, pt.y - 8);
+            const valStr = pt.b.amt >= 10000 ? "$" + (pt.b.amt / 1000).toFixed(1) + "k" : "$" + pt.b.amt.toLocaleString();
+            overlayPointsHtml += `
+              <g transform="translate(${badgeX.toFixed(1)}, ${badgeY.toFixed(1)})">
+                <rect x="-22" y="-12" width="44" height="15" rx="4" fill="var(--accent)" />
+                <text x="0" y="-1.5" text-anchor="middle" font-size="9" font-weight="800" fill="#ffffff">${valStr}</text>
+              </g>
+            `;
+          } else if (isPeak) {
+            overlayPointsHtml += `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="3" fill="#f97316" />`;
+          } else if (pt.b.isToday) {
+            overlayPointsHtml += `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="3" fill="var(--accent)" />`;
+          }
+
+          const hx = (pt.x - colW / 2).toFixed(1);
+          hitRectsHtml += `
+            <rect x="${hx}" y="0" width="${colW.toFixed(1)}" height="${H}" fill="transparent" cursor="pointer" onclick="toggleReportBarDay('${pt.b.fullDate}')">
+              <title>${pt.b.fullDate}: $${pt.b.amt.toLocaleString()}</title>
+            </rect>
+          `;
+        });
+
+        // X 軸日期刻度
+        const isCurM = (reportMonthOffset === 0);
+        const tNum = (new Date()).getDate();
+        const tickSet = new Set([1, 5, 10, 15, 20, 25, N]);
+        if (isCurM && tNum >= 1 && tNum <= N) tickSet.add(tNum);
+        const sortedTicks = Array.from(tickSet).sort((a, b) => a - b);
+        const xTicksHtml = sortedTicks.map(dNum => {
+          const pct = (((dNum - 1) / Math.max(1, N - 1)) * 100).toFixed(1);
+          const isT = isCurM && (dNum === tNum);
+          const lbl = isT ? `${dNum}(今)` : (dNum === 1 || dNum === N ? dNum + "日" : String(dNum));
+          return `<span class="${isT ? 'today-marker' : ''}" style="left:${pct}%;">${lbl}</span>`;
+        }).join("");
+
+        chartHtml = `
+          <div class="rep-curve-card-wrapper">
+            <div class="rep-y-axis">
+              <span>$${formatYAxis(maxBarAmt)}</span>
+              <span>$${formatYAxis(Math.round(maxBarAmt / 2))}</span>
+              <span>$0</span>
+            </div>
+            <div class="rep-curve-chart-container">
+              <svg viewBox="0 0 ${W} ${H}" class="rep-curve-svg" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="repMonthlyGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.38"/>
+                    <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.02"/>
+                  </linearGradient>
+                </defs>
+                <line x1="${pLeft}" y1="${pTop}" x2="${W - pRight}" y2="${pTop}" stroke="var(--card-border)" stroke-dasharray="3,3" stroke-width="1" />
+                <line x1="${pLeft}" y1="${pTop + cH / 2}" x2="${W - pRight}" y2="${pTop + cH / 2}" stroke="var(--card-border)" stroke-dasharray="3,3" stroke-width="1" />
+                <line x1="${pLeft}" y1="${pTop + cH}" x2="${W - pRight}" y2="${pTop + cH}" stroke="var(--card-border)" stroke-width="1" />
+                <path d="${areaD}" fill="url(#repMonthlyGrad)" />
+                <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                ${overlayPointsHtml}
+                ${hitRectsHtml}
+              </svg>
+              <div class="rep-curve-x-axis">${xTicksHtml}</div>
+            </div>
+          </div>
+        `;
+      }
 
       // 類別漲跌比較 HTML（移除類別表情符號，點擊類別可展開查看該類別的消費明細）
       const maxCatAmt = Math.max(...catDeltaList.map(c => Math.max(c.curr, c.prev)), 1);
@@ -5444,9 +5623,9 @@
         <div class="rep-section-card">
           <div class="rep-sec-title">
             <span>${isWeekly ? "週一 ～ 週日 花費分佈" : "當月每日花費分佈"}</span>
-            <span class="rep-sec-sub">${isWeekly ? "點擊長條看當日" : "左右滑動 · 點擊看當日"}</span>
+            <span class="rep-sec-sub">${isWeekly ? "點擊長條看當日" : "點擊曲線看當日"}</span>
           </div>
-          <div class="rep-bar-chart ${isWeekly ? "" : "monthly-daily"}" id="rep-bar-chart-container">${barsHtml}</div>
+          ${chartHtml}
           ${activeBarDrawerHtml}
         </div>
 
@@ -5478,19 +5657,6 @@
           <div class="rep-top-list">${topItemsHtml}</div>
         </div>
       `;
-
-      // 若為月報，自動平滑滾動到「今日」或「最高峰日」方便檢視
-      if (!isWeekly) {
-        setTimeout(() => {
-          const chartEl = document.getElementById("rep-bar-chart-container");
-          if (chartEl) {
-            const targetCol = chartEl.querySelector(".rep-bar-col.today") || chartEl.querySelector(".rep-bar-col.active-bar") || chartEl.querySelector(".rep-bar-col.peak");
-            if (targetCol) {
-              chartEl.scrollLeft = targetCol.offsetLeft - (chartEl.clientWidth / 2) + (targetCol.clientWidth / 2);
-            }
-          }
-        }, 50);
-      }
     }
   </script>
 </body>
