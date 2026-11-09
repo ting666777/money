@@ -110,51 +110,86 @@
       touch-action: pan-y;
     }
 
-    /* 🚀 全螢幕外框流動光暈 (Full-Screen Border Effect) - 升級加大炫彩波動氣勢 */
+    /* 🚀 iPhone Siri / Apple Intelligence 風格流動光暈 (動態邊緣羽化，無死板粗線條) */
     .screen-neon-border {
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: 9998;
       opacity: 0;
-      transition: opacity 0.35s ease;
-      border: 5px solid transparent;
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
     }
 
     .screen-neon-border.active {
       opacity: 1;
-      animation: neon-glow-pulse 1.3s ease-in-out infinite alternate;
     }
 
+    /* 第一層：邊界飽和霓虹光帶，向內柔和羽化 (Siri Primary Edge) */
     .screen-neon-border.active::before {
       content: "";
       position: absolute;
-      inset: 0;
-      border: 5px solid transparent;
-      border-image: conic-gradient(from var(--neon-angle, 0deg), #38bdf8, #818cf8, #c084fc, #f472b6, #fb923c, #facc15, #4ade80, #38bdf8) 1;
-      animation: neon-rotate 1.6s linear infinite;
+      inset: -6px;
+      border: 14px solid transparent;
+      border-image: conic-gradient(
+        from var(--siri-angle, 0deg),
+        #00d2ff 0%,
+        #6366f1 18%,
+        #a855f7 35%,
+        #ec4899 52%,
+        #fb7185 68%,
+        #f59e0b 84%,
+        #00d2ff 100%
+      ) 1;
+      filter: blur(9px) brightness(1.25);
+      opacity: 0.95;
+      animation: siri-rotate 3s linear infinite, siri-breathe 2s ease-in-out infinite alternate;
     }
 
-    @property --neon-angle {
+    /* 第二層：深層大範圍氛圍暈染 (Siri Ambient Diffusion) */
+    .screen-neon-border.active::after {
+      content: "";
+      position: absolute;
+      inset: -14px;
+      border: 32px solid transparent;
+      border-image: conic-gradient(
+        from calc(var(--siri-angle, 0deg) + 60deg),
+        #ec4899 0%,
+        #fb7185 20%,
+        #f59e0b 38%,
+        #00d2ff 56%,
+        #6366f1 74%,
+        #a855f7 90%,
+        #ec4899 100%
+      ) 1;
+      filter: blur(24px) brightness(1.15);
+      opacity: 0.7;
+      animation: siri-rotate 4.5s linear infinite reverse;
+    }
+
+    @property --siri-angle {
       syntax: '<angle>';
       inherits: false;
       initial-value: 0deg;
     }
 
-    @keyframes neon-rotate {
-      0% { --neon-angle: 0deg; }
-      100% { --neon-angle: 360deg; }
+    @keyframes siri-rotate {
+      0% { --siri-angle: 0deg; }
+      100% { --siri-angle: 360deg; }
     }
 
-    @keyframes neon-glow-pulse {
+    @keyframes siri-breathe {
       0% {
-        box-shadow: inset 0 0 35px rgba(56, 189, 248, 0.45), inset 0 0 70px rgba(192, 132, 252, 0.3), inset 0 0 15px rgba(244, 114, 182, 0.55);
+        opacity: 0.8;
+        transform: scale(1);
       }
       50% {
-        box-shadow: inset 0 0 50px rgba(244, 114, 182, 0.55), inset 0 0 95px rgba(251, 146, 60, 0.35), inset 0 0 22px rgba(74, 222, 128, 0.65);
+        opacity: 1;
+        transform: scale(1.008);
       }
       100% {
-        box-shadow: inset 0 0 65px rgba(129, 140, 248, 0.6), inset 0 0 120px rgba(56, 189, 248, 0.45), inset 0 0 30px rgba(192, 132, 252, 0.7);
+        opacity: 0.8;
+        transform: scale(1);
       }
     }
 
@@ -1724,10 +1759,12 @@
       max-width: 450px;
       max-height: 88vh;
       overflow-y: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
       background: var(--card);
       border: 1.5px solid var(--card-border);
       border-radius: 20px;
-      padding: 16px;
+      padding: 16px 12px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.48);
       color: var(--text);
       display: flex;
@@ -1995,10 +2032,14 @@
       background: var(--card-soft);
       border: 1px solid var(--card-border);
       border-radius: 14px;
-      padding: 12px 13px;
+      padding: 12px 10px;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     .rep-sec-title {
@@ -2025,23 +2066,45 @@
       padding-top: 18px;
       gap: 6px;
       border-bottom: 1px solid var(--card-border);
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .rep-bar-chart.yearly {
-      gap: 3px;
+      gap: 1.5px;
+      padding-left: 1px;
+      padding-right: 1px;
+    }
+
+    .rep-bar-chart.yearly .rep-bar-col {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 2px 0 0;
+      gap: 2px;
     }
 
     .rep-bar-chart.yearly .rep-bar-val {
-      font-size: 0.54rem;
-      letter-spacing: -0.2px;
+      font-size: 0.44rem;
+      letter-spacing: -0.4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
+      max-width: 100%;
+      text-align: center;
+      line-height: 1.1;
     }
 
     .rep-bar-chart.yearly .rep-bar-lbl {
-      font-size: 0.65rem;
+      font-size: 0.52rem;
+      letter-spacing: -0.4px;
+      white-space: nowrap;
+      line-height: 1.2;
     }
 
     .rep-bar-chart.yearly .rep-bar-fill {
-      max-width: 18px;
+      width: 100%;
+      max-width: 12px;
+      border-radius: 3px 3px 1px 1px;
     }
 
     .rep-bar-col {
@@ -5551,7 +5614,13 @@
           let valText = "-";
           if (b.amt > 0) {
             if (isYearly) {
-              valText = b.amt >= 100000 ? "$" + Math.round(b.amt / 1000) + "k" : (b.amt >= 10000 ? "$" + (b.amt / 1000).toFixed(1) + "k" : "$" + b.amt.toLocaleString());
+              if (b.amt >= 10000) {
+                valText = "$" + Math.round(b.amt / 1000) + "k";
+              } else if (b.amt >= 1000) {
+                valText = "$" + (b.amt / 1000).toFixed(1) + "k";
+              } else {
+                valText = "$" + b.amt;
+              }
             } else {
               valText = b.amt >= 10000 ? "$" + (b.amt / 1000).toFixed(1) + "k" : "$" + b.amt.toLocaleString();
             }
