@@ -110,30 +110,29 @@
       touch-action: pan-y;
     }
 
-    /* 🚀 全螢幕外框流動光暈 (Full-Screen Border Effect) */
+    /* 🚀 全螢幕外框流動光暈 (Full-Screen Border Effect) - 升級加大炫彩波動氣勢 */
     .screen-neon-border {
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: 9998;
       opacity: 0;
-      transition: opacity 0.3s ease;
-      box-shadow: inset 0 0 25px rgba(166, 124, 82, 0.55), inset 0 0 10px rgba(191, 110, 126, 0.7);
-      border: 3px solid transparent;
+      transition: opacity 0.35s ease;
+      border: 5px solid transparent;
     }
 
     .screen-neon-border.active {
       opacity: 1;
-      animation: neon-glow-pulse 1.2s ease-in-out infinite alternate;
+      animation: neon-glow-pulse 1.3s ease-in-out infinite alternate;
     }
 
     .screen-neon-border.active::before {
       content: "";
       position: absolute;
       inset: 0;
-      border: 3.5px solid transparent;
-      border-image: conic-gradient(from var(--neon-angle, 0deg), #a67c52, #d4a373, #bf6e7e, #5c7c99, #a67c52) 1;
-      animation: neon-rotate 1.5s linear infinite;
+      border: 5px solid transparent;
+      border-image: conic-gradient(from var(--neon-angle, 0deg), #38bdf8, #818cf8, #c084fc, #f472b6, #fb923c, #facc15, #4ade80, #38bdf8) 1;
+      animation: neon-rotate 1.6s linear infinite;
     }
 
     @property --neon-angle {
@@ -149,10 +148,13 @@
 
     @keyframes neon-glow-pulse {
       0% {
-        box-shadow: inset 0 0 20px rgba(166, 124, 82, 0.45), inset 0 0 10px rgba(212, 163, 115, 0.65), 0 0 15px rgba(166, 124, 82, 0.35);
+        box-shadow: inset 0 0 35px rgba(56, 189, 248, 0.45), inset 0 0 70px rgba(192, 132, 252, 0.3), inset 0 0 15px rgba(244, 114, 182, 0.55);
+      }
+      50% {
+        box-shadow: inset 0 0 50px rgba(244, 114, 182, 0.55), inset 0 0 95px rgba(251, 146, 60, 0.35), inset 0 0 22px rgba(74, 222, 128, 0.65);
       }
       100% {
-        box-shadow: inset 0 0 32px rgba(191, 110, 126, 0.6), inset 0 0 14px rgba(166, 124, 82, 0.75), 0 0 22px rgba(191, 110, 126, 0.45);
+        box-shadow: inset 0 0 65px rgba(129, 140, 248, 0.6), inset 0 0 120px rgba(56, 189, 248, 0.45), inset 0 0 30px rgba(192, 132, 252, 0.7);
       }
     }
 
@@ -1750,7 +1752,7 @@
 
     .report-seg-tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       background: var(--card-soft);
       border: 1px solid var(--card-border);
       border-radius: 11px;
@@ -2023,6 +2025,23 @@
       padding-top: 18px;
       gap: 6px;
       border-bottom: 1px solid var(--card-border);
+    }
+
+    .rep-bar-chart.yearly {
+      gap: 3px;
+    }
+
+    .rep-bar-chart.yearly .rep-bar-val {
+      font-size: 0.54rem;
+      letter-spacing: -0.2px;
+    }
+
+    .rep-bar-chart.yearly .rep-bar-lbl {
+      font-size: 0.65rem;
+    }
+
+    .rep-bar-chart.yearly .rep-bar-fill {
+      max-width: 18px;
     }
 
     .rep-bar-col {
@@ -2515,6 +2534,7 @@
       <div class="report-seg-tabs">
         <button type="button" class="report-seg-btn active" id="rep-tab-weekly" onclick="switchReportTab('weekly')">週</button>
         <button type="button" class="report-seg-btn" id="rep-tab-monthly" onclick="switchReportTab('monthly')">月</button>
+        <button type="button" class="report-seg-btn" id="rep-tab-yearly" onclick="switchReportTab('yearly')">年</button>
       </div>
 
       <div id="report-modal-body" style="display:flex; flex-direction:column; gap:12px;"></div>
@@ -2950,7 +2970,7 @@
     }
 
     function setDefaultTimeKey() {
-      // 1. 優先對齊「真正的今天」(例如 2026/11/05)
+      // 永遠優先對齊「真正的今天 / 本月 / 今年」，不因今日尚未記帳而跳往昨天
       const todayStr = getTodayString();
       const now = new Date();
       const y = now.getFullYear();
@@ -2962,24 +2982,6 @@
         currentTimeKey = `${y}/${m}`;
       } else {
         currentTimeKey = `${y}`;
-      }
-
-      // 2. 如果今天該使用者完全沒有任何紀錄，但有歷史資料，則自動跳轉到他最新有記帳的那一天
-      if (allRecords && allRecords.length > 0) {
-        const userRecs = allRecords.filter(r => r.user === currentUser);
-        const hasToday = userRecs.some(r => String(r["Recorded At"] || "").slice(0, 10) === todayStr);
-        if (!hasToday && userRecs.length > 0) {
-          const latestDate = String(userRecs[0]["Recorded At"] || "");
-          if (latestDate.length >= 10) {
-            if (currentDimension === "day") {
-              currentTimeKey = latestDate.slice(0, 10);
-            } else if (currentDimension === "month") {
-              currentTimeKey = latestDate.slice(0, 7);
-            } else {
-              currentTimeKey = latestDate.slice(0, 4);
-            }
-          }
-        }
       }
     }
 
@@ -4893,24 +4895,29 @@
     }
 
     // =====================================================
-    // 📊 週報 / 月報消費比較分析引擎（方式 A：點選右上角按鈕才載入與顯示）
+    // 📊 週報 / 月報 / 年報消費比較分析引擎（方式 A：點選右上角按鈕才載入與顯示）
     // =====================================================
-    let currentReportTab = "weekly"; // "weekly" | "monthly"
+    let currentReportTab = "weekly"; // "weekly" | "monthly" | "yearly"
     let reportWeekOffset = 0;        // 0=本週, -1=上週, -2=前週...
     let reportMonthOffset = 0;       // 0=本月, -1=上月...
+    let reportYearOffset = 0;        // 0=今年, -1=去年, -2=前年...
     let expandedReportCats = {};     // 記錄展開查看明細的類別
 
     function openReportModal(tab) {
       if (tab) currentReportTab = tab;
       reportWeekOffset = 0;
       reportMonthOffset = 0;
+      reportYearOffset = 0;
       expandedReportCats = {};
       document.getElementById("rep-tab-weekly").className = "report-seg-btn" + (currentReportTab === "weekly" ? " active" : "");
       document.getElementById("rep-tab-monthly").className = "report-seg-btn" + (currentReportTab === "monthly" ? " active" : "");
+      document.getElementById("rep-tab-yearly").className = "report-seg-btn" + (currentReportTab === "yearly" ? " active" : "");
       document.getElementById("report-modal-overlay").classList.add("open");
 
-      // 若尚未載入近兩個月或完整歷史資料，自動在背景補齊以確保週報/月報比較完整
-      if (!isMonthHistoryLoaded && !isFullHistoryLoaded) {
+      // 若尚未載入完整歷史資料，點選年報或翻查前期時自動在背景補齊
+      if (currentReportTab === "yearly" || reportWeekOffset !== 0 || reportMonthOffset !== 0) {
+        if (!isFullHistoryLoaded) loadFullHistoryFromServer();
+      } else if (!isMonthHistoryLoaded && !isFullHistoryLoaded) {
         loadMonthHistoryFromServer();
       }
       renderReportModal();
@@ -4925,6 +4932,10 @@
       expandedReportCats = {};
       document.getElementById("rep-tab-weekly").className = "report-seg-btn" + (tab === "weekly" ? " active" : "");
       document.getElementById("rep-tab-monthly").className = "report-seg-btn" + (tab === "monthly" ? " active" : "");
+      document.getElementById("rep-tab-yearly").className = "report-seg-btn" + (tab === "yearly" ? " active" : "");
+      if (tab === "yearly" && !isFullHistoryLoaded) {
+        loadFullHistoryFromServer();
+      }
       renderReportModal();
     }
 
@@ -4932,8 +4943,10 @@
       expandedReportCats = {};
       if (currentReportTab === "weekly") {
         reportWeekOffset = Math.min(0, reportWeekOffset + dir);
-      } else {
+      } else if (currentReportTab === "monthly") {
         reportMonthOffset = Math.min(0, reportMonthOffset + dir);
+      } else if (currentReportTab === "yearly") {
+        reportYearOffset = Math.min(0, reportYearOffset + dir);
       }
       if (!isFullHistoryLoaded) {
         loadFullHistoryFromServer();
@@ -4980,7 +4993,7 @@
     }
 
     function handleReportCurvePointer(e, isClick) {
-      if (!window.reportCurrentCtx || window.reportCurrentCtx.isWeekly) return;
+      if (!window.reportCurrentCtx || window.reportCurrentCtx.isWeekly || window.reportCurrentCtx.isYearly) return;
       const container = document.getElementById("rep-curve-chart-container");
       if (!container) return;
       const rect = container.getBoundingClientRect();
@@ -5230,7 +5243,8 @@
           currRecs,
           prevRecs
         });
-      } else {
+      } else if (currentReportTab === "monthly") {
+        // 🗓️ 月報結算（若為「本月 reportMonthOffset === 0」，僅比較本月 1~今天幾號 vs 上月 1~同日；過去月份則整月比整月）
         const now = new Date();
         const targetDate = new Date(now.getFullYear(), now.getMonth() + reportMonthOffset, 1);
         const prevDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 1);
@@ -5291,6 +5305,7 @@
 
         renderReportContent(body, {
           isWeekly: false,
+          isYearly: false,
           isPartial: isPartialMonth,
           elapsedDays,
           targetYM: currYM,
@@ -5304,19 +5319,104 @@
           currRecs,
           prevRecs
         });
+      } else if (currentReportTab === "yearly") {
+        // 📅 年報結算（若為「今年 reportYearOffset === 0」，比較今年 1/1~今天 vs 去年 1/1~同月同日；過去年份則整年比整年）
+        const now = new Date();
+        const targetYear = now.getFullYear() + reportYearOffset;
+        const prevYear = targetYear - 1;
+        const targetYearStr = String(targetYear);
+        const prevYearStr = String(prevYear);
+
+        const isCurrentYear = (reportYearOffset === 0);
+        const todayMonth = now.getMonth() + 1; // 1~12
+        const todayMD = String(todayMonth).padStart(2, "0") + "/" + String(now.getDate()).padStart(2, "0");
+
+        // 計算今年已過天數（以 1/1 起算）
+        const startOfYear = new Date(targetYear, 0, 1);
+        const isLeap = (y) => (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+        const totalDaysInYear = isLeap(targetYear) ? 366 : 365;
+        const elapsedDays = isCurrentYear ? Math.max(1, Math.min(totalDaysInYear, Math.floor((now - startOfYear) / 86400000) + 1)) : totalDaysInYear;
+        const isPartialYear = isCurrentYear && (elapsedDays < totalDaysInYear);
+
+        const currRecs = userExpRecords.filter(r => {
+          const d = String(r["Recorded At"] || "");
+          if (d.slice(0, 4) !== targetYearStr) return false;
+          if (isPartialYear) {
+            return d.slice(5, 10) <= todayMD;
+          }
+          return true;
+        });
+
+        const prevRecs = userExpRecords.filter(r => {
+          const d = String(r["Recorded At"] || "");
+          if (d.slice(0, 4) !== prevYearStr) return false;
+          if (isPartialYear) {
+            return d.slice(5, 10) <= todayMD;
+          }
+          return true;
+        });
+
+        const currTotal = Math.round(currRecs.reduce((s, r) => s + (Number(r.Amount) || 0), 0));
+        const prevTotal = Math.round(prevRecs.reduce((s, r) => s + (Number(r.Amount) || 0), 0));
+
+        // 12 個月份 (1月 ~ 12月) 花費分佈
+        const monthlyBars = [];
+        const elapsedMonths = isCurrentYear ? todayMonth : 12;
+
+        for (let m = 1; m <= 12; m++) {
+          const mStr = `${targetYearStr}/${String(m).padStart(2, "0")}`;
+          const isThisMonth = isCurrentYear && (m === todayMonth);
+          const isFutureMonth = isCurrentYear && (m > todayMonth);
+
+          const mSum = Math.round(currRecs.reduce((s, r) => {
+            const d = String(r["Recorded At"] || "").slice(0, 7);
+            return d === mStr ? s + (Number(r.Amount) || 0) : s;
+          }, 0));
+
+          monthlyBars.push({
+            lbl: `${m}月`,
+            wLbl: `${targetYearStr}年 ${m}月`,
+            monthNum: m,
+            fullDate: mStr,
+            amt: mSum,
+            isToday: isThisMonth,
+            isFuture: isFutureMonth
+          });
+        }
+
+        renderReportContent(body, {
+          isWeekly: false,
+          isYearly: true,
+          isPartial: isPartialYear,
+          elapsedDays,
+          elapsedMonths,
+          targetYear,
+          periodTitle: `${targetYear} 年${isCurrentYear ? " (今年)" : ""}`,
+          canNext: reportYearOffset < 0,
+          currTotal,
+          prevTotal,
+          monthlyAvg: Math.round(currTotal / Math.max(1, elapsedMonths)),
+          dailyAvg: Math.round(currTotal / Math.max(1, elapsedDays)),
+          bars: monthlyBars,
+          currRecs,
+          prevRecs
+        });
       }
     }
 
     function renderReportContent(body, ctx) {
-      const isWeekly = ctx.isWeekly;
+      const isWeekly = !!ctx.isWeekly;
+      const isYearly = !!ctx.isYearly;
       const diff = ctx.currTotal - ctx.prevTotal;
       const pct = ctx.prevTotal > 0 ? ((Math.abs(diff) / ctx.prevTotal) * 100).toFixed(1) : "0.0";
       const isUp = diff > 0;
       const deltaClass = isUp ? "up" : "down";
       const prevName = isWeekly
         ? (ctx.isPartial ? `上週前${ctx.elapsedDays}天` : "上週")
-        : (ctx.isPartial ? `上月前${ctx.elapsedDays}天` : "上月");
-      const shortPrevName = isWeekly ? "上週" : "上月";
+        : (isYearly
+          ? (ctx.isPartial ? `去年同期` : "去年")
+          : (ctx.isPartial ? `上月前${ctx.elapsedDays}天` : "上月"));
+      const shortPrevName = isWeekly ? "上週" : (isYearly ? "去年" : "上月");
 
       const deltaLabel = ctx.prevTotal === 0
         ? `${prevName} $0`
@@ -5378,19 +5478,23 @@
 
       const heroTitleText = isWeekly
         ? (ctx.isPartial ? `本週支出 (前${ctx.elapsedDays}天)` : "當週總支出")
-        : (ctx.isPartial ? `本月支出 (前${ctx.elapsedDays}天)` : "當月總支出");
+        : (isYearly
+          ? (ctx.isPartial ? `本年支出 (前${ctx.elapsedDays}天)` : "當年度總支出")
+          : (ctx.isPartial ? `本月支出 (前${ctx.elapsedDays}天)` : "當月總支出"));
 
       const tile2SubText = isWeekly
         ? `近4週均 $${(ctx.avg4Weeks || 0).toLocaleString()}`
-        : (ctx.budget > 0
-          ? (ctx.budget - ctx.currTotal >= 0 ? `預算剩 $${(ctx.budget - ctx.currTotal).toLocaleString()}` : `超支 $${Math.abs(ctx.budget - ctx.currTotal).toLocaleString()}`)
-          : "未設定預算");
+        : (isYearly
+          ? `日均 $${(ctx.dailyAvg || 0).toLocaleString()}`
+          : (ctx.budget > 0
+            ? (ctx.budget - ctx.currTotal >= 0 ? `預算剩 $${(ctx.budget - ctx.currTotal).toLocaleString()}` : `超支 $${Math.abs(ctx.budget - ctx.currTotal).toLocaleString()}`)
+            : "未設定預算"));
 
       window.reportCurrentCtx = ctx;
       window.reportDayRecordsMap = dayRecordsMap;
       window.reportDaySumMap = daySumMap;
 
-      // 找出當前被選取的單一日期（支援週報長條與月報曲線單選點擊）
+      // 找出當前被選取的單一日期/月份（支援週報長條、年報月份長條、月報曲線單選點擊）
       const maxBarAmt = Math.max(...ctx.bars.map(b => b.amt), 1);
       let activeBarDrawerContent = "";
       const activeBarDayKey = Object.keys(expandedReportCats).find(k => k.startsWith("bar_") && expandedReportCats[k]);
@@ -5400,12 +5504,16 @@
           fullDate: activeDateStr,
           amt: Math.round(daySumMap[activeDateStr] || 0)
         };
-        const dayRecs = (dayRecordsMap[activeDateStr] || []).slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0));
+        const dayRecs = isYearly
+          ? ctx.currRecs.filter(r => String(r["Recorded At"] || "").slice(0, 7) === activeDateStr).sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0))
+          : (dayRecordsMap[activeDateStr] || []).slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0));
 
+        const renderRecs = dayRecs.slice(0, 60);
         const dayRows = dayRecs.length === 0
-          ? `<div style="font-size:0.73rem;color:var(--text-muted);padding:4px 6px;">當日無支出紀錄</div>`
-          : dayRecs.map(r => {
-              const tStr = String(r["Recorded At"] || "").slice(11, 16) || r.Category || "";
+          ? `<div style="font-size:0.73rem;color:var(--text-muted);padding:4px 6px;">該期間無支出紀錄</div>`
+          : renderRecs.map(r => {
+              const fullD = String(r["Recorded At"] || "");
+              const tStr = isYearly ? fullD.slice(5, 10) : (fullD.slice(11, 16) || r.Category || "");
               const nStr = escapeHtml(r.note || r.Category || "項目");
               const aNum = Math.round(Number(r.Amount) || 0);
               return `
@@ -5419,30 +5527,38 @@
               `;
             }).join("");
 
+        const countNotice = dayRecs.length > 60 ? `<div style="font-size:0.68rem;color:var(--text-muted);text-align:center;padding:4px 0;">僅顯示單筆前 60 筆（共 ${dayRecs.length} 筆）</div>` : "";
+
         activeBarDrawerContent = `
           <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px;font-size:0.76rem;font-weight:800;color:var(--text);width:100%;">
-            <span>${activeBarObj.fullDate}${activeBarObj.wLbl ? " (" + activeBarObj.wLbl + ")" : ""}</span>
+            <span>${activeBarObj.wLbl || activeBarObj.fullDate}${activeBarObj.lbl && !isYearly ? " (" + activeBarObj.lbl + ")" : ""} (共 ${dayRecs.length} 筆)</span>
             <span style="color:var(--expense);font-weight:900;">$${(activeBarObj.amt || 0).toLocaleString()}</span>
           </div>
           ${dayRows}
+          ${countNotice}
         `;
       }
 
-      // 圖表 HTML：週報使用週一～週日 7 天柱狀圖；月報使用全月 1..30/31 日平滑曲線走勢圖 + 左側 Y 軸金額
+      // 圖表 HTML：週報使用週一～週日 7 天柱狀圖；年報使用 1~12 月 12 個月柱狀圖；月報使用全月 1..30/31 日平滑曲線走勢圖 + 左側 Y 軸金額
       let chartHtml = "";
-      if (isWeekly) {
+      if (isWeekly || isYearly) {
         const barsHtml = ctx.bars.map(b => {
           const hPx = b.amt === 0 ? 4 : Math.max(12, Math.round((b.amt / maxBarAmt) * 76));
           const isPeak = b.amt === maxBarAmt && b.amt > 0;
           const barKey = "bar_" + b.fullDate;
           const isBarExp = !!expandedReportCats[barKey];
 
-          const valText = b.amt > 0
-            ? (b.amt >= 10000 ? "$" + (b.amt / 1000).toFixed(1) + "k" : "$" + b.amt.toLocaleString())
-            : "-";
+          let valText = "-";
+          if (b.amt > 0) {
+            if (isYearly) {
+              valText = b.amt >= 100000 ? "$" + Math.round(b.amt / 1000) + "k" : (b.amt >= 10000 ? "$" + (b.amt / 1000).toFixed(1) + "k" : "$" + b.amt.toLocaleString());
+            } else {
+              valText = b.amt >= 10000 ? "$" + (b.amt / 1000).toFixed(1) + "k" : "$" + b.amt.toLocaleString();
+            }
+          }
 
           return `
-            <div class="rep-bar-col ${b.isToday ? "today" : ""} ${isBarExp ? "active-bar" : ""}" onclick="toggleReportBarDay('${b.fullDate}')" title="${b.fullDate}: $${b.amt.toLocaleString()}">
+            <div class="rep-bar-col ${b.isToday ? "today" : ""} ${isBarExp ? "active-bar" : ""}" onclick="toggleReportBarDay('${b.fullDate}')" title="${b.wLbl || b.fullDate}: $${b.amt.toLocaleString()}">
               <span class="rep-bar-val ${b.amt === 0 ? "dim" : ""}">${valText}</span>
               <div class="rep-bar-fill ${b.amt === 0 ? "zero" : (isPeak ? "peak" : "")}" style="height:${hPx}px;"></div>
               <span class="rep-bar-lbl">${b.lbl}</span>
@@ -5450,7 +5566,7 @@
           `;
         }).join("");
 
-        chartHtml = `<div class="rep-bar-chart" id="rep-bar-chart-container">${barsHtml}</div>`;
+        chartHtml = `<div class="rep-bar-chart ${isYearly ? "yearly" : ""}" id="rep-bar-chart-container">${barsHtml}</div>`;
       } else {
         const W = 340;
         const H = 100;
@@ -5640,38 +5756,67 @@
           }).join("")
         : "";
 
-      // 找出本期單日最高峰（點擊原地展開當天所有消費明細）
-      const peakDayEntry = Object.keys(daySumMap)
-        .map(d => ({ fullDate: d, amt: Math.round(daySumMap[d]) }))
-        .sort((a, b) => b.amt - a.amt)[0];
-
-      let secondBoxLbl = "單日最高峰";
+      // 第二小卡：年報顯示「單月最高峰」，週報與月報顯示「單日最高峰」
+      let secondBoxLbl = isYearly ? "單月最高峰" : "單日最高峰";
       let secondBoxTitle = "尚無花費";
       let secondBoxDetail = "$0";
       let peakDrawerHtml = "";
       const isPeakExp = !!expandedReportCats["hl_peak"];
-      if (peakDayEntry && peakDayEntry.amt > 0) {
-        const parts = peakDayEntry.fullDate.split("/").map(Number);
-        const dObj = new Date(parts[0], parts[1] - 1, parts[2]);
-        const wNames = ["日", "一", "二", "三", "四", "五", "六"];
-        const wLbl = wNames[dObj.getDay()];
-        secondBoxTitle = `${peakDayEntry.fullDate.slice(5)} (週${wLbl})`;
-        secondBoxDetail = `單日 $${peakDayEntry.amt.toLocaleString()}`;
-        const peakRecs = (dayRecordsMap[peakDayEntry.fullDate] || []).slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0));
-        peakDrawerHtml = peakRecs.map(r => {
-          const timePart = String(r["Recorded At"] || "").slice(11, 16) || r.Category || "";
-          const noteStr = escapeHtml(r.note || r.Category || "項目");
-          const amtNum = Math.round(Number(r.Amount) || 0);
-          return `
-            <div class="rep-cat-rec-mini-row">
-              <div style="display:flex;align-items:center;gap:6px;min-width:0;">
-                <span style="color:var(--text-muted);font-size:0.7rem;flex-shrink:0;">${escapeHtml(timePart)}</span>
-                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${noteStr}</span>
+
+      if (isYearly) {
+        const peakMonthEntry = ctx.bars.slice().sort((a, b) => b.amt - a.amt)[0];
+        if (peakMonthEntry && peakMonthEntry.amt > 0) {
+          secondBoxTitle = `${peakMonthEntry.lbl} ($${peakMonthEntry.amt.toLocaleString()})`;
+          secondBoxDetail = `全年度最高花費月份`;
+          const peakMonthRecs = ctx.currRecs.filter(r => String(r["Recorded At"] || "").slice(0, 7) === peakMonthEntry.fullDate)
+            .sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0));
+          const renderPeakRecs = peakMonthRecs.slice(0, 50);
+          peakDrawerHtml = renderPeakRecs.map(r => {
+            const shortD = String(r["Recorded At"] || "").slice(5, 10);
+            const noteStr = escapeHtml(r.note || r.Category || "項目");
+            const amtNum = Math.round(Number(r.Amount) || 0);
+            return `
+              <div class="rep-cat-rec-mini-row">
+                <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                  <span style="color:var(--text-muted);font-size:0.7rem;flex-shrink:0;">${shortD}</span>
+                  <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${noteStr}</span>
+                </div>
+                <span style="font-weight:800;flex-shrink:0;">$${amtNum.toLocaleString()}</span>
               </div>
-              <span style="font-weight:800;flex-shrink:0;">$${amtNum.toLocaleString()}</span>
-            </div>
-          `;
-        }).join("");
+            `;
+          }).join("");
+          if (peakMonthRecs.length > 50) {
+            peakDrawerHtml += `<div style="font-size:0.68rem;color:var(--text-muted);text-align:center;padding:4px 0;">僅顯示單筆前 50 筆（共 ${peakMonthRecs.length} 筆）</div>`;
+          }
+        }
+      } else {
+        const peakDayEntry = Object.keys(daySumMap)
+          .map(d => ({ fullDate: d, amt: Math.round(daySumMap[d]) }))
+          .sort((a, b) => b.amt - a.amt)[0];
+
+        if (peakDayEntry && peakDayEntry.amt > 0) {
+          const parts = peakDayEntry.fullDate.split("/").map(Number);
+          const dObj = new Date(parts[0], parts[1] - 1, parts[2]);
+          const wNames = ["日", "一", "二", "三", "四", "五", "六"];
+          const wLbl = wNames[dObj.getDay()];
+          secondBoxTitle = `${peakDayEntry.fullDate.slice(5)} (週${wLbl})`;
+          secondBoxDetail = `單日 $${peakDayEntry.amt.toLocaleString()}`;
+          const peakRecs = (dayRecordsMap[peakDayEntry.fullDate] || []).slice().sort((a, b) => (Number(b.Amount) || 0) - (Number(a.Amount) || 0));
+          peakDrawerHtml = peakRecs.map(r => {
+            const timePart = String(r["Recorded At"] || "").slice(11, 16) || r.Category || "";
+            const noteStr = escapeHtml(r.note || r.Category || "項目");
+            const amtNum = Math.round(Number(r.Amount) || 0);
+            return `
+              <div class="rep-cat-rec-mini-row">
+                <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                  <span style="color:var(--text-muted);font-size:0.7rem;flex-shrink:0;">${escapeHtml(timePart)}</span>
+                  <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${noteStr}</span>
+                </div>
+                <span style="font-weight:800;flex-shrink:0;">$${amtNum.toLocaleString()}</span>
+              </div>
+            `;
+          }).join("");
+        }
       }
 
       // Top 3 單筆最高消費（去掉類別表情符號，點擊原地展開下拉明細）
@@ -5744,8 +5889,8 @@
               <span class="rep-metric-tile-sub">${ctx.isPartial ? "同期對比" : "完整期間"}</span>
             </div>
             <div class="rep-metric-tile">
-              <span class="rep-metric-tile-lbl">日均支出</span>
-              <span class="rep-metric-tile-val">$${ctx.dailyAvg.toLocaleString()}</span>
+              <span class="rep-metric-tile-lbl">${isYearly ? "月均支出" : "日均支出"}</span>
+              <span class="rep-metric-tile-val">$${(isYearly ? ctx.monthlyAvg : ctx.dailyAvg).toLocaleString()}</span>
               <span class="rep-metric-tile-sub">${tile2SubText}</span>
             </div>
             <div class="rep-metric-tile">
@@ -5758,7 +5903,7 @@
 
         <div class="rep-section-card">
           <div class="rep-sec-title">
-            <span>${isWeekly ? "週一 ～ 週日 花費分佈" : "當月每日花費分佈"}</span>
+            <span>${isWeekly ? "週一 ～ 週日 花費分佈" : (isYearly ? "當年度各月花費分佈" : "當月每日花費分佈")}</span>
           </div>
           ${chartHtml}
           <div id="rep-chart-active-drawer" class="rep-cat-records-drawer" style="${activeBarDrawerContent ? 'display:flex;' : 'display:none;'}margin-top:8px;">
