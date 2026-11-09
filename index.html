@@ -3205,7 +3205,7 @@
       const barTextEl = document.getElementById("budget-bar-text");
       if (!titleEl || !statusEl || !fillEl || !barTextEl) return;
 
-      titleEl.innerHTML = `${monthNum}月預算 <span style="font-weight:600;color:var(--text-muted);font-size:0.73rem;margin-left:4px;">(日均 $${dailyAvg.toLocaleString()})</span>`;
+      titleEl.innerHTML = `${monthNum}月預算 <span style="font-weight:600;color:var(--text-muted);font-size:0.73rem;margin-left:4px;">(日均花費 $${dailyAvg.toLocaleString()})</span>`;
       statusEl.style.color = "var(--muted)";
 
       if (budget <= 0) {
@@ -3216,15 +3216,41 @@
         return;
       }
 
-      // 有設定預算時：方案 B 左右分置（左邊：11月預算 (日均 $XXX)，右邊：今日還剩 $XXX 可花）
+      // 計算今天實際花費（精準加總今日所有記帳支出）
+      let todayExpense = 0;
+      allRecords.forEach(r => {
+        if (r.user !== currentUser) return;
+        if (r.Category === "收入") return;
+        const recDay = String(r["Recorded At"] || "").slice(0, 10);
+        if (recDay === todayStr) {
+          todayExpense += (Number(r.Amount) || 0);
+        }
+      });
+      todayExpense = Math.round(todayExpense);
+
+      // 有設定預算時：左右分置（左邊：11月預算 (日均花費 $XXX)，右邊：今日還剩 $XXX 可花 / 今日超支 $XXX）
       const remainBudget = budget - monthExpense;
       if (targetMonth === currentRealMonth) {
+        // 截至今天以前（昨天以前）的當月累積支出
+        const pastExpense = Math.max(0, monthExpense - todayExpense);
+        // 今天開始時的剩餘可用預算額度
+        const remainBudgetStartOfDay = budget - pastExpense;
+        // 本月剩餘天數（包含今天）
         const remainingDays = Math.max(1, totalDaysInMonth - todayDay + 1);
-        const dailyCanSpend = Math.floor(remainBudget / remainingDays);
-        if (remainBudget >= 0) {
-          statusEl.innerHTML = `<span style="color:var(--text);font-weight:800;">今日還剩 $${dailyCanSpend.toLocaleString()} 可花</span>`;
+        // 今天這一整天分配到的預算額度（若本月已被透支則為 0）
+        const todayAllocated = remainBudgetStartOfDay > 0 ? Math.floor(remainBudgetStartOfDay / remainingDays) : 0;
+        // 今天扣除已花費後「真正還剩」多少可花
+        const todayRemaining = todayAllocated - todayExpense;
+
+        if (remainBudget < 0) {
+          statusEl.innerHTML = `<span style="color:#ef4444;font-weight:800;">當月已超支 $${Math.abs(remainBudget).toLocaleString()}</span>`;
+        } else if (todayRemaining > 0) {
+          statusEl.innerHTML = `<span style="color:var(--text);font-weight:800;">今日還剩 $${todayRemaining.toLocaleString()} 可花</span>`;
+        } else if (todayRemaining === 0) {
+          statusEl.innerHTML = `<span style="color:var(--text-muted);font-weight:800;">今日額度已用完 ($0)</span>`;
         } else {
-          statusEl.innerHTML = `<span style="color:#ef4444;font-weight:800;">今日還剩 $0 可花 (超支 $${Math.abs(remainBudget).toLocaleString()})</span>`;
+          const overToday = Math.abs(todayRemaining);
+          statusEl.innerHTML = `<span style="color:#ef4444;font-weight:800;">今日超支 $${overToday.toLocaleString()}</span>`;
         }
       } else {
         if (remainBudget >= 0) {
