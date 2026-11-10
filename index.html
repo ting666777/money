@@ -1412,6 +1412,26 @@
       cursor: pointer;
     }
 
+    .btn-quick-half {
+      background: var(--accent-soft, #f4ebe1);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-quick-half:hover, .btn-quick-half:active {
+      background: var(--accent) !important;
+      color: #ffffff !important;
+    }
+
     .btn-del {
       background: #fae5e1;
       color: #c65d47;
@@ -2668,11 +2688,19 @@
   <!-- 欠錢 Modal -->
   <div class="edit-modal-overlay" id="split-debt-modal" onclick="closeDebtSplitModal(event)">
     <div class="edit-modal" onclick="event.stopPropagation()">
-      <h3 style="margin-bottom:14px; font-size:1.1rem;" id="debt-modal-heading">欠錢</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="margin:0; font-size:1.1rem;" id="debt-modal-heading">欠錢</h3>
+        <button type="button" class="btn-quick-half" id="debt-half-btn" onclick="fillHalfSplitAmount()">
+          ⚖️ 一半
+        </button>
+      </div>
 
       <form id="debt-split-form" onsubmit="handleDebtSplitSubmit(event)">
         <div class="form-row">
-          <label class="form-label" id="debt-modal-input-label">金額</label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label class="form-label" id="debt-modal-input-label" style="margin:0;">金額</label>
+            <span id="debt-modal-half-tip" style="font-size:0.75rem; color:var(--accent); font-weight:700;"></span>
+          </div>
           <input type="number" step="1" min="1" class="form-input" id="debt-split-amount" placeholder="金額" required>
         </div>
 
@@ -4475,8 +4503,24 @@
       const totalAmt = Number(rec.Amount) || 0;
       const noteText = rec.note || rec.Category || "消費";
 
+      // 依奇數定成+1規則計算一半金額
+      const dingShare = Math.ceil(totalAmt / 2);
+      const yuShare = Math.floor(totalAmt / 2);
+      const debtorShare = (payer === "定成") ? yuShare : dingShare;
+
       document.getElementById("debt-modal-heading").innerText = `欠錢 (${payer})`;
-      document.getElementById("debt-modal-input-label").innerText = `${noteText} ($${totalAmt}) — 金額`;
+      document.getElementById("debt-modal-input-label").innerText = `${noteText} ($${totalAmt}) — 拆帳金額`;
+
+      const halfBtn = document.getElementById("debt-half-btn");
+      if (halfBtn) {
+        halfBtn.innerText = `⚖️ 一半 ($${debtorShare})`;
+        halfBtn.title = `點擊自動填入一半：定成 $${dingShare}、妤珊 $${yuShare}（奇數定成+1）`;
+      }
+
+      const halfTip = document.getElementById("debt-modal-half-tip");
+      if (halfTip) {
+        halfTip.innerText = `（定成 $${dingShare}，妤珊 $${yuShare}）`;
+      }
 
       const inp = document.getElementById("debt-split-amount");
       inp.max = totalAmt;
@@ -4484,6 +4528,21 @@
 
       document.getElementById("split-debt-modal").classList.add("open");
       setTimeout(() => { inp.focus(); }, 80);
+    }
+
+    function fillHalfSplitAmount() {
+      if (!currentDebtSplitRecord) return;
+      const rec = currentDebtSplitRecord;
+      const payer = rec.user || currentUser;
+      const totalAmt = Number(rec.Amount) || 0;
+
+      const dingShare = Math.ceil(totalAmt / 2);
+      const yuShare = Math.floor(totalAmt / 2);
+      const debtorShare = (payer === "定成") ? yuShare : dingShare;
+
+      const inp = document.getElementById("debt-split-amount");
+      inp.value = debtorShare;
+      inp.focus();
     }
 
     function closeDebtSplitModal() {
