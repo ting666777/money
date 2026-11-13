@@ -8,6 +8,9 @@
   <meta name="apple-mobile-web-app-title" content="智慧記帳">
   <meta name="mobile-web-app-capable" content="yes">
   <title>定成 & 妤珊 記帳</title>
+  <meta name="theme-color" content="#0b0f19">
+  <link rel="apple-touch-icon" sizes="180x180" href="PIC1.jpg">
+  <link rel="icon" type="image/jpeg" href="PIC1.jpg">
   <style>
     :root,
     body[data-theme="dark"] {
@@ -2424,9 +2427,12 @@
        區塊 1：頂部列（切換是誰 / 單人名稱 ＋ 財報分析、重新整理、除錯偵測、頁面設定）
        ========================================================= -->
   <div class="top-bar">
-    <div class="user-pill-group" id="user-toggle-pill-group">
-      <button class="user-pill active-ding" id="pill-ding" onclick="switchUser('定成')">定成</button>
-      <button class="user-pill" id="pill-yu" onclick="switchUser('妤珊')">妤珊</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img src="PIC1.jpg" alt="Logo" style="width:36px;height:36px;border-radius:10px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.3);flex-shrink:0;">
+      <div class="user-pill-group" id="user-toggle-pill-group">
+        <button class="user-pill active-ding" id="pill-ding" onclick="switchUser('定成')">定成</button>
+        <button class="user-pill" id="pill-yu" onclick="switchUser('妤珊')">妤珊</button>
+      </div>
     </div>
     <div class="locked-user-title" id="locked-user-title">
       <span id="locked-user-name">定成</span>
@@ -2885,6 +2891,12 @@
           },
           splitRecordAndSyncDebt: function(user, rowIndex, splitAmount, matchCriteria) {
             callGasApi({ action: "splitRecordAndSyncDebt", user: user, rowIndex: rowIndex, splitAmount: splitAmount, matchCriteria: matchCriteria });
+          },
+          splitLatestExpenseForBoth: function(payer, splitAmount, note, isHalf) {
+            callGasApi({ action: "splitExpense", payer: payer, splitAmount: splitAmount, note: note, isHalf: !!isHalf });
+          },
+          recordCashExpenseAndDebtSplit: function(payer, totalAmount, payerAmount, note, isHalf) {
+            callGasApi({ action: "cashSplit", payer: payer, totalAmount: totalAmount, payerAmount: payerAmount, note: note, isHalf: !!isHalf });
           },
           saveUserSettings: function(user, settings) {
             callGasApi({ action: "saveUserSettings", user: user, settings: settings }, "settings");
