@@ -9,6 +9,9 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>定成 & 妤珊 記帳</title>
   <meta name="theme-color" id="theme-color-meta" content="#0b0f19">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <script>
     (function() {
       try {
@@ -121,6 +124,9 @@
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
 
     html {
@@ -173,6 +179,7 @@
 
     /* 🚀 iPhone Siri / Apple Intelligence 風格流動光暈 (動態邊緣羽化，無死板粗線條) */
     .screen-neon-border {
+      display: none;
       position: fixed;
       inset: 0;
       pointer-events: none;
@@ -183,6 +190,7 @@
     }
 
     .screen-neon-border.active {
+      display: block;
       opacity: 1;
     }
 
@@ -433,7 +441,6 @@
 
     /* 左右滑動動態舞台 */
     .swipe-stage {
-      will-change: transform, opacity;
       touch-action: pan-y;
     }
 
@@ -496,7 +503,7 @@
       font-size: 0.72rem;
       font-weight: 800;
       color: var(--text);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+      text-shadow: none;
     }
 
     /* 2-2: 日期切換 與 天/月/年 同一排 */
@@ -563,6 +570,9 @@
 
     /* 📅 彈出式行事曆月曆選擇器 (Calendar Picker Modal) */
     .calendar-picker-overlay {
+      display: none;
+      visibility: hidden;
+      pointer-events: none;
       position: fixed;
       inset: 0;
       background: rgba(15, 23, 42, 0.48);
@@ -576,6 +586,8 @@
 
     .calendar-picker-overlay.open {
       display: flex;
+      visibility: visible;
+      pointer-events: auto;
     }
 
     .calendar-modal-card {
@@ -871,6 +883,9 @@
       background: var(--card-soft);
       transition: all 0.15s ease;
       user-select: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
 
     .cat-chip:active {
@@ -1315,6 +1330,9 @@
 
     /* 快速改分類彈出選單 (Sheet Modal) */
     .category-picker-overlay {
+      display: none;
+      visibility: hidden;
+      pointer-events: none;
       position: fixed;
       inset: 0;
       background: rgba(74, 59, 50, 0.35);
@@ -1327,6 +1345,8 @@
 
     .category-picker-overlay.open {
       display: flex;
+      visibility: visible;
+      pointer-events: auto;
     }
 
     .category-sheet {
@@ -1389,6 +1409,9 @@
 
     /* 手動新增/編輯記帳與欠錢 Modal */
     .edit-modal-overlay {
+      display: none;
+      visibility: hidden;
+      pointer-events: none;
       position: fixed;
       inset: 0;
       background: rgba(74, 59, 50, 0.38);
@@ -1402,6 +1425,8 @@
 
     .edit-modal-overlay.open {
       display: flex;
+      visibility: visible;
+      pointer-events: auto;
     }
 
     .edit-modal {
@@ -1511,6 +1536,9 @@
 
     /* 🩺 除錯與重複偵測中心 Modal */
     .audit-modal-overlay {
+      display: none;
+      visibility: hidden;
+      pointer-events: none;
       position: fixed;
       inset: 0;
       background: rgba(74, 59, 50, 0.38);
@@ -1524,6 +1552,8 @@
 
     .audit-modal-overlay.open {
       display: flex;
+      visibility: visible;
+      pointer-events: auto;
     }
 
     .audit-modal-card {
@@ -1820,6 +1850,9 @@
        📊 週報 / 月報消費對比分析 Modal 樣式
        ========================================================= */
     .report-modal-overlay {
+      display: none;
+      visibility: hidden;
+      pointer-events: none;
       position: fixed;
       inset: 0;
       background: rgba(2, 6, 23, 0.68);
@@ -1833,6 +1866,8 @@
 
     .report-modal-overlay.open {
       display: flex;
+      visibility: visible;
+      pointer-events: auto;
     }
 
     .report-modal-box {
@@ -2293,6 +2328,9 @@
       cursor: crosshair;
       user-select: none;
       -webkit-user-select: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
 
     .rep-curve-svg {
@@ -3055,12 +3093,12 @@
     // 初始化服務端資料注入（GitHub Pages 極速版：0.01 秒先顯示本地快取畫面，同時背景向 Google Sheet 同步最新資料）
     window.onload = function() {
       // 📱 PWA / iOS 獨立主畫面防遮擋與快取自動更新機制（向上微調）
-      const PWA_VERSION = "20261114_v10";
+      const PWA_VERSION = "20261114_v11";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
         if (oldVer) {
-          window.location.reload();
+          window.location.replace(window.location.pathname + "?v=" + PWA_VERSION);
           return;
         }
       }
