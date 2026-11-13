@@ -117,30 +117,30 @@
       box-sizing: border-box;
     }
 
-    /* 📱 PWA / iOS 加入主畫面全螢幕模式：精準避開頂部狀態列、瀏海與動態島遮擋（至少給予 72px 安全距離） */
+    /* 📱 PWA / iOS 加入主畫面全螢幕模式：完美對齊動態島與狀態列（向上微調貼合，高雅舒適） */
     @supports (padding-top: env(safe-area-inset-top)) {
       body {
-        padding-top: max(calc(env(safe-area-inset-top) + 16px), 24px);
+        padding-top: max(calc(env(safe-area-inset-top) + 6px), 18px);
       }
     }
 
     @media all and (display-mode: standalone) {
       body {
-        padding-top: 72px !important;
-        padding-top: max(calc(env(safe-area-inset-top) + 18px), 72px) !important;
+        padding-top: 54px !important;
+        padding-top: max(calc(env(safe-area-inset-top) + 6px), 54px) !important;
       }
       .top-bar {
-        margin-top: 6px !important;
+        margin-top: 0 !important;
       }
     }
 
     body.pwa-standalone {
-      padding-top: 72px !important;
-      padding-top: max(calc(env(safe-area-inset-top) + 18px), 72px) !important;
+      padding-top: 54px !important;
+      padding-top: max(calc(env(safe-area-inset-top) + 6px), 54px) !important;
     }
 
     body.pwa-standalone .top-bar {
-      margin-top: 6px !important;
+      margin-top: 0 !important;
     }
 
     /* 🚀 iPhone Siri / Apple Intelligence 風格流動光暈 (動態邊緣羽化，無死板粗線條) */
@@ -3026,8 +3026,8 @@
 
     // 初始化服務端資料注入（GitHub Pages 極速版：0.01 秒先顯示本地快取畫面，同時背景向 Google Sheet 同步最新資料）
     window.onload = function() {
-      // 📱 PWA / iOS 獨立主畫面防遮擋與快取自動更新機制
-      const PWA_VERSION = "20261114_v3";
+      // 📱 PWA / iOS 獨立主畫面防遮擋與快取自動更新機制（向上微調）
+      const PWA_VERSION = "20261114_v4";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -3040,9 +3040,9 @@
       if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
         document.body.classList.add('pwa-standalone');
         try {
-          document.body.style.paddingTop = 'max(calc(env(safe-area-inset-top) + 18px), 72px)';
+          document.body.style.paddingTop = 'max(calc(env(safe-area-inset-top) + 6px), 54px)';
         } catch(e) {
-          document.body.style.paddingTop = '72px';
+          document.body.style.paddingTop = '54px';
         }
       }
       // 支援網址帶 ?user=定成 或 ?user=妤珊 鎖定專屬個人頁面
