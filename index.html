@@ -2745,7 +2745,7 @@
         <button type="button" class="report-seg-btn" id="rep-tab-yearly" onclick="switchReportTab('yearly')">年</button>
       </div>
 
-      <div id="report-modal-body" style="display:flex; flex-direction:column; gap:12px;"></div>
+      <div id="report-modal-body" style="display:flex; flex-direction:column; gap:12px; touch-action:pan-y;"></div>
     </div>
   </div>
 
@@ -2927,7 +2927,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261114_v14</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261114_v15</span>
         </div>
         <button type="button" onclick="localStorage.removeItem('money_pwa_version'); window.location.replace(window.location.pathname + '?v=' + Date.now());" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -3130,7 +3130,7 @@
     // 初始化服務端資料注入（GitHub Pages 極速版：0.01 秒先顯示本地快取畫面，同時背景向 Google Sheet 同步最新資料）
     window.onload = function() {
       // 📱 PWA / iOS 獨立主畫面防遮擋與快取自動更新機制（向上微調）
-      const PWA_VERSION = "20261114_v14";
+      const PWA_VERSION = "20261114_v15";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -3188,6 +3188,7 @@
       initCategoryGrid();
       initFormCategoryOptions();
       bindSwipeGestures();
+      bindReportSwipeGestures();
 
       const searchEl = document.getElementById("search-input");
       if (searchEl) {
@@ -5299,6 +5300,195 @@
       renderReportModal();
     }
 
+    function canReportGoNext() {
+      if (currentReportTab === "weekly") return reportWeekOffset < 0;
+      if (currentReportTab === "monthly") return reportMonthOffset < 0;
+      if (currentReportTab === "yearly") return reportYearOffset < 0;
+      return false;
+    }
+
+    let isAnimatingReportSwipe = false;
+
+    // 📱 導航切換消費回顧期數：上一期 (-1) 或 下一期 (+1)，附帶水平滑動流暢動畫
+    function navigateReportStep(direction) {
+      if (direction > 0 && !canReportGoNext()) return;
+
+      const bodyEl = document.getElementById("report-modal-body");
+      if (!bodyEl || isAnimatingReportSwipe) {
+        stepReportPeriod(direction);
+        return;
+      }
+
+      isAnimatingReportSwipe = true;
+      const outX = direction > 0 ? -75 : 75;
+      const inX = direction > 0 ? 60 : -60;
+
+      bodyEl.style.transition = "transform 0.13s cubic-bezier(0.4, 0, 1, 1), opacity 0.13s ease";
+      bodyEl.style.transform = `translate3d(${outX}px, 0, 0)`;
+      bodyEl.style.opacity = "0.15";
+
+      setTimeout(function() {
+        stepReportPeriod(direction);
+        const overlay = document.getElementById("report-modal-overlay");
+        if (overlay) overlay.scrollTop = 0;
+
+        const newBodyEl = document.getElementById("report-modal-body");
+        if (newBodyEl) {
+          newBodyEl.style.transition = "none";
+          newBodyEl.style.transform = `translate3d(${inX}px, 0, 0)`;
+          newBodyEl.style.opacity = "0.18";
+          void newBodyEl.offsetWidth;
+
+          newBodyEl.style.transition = "transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease";
+          newBodyEl.style.transform = "translate3d(0, 0, 0)";
+          newBodyEl.style.opacity = "1";
+
+          setTimeout(function() {
+            newBodyEl.style.transition = "";
+            newBodyEl.style.transform = "";
+            newBodyEl.style.opacity = "";
+            isAnimatingReportSwipe = false;
+          }, 250);
+        } else {
+          isAnimatingReportSwipe = false;
+        }
+      }, 125);
+    }
+
+    // 📱 消費回顧與對比 Modal：手勢左右跟手拖曳與流暢翻期切換（比照記帳主畫面）
+    function bindReportSwipeGestures() {
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartTime = 0;
+      let isDraggingHorizontal = false;
+      let directionLocked = false;
+
+      const overlay = document.getElementById("report-modal-overlay");
+      if (!overlay) return;
+
+      overlay.addEventListener("touchstart", function(e) {
+        if (!e.touches || e.touches.length !== 1 || isAnimatingReportSwipe) return;
+        if (!overlay.classList.contains("open")) return;
+
+        // 若觸摸的是月報的互動式 SVG 曲線走勢圖，則交給圖表處理
+        if (e.target && e.target.closest && e.target.closest("#rep-curve-chart-container")) return;
+
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : "";
+        if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+        isDraggingHorizontal = false;
+        directionLocked = false;
+      }, { passive: true });
+
+      overlay.addEventListener("touchmove", function(e) {
+        if (!e.touches || e.touches.length !== 1 || isAnimatingReportSwipe || !touchStartTime) return;
+        if (!overlay.classList.contains("open")) return;
+        if (isReportCurveDragging) return;
+
+        const dx = e.touches[0].clientX - touchStartX;
+        const dy = e.touches[0].clientY - touchStartY;
+
+        if (!directionLocked) {
+          if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+          directionLocked = true;
+          // 水平位移明顯大於垂直位移時鎖定為水平滑動
+          isDraggingHorizontal = Math.abs(dx) > Math.abs(dy) * 1.25;
+        }
+
+        // 若為垂直滑動，完全不干預，交由瀏覽器原生流暢上下滾動
+        if (!isDraggingHorizontal) return;
+
+        const bodyEl = document.getElementById("report-modal-body");
+        if (!bodyEl) return;
+
+        // 若向左滑（dx < 0，嘗試往未來），但已是最新一期（無法往未來），給予阻尼橡皮筋效果
+        const canNext = canReportGoNext();
+        let dampedX = 0;
+        if (dx < 0 && !canNext) {
+          dampedX = Math.max(-28, dx * 0.16);
+        } else {
+          dampedX = Math.max(-130, Math.min(130, dx * 0.52));
+        }
+
+        const fade = Math.max(0.45, 1 - Math.abs(dampedX) / 240);
+        bodyEl.style.transition = "none";
+        bodyEl.style.transform = `translate3d(${dampedX}px, 0, 0)`;
+        bodyEl.style.opacity = String(fade);
+      }, { passive: true });
+
+      overlay.addEventListener("touchend", function(e) {
+        if (!touchStartTime) return;
+        const bodyEl = document.getElementById("report-modal-body");
+        const endTouch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+        const deltaX = endTouch ? (endTouch.clientX - touchStartX) : 0;
+        const deltaY = endTouch ? (endTouch.clientY - touchStartY) : 0;
+        const elapsed = Date.now() - touchStartTime;
+        const wasHorizontal = isDraggingHorizontal;
+
+        touchStartTime = 0;
+        isDraggingHorizontal = false;
+        directionLocked = false;
+
+        if (!overlay.classList.contains("open")) {
+          if (bodyEl) {
+            bodyEl.style.transition = "";
+            bodyEl.style.transform = "";
+            bodyEl.style.opacity = "";
+          }
+          return;
+        }
+
+        const triggered = wasHorizontal && (
+          Math.abs(deltaX) > 48 ||
+          (elapsed < 450 && Math.abs(deltaX) > 30 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2)
+        );
+
+        if (triggered && bodyEl) {
+          const direction = deltaX < 0 ? 1 : -1;
+          const canNext = canReportGoNext();
+
+          if (direction > 0 && !canNext) {
+            // 已是最新一期，彈簧回彈
+            bodyEl.style.transition = "transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease";
+            bodyEl.style.transform = "translate3d(0, 0, 0)";
+            bodyEl.style.opacity = "1";
+            setTimeout(function() {
+              bodyEl.style.transition = "";
+              bodyEl.style.transform = "";
+              bodyEl.style.opacity = "";
+            }, 230);
+          } else {
+            navigateReportStep(direction);
+          }
+        } else if (bodyEl && wasHorizontal) {
+          // 未達滑動門檻，平滑彈回原位
+          bodyEl.style.transition = "transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease";
+          bodyEl.style.transform = "translate3d(0, 0, 0)";
+          bodyEl.style.opacity = "1";
+          setTimeout(function() {
+            bodyEl.style.transition = "";
+            bodyEl.style.transform = "";
+            bodyEl.style.opacity = "";
+          }, 210);
+        }
+      }, { passive: true });
+
+      overlay.addEventListener("touchcancel", function() {
+        touchStartTime = 0;
+        isDraggingHorizontal = false;
+        directionLocked = false;
+        const bodyEl = document.getElementById("report-modal-body");
+        if (bodyEl) {
+          bodyEl.style.transition = "";
+          bodyEl.style.transform = "";
+          bodyEl.style.opacity = "";
+        }
+      }, { passive: true });
+    }
+
     function stepReportPeriod(dir) {
       expandedReportCats = {};
       if (currentReportTab === "weekly") {
@@ -6229,11 +6419,11 @@
 
       body.innerHTML = `
         <div class="report-period-nav">
-          <button type="button" class="nav-arrow-sm" onclick="stepReportPeriod(-1)">
+          <button type="button" class="nav-arrow-sm" onclick="navigateReportStep(-1)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
           <span>${ctx.periodTitle}</span>
-          <button type="button" class="nav-arrow-sm" onclick="stepReportPeriod(1)" ${ctx.canNext ? "" : "disabled style='opacity:0.3;pointer-events:none;'"}>
+          <button type="button" class="nav-arrow-sm" onclick="navigateReportStep(1)" ${ctx.canNext ? "" : "disabled style='opacity:0.3;pointer-events:none;'"}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
         </div>
