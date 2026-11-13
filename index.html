@@ -129,11 +129,6 @@
       text-rendering: optimizeLegibility;
     }
 
-    html.modal-open,
-    body.modal-open {
-      background-color: #0b0f19 !important;
-    }
-
     html {
       min-height: 100%;
       height: 100%;
@@ -142,8 +137,9 @@
     }
 
     body {
+      min-height: 100%;
       min-height: 100vh;
-      min-height: -webkit-fill-available;
+      min-height: 100dvh;
       background-color: var(--bg);
       transition: background-color 0.25s ease;
       color: var(--text);
@@ -156,6 +152,10 @@
       margin: 0 auto;
       touch-action: pan-y;
       box-sizing: border-box;
+    }
+
+    body.modal-open {
+      overflow: hidden !important;
     }
 
     /* 📱 PWA / iOS 加入主畫面全螢幕模式：完美對齊動態島與狀態列（向上微調貼合，高雅舒適） */
@@ -1679,6 +1679,18 @@
       transform: scale(0.92);
     }
 
+    /* 🛡️ 當任何彈窗開啟時，右下角懸浮按鈕自動完全隱藏，防止穿透覆蓋 */
+    body.modal-open .fab-add-btn,
+    body:has(.report-modal-overlay.open) .fab-add-btn,
+    body:has(.edit-modal-overlay.open) .fab-add-btn,
+    body:has(.audit-modal-overlay.open) .fab-add-btn,
+    body:has(.calendar-picker-overlay.open) .fab-add-btn,
+    body:has(.category-picker-overlay.open) .fab-add-btn {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
     /* 🎯 每月預算進度條（位於誰的記帳與天/月/年之間） */
     .monthly-budget-card {
       background: var(--card);
@@ -1859,31 +1871,29 @@
       visibility: hidden;
       pointer-events: none;
       position: fixed;
+      inset: 0;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      width: 100vw;
-      height: 100vh;
-      height: -webkit-fill-available;
+      width: 100%;
+      height: 100%;
       background: rgba(2, 6, 23, 0.78);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      z-index: 1500;
-      overflow-y: auto;
+      z-index: 2500;
+      overflow-y: scroll;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
       padding: 14px;
-      padding-top: max(calc(env(safe-area-inset-top, 0px) + 20px), 64px);
+      padding-top: max(calc(env(safe-area-inset-top, 0px) + 24px), 64px);
       padding-bottom: max(calc(env(safe-area-inset-bottom, 0px) + 60px), 80px);
       box-sizing: border-box;
     }
 
     .report-modal-overlay.open {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      display: block;
       visibility: visible;
       pointer-events: auto;
     }
@@ -1891,18 +1901,17 @@
     .report-modal-box {
       width: 100%;
       max-width: 450px;
+      margin: 0 auto 50px auto;
       box-sizing: border-box;
       background: var(--card);
       border: 1.5px solid var(--card-border);
       border-radius: 20px;
-      padding: 16px 14px;
+      padding: 16px 14px 24px 14px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.48);
       color: var(--text);
       display: flex;
       flex-direction: column;
       gap: 13px;
-      flex-shrink: 0;
-      margin-bottom: 30px;
     }
 
     .report-header-row {
@@ -2918,7 +2927,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261114_v13</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261114_v14</span>
         </div>
         <button type="button" onclick="localStorage.removeItem('money_pwa_version'); window.location.replace(window.location.pathname + '?v=' + Date.now());" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -3121,7 +3130,7 @@
     // 初始化服務端資料注入（GitHub Pages 極速版：0.01 秒先顯示本地快取畫面，同時背景向 Google Sheet 同步最新資料）
     window.onload = function() {
       // 📱 PWA / iOS 獨立主畫面防遮擋與快取自動更新機制（向上微調）
-      const PWA_VERSION = "20261114_v13";
+      const PWA_VERSION = "20261114_v14";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -4506,6 +4515,7 @@
 
       document.getElementById("form-del-btn").style.display = "none";
       document.getElementById("edit-modal").classList.add("open");
+      document.body.classList.add("modal-open");
     }
 
     function openEditModal(index) {
@@ -4537,10 +4547,12 @@
 
       document.getElementById("form-del-btn").style.display = "inline-flex";
       document.getElementById("edit-modal").classList.add("open");
+      document.body.classList.add("modal-open");
     }
 
     function closeEditModal() {
       document.getElementById("edit-modal").classList.remove("open");
+      document.body.classList.remove("modal-open");
     }
 
     function handleFormSubmit(e) {
@@ -4956,6 +4968,7 @@
       }
 
       document.getElementById("settings-modal").classList.add("open");
+      document.body.classList.add("modal-open");
     }
 
     function toggleSettingsSection(secKey) {
@@ -4971,6 +4984,7 @@
 
     function closeSettingsModal() {
       document.getElementById("settings-modal").classList.remove("open");
+      document.body.classList.remove("modal-open");
     }
 
     function selectTheme(themeKey) {
@@ -5116,11 +5130,13 @@
       } catch (e) {}
 
       document.getElementById("audit-modal").classList.add("open");
+      document.body.classList.add("modal-open");
       runAuditWithDays(currentAuditDays);
     }
 
     function closeAuditModal() {
       document.getElementById("audit-modal").classList.remove("open");
+      document.body.classList.remove("modal-open");
     }
 
     function runAuditWithDays(days) {
@@ -5252,9 +5268,10 @@
       document.getElementById("rep-tab-weekly").className = "report-seg-btn" + (currentReportTab === "weekly" ? " active" : "");
       document.getElementById("rep-tab-monthly").className = "report-seg-btn" + (currentReportTab === "monthly" ? " active" : "");
       document.getElementById("rep-tab-yearly").className = "report-seg-btn" + (currentReportTab === "yearly" ? " active" : "");
-      document.getElementById("report-modal-overlay").classList.add("open");
-      document.documentElement.classList.add("modal-open");
+      const overlay = document.getElementById("report-modal-overlay");
+      overlay.classList.add("open");
       document.body.classList.add("modal-open");
+      overlay.scrollTop = 0;
 
       // 若尚未載入完整歷史資料，點選年報或翻查前期時自動在背景補齊
       if (currentReportTab === "yearly" || reportWeekOffset !== 0 || reportMonthOffset !== 0) {
@@ -5267,7 +5284,6 @@
 
     function closeReportModal() {
       document.getElementById("report-modal-overlay").classList.remove("open");
-      document.documentElement.classList.remove("modal-open");
       document.body.classList.remove("modal-open");
     }
 
