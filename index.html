@@ -9,11 +9,31 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>定成 & 妤珊 記帳</title>
   <meta name="theme-color" id="theme-color-meta" content="#0b0f19">
+  <script>
+    (function() {
+      try {
+        var u = localStorage.getItem("active_user") || "定成";
+        var t = localStorage.getItem("theme_" + u) || (u === "妤珊" ? "milktea" : "dark");
+        var valids = ["dark", "white", "milktea", "pink", "cyberpunk"];
+        var safe = valids.indexOf(t) !== -1 ? t : (u === "妤珊" ? "milktea" : "dark");
+        document.documentElement.setAttribute("data-theme", safe);
+        var bgs = {
+          "dark": "#0b0f19",
+          "white": "#f8fafc",
+          "milktea": "#f6efe6",
+          "pink": "#fdf2f8",
+          "cyberpunk": "#080012"
+        };
+        var m = document.getElementById("theme-color-meta") || document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute("content", bgs[safe] || "#0b0f19");
+      } catch(e) {}
+    })();
+  </script>
   <link rel="apple-touch-icon" sizes="180x180" href="PIC1.jpg">
   <link rel="icon" type="image/jpeg" href="PIC1.jpg">
   <style>
     :root,
-    body[data-theme="dark"] {
+    [data-theme="dark"] {
       --bg: #0b0f19;
       --card: #151d2f;
       --card-soft: #111827;
@@ -30,7 +50,7 @@
       --radius: 16px;
     }
 
-    body[data-theme="white"] {
+    [data-theme="white"] {
       --bg: #f8fafc;
       --card: #ffffff;
       --card-soft: #f1f5f9;
@@ -46,7 +66,7 @@
       --pill-active-bg: #ffffff;
     }
 
-    body[data-theme="milktea"] {
+    [data-theme="milktea"] {
       --bg: #f6efe6;
       --card: #fffdf9;
       --card-soft: #eee4d6;
@@ -62,7 +82,7 @@
       --pill-active-bg: #ffffff;
     }
 
-    body[data-theme="pink"] {
+    [data-theme="pink"] {
       --bg: #fdf2f8;
       --card: #fffafc;
       --card-soft: #fce7f3;
@@ -78,7 +98,7 @@
       --pill-active-bg: #ffffff;
     }
 
-    body[data-theme="cyberpunk"] {
+    [data-theme="cyberpunk"] {
       --bg: #080012;
       --card: #130428;
       --card-soft: #1d083a;
@@ -104,11 +124,17 @@
     }
 
     html {
+      min-height: 100%;
+      height: 100%;
       background-color: var(--bg);
+      transition: background-color 0.25s ease;
     }
 
     body {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
       background-color: var(--bg);
+      transition: background-color 0.25s ease;
       color: var(--text);
       padding: 14px;
       padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
@@ -1946,13 +1972,13 @@
       border: 1px solid rgba(34, 197, 94, 0.35);
     }
 
-    body[data-theme="dark"] .rep-delta-pill.up,
-    body[data-theme="cyberpunk"] .rep-delta-pill.up {
+    [data-theme="dark"] .rep-delta-pill.up,
+    [data-theme="cyberpunk"] .rep-delta-pill.up {
       color: #f87171;
     }
 
-    body[data-theme="dark"] .rep-delta-pill.down,
-    body[data-theme="cyberpunk"] .rep-delta-pill.down {
+    [data-theme="dark"] .rep-delta-pill.down,
+    [data-theme="cyberpunk"] .rep-delta-pill.down {
       color: #4ade80;
     }
 
@@ -2021,10 +2047,10 @@
 
     .rep-swing-row.up { color: #ef4444; }
     .rep-swing-row.down { color: #16a34a; }
-    body[data-theme="dark"] .rep-swing-row.up,
-    body[data-theme="cyberpunk"] .rep-swing-row.up { color: #f87171; }
-    body[data-theme="dark"] .rep-swing-row.down,
-    body[data-theme="cyberpunk"] .rep-swing-row.down { color: #4ade80; }
+    [data-theme="dark"] .rep-swing-row.up,
+    [data-theme="cyberpunk"] .rep-swing-row.up { color: #f87171; }
+    [data-theme="dark"] .rep-swing-row.down,
+    [data-theme="cyberpunk"] .rep-swing-row.down { color: #4ade80; }
 
     /* 點擊類別展開的消費明細抽屜 */
     .rep-cat-delta-item {
@@ -2359,13 +2385,13 @@
       background: rgba(34, 197, 94, 0.13);
     }
 
-    body[data-theme="dark"] .rep-diff-tag.more,
-    body[data-theme="cyberpunk"] .rep-diff-tag.more {
+    [data-theme="dark"] .rep-diff-tag.more,
+    [data-theme="cyberpunk"] .rep-diff-tag.more {
       color: #f87171;
     }
 
-    body[data-theme="dark"] .rep-diff-tag.less,
-    body[data-theme="cyberpunk"] .rep-diff-tag.less {
+    [data-theme="dark"] .rep-diff-tag.less,
+    [data-theme="cyberpunk"] .rep-diff-tag.less {
       color: #4ade80;
     }
 
@@ -2453,7 +2479,7 @@
     }
   </style>
 </head>
-<body data-theme="dark">
+<body>
   <!-- 🚀 全螢幕流動霓虹光暈外框 (重新整理、編輯、刪除進行時轉動) -->
   <div class="screen-neon-border" id="screen-neon-border"></div>
 
@@ -3031,7 +3057,7 @@
     // 初始化服務端資料注入（GitHub Pages 極速版：0.01 秒先顯示本地快取畫面，同時背景向 Google Sheet 同步最新資料）
     window.onload = function() {
       // 📱 PWA / iOS 獨立主畫面防遮擋與快取自動更新機制（向上微調）
-      const PWA_VERSION = "20261114_v6";
+      const PWA_VERSION = "20261114_v8";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -4808,6 +4834,7 @@
       const currentTheme = userCfg.theme || defaultTheme;
       const safeTheme = VALID_THEMES.indexOf(currentTheme) !== -1 ? currentTheme : defaultTheme;
 
+      document.documentElement.setAttribute("data-theme", safeTheme);
       document.body.setAttribute("data-theme", safeTheme);
       const THEME_BG_MAP = {
         "dark": "#0b0f19",
