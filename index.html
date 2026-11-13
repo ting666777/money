@@ -156,8 +156,8 @@
 
     @media all and (display-mode: standalone) {
       body {
-        padding-top: 54px !important;
-        padding-top: max(calc(env(safe-area-inset-top) + 6px), 54px) !important;
+        padding-top: 64px !important;
+        padding-top: max(calc(env(safe-area-inset-top) + 8px), 64px) !important;
       }
       .top-bar {
         margin-top: 0 !important;
@@ -165,8 +165,8 @@
     }
 
     body.pwa-standalone {
-      padding-top: 54px !important;
-      padding-top: max(calc(env(safe-area-inset-top) + 6px), 54px) !important;
+      padding-top: 64px !important;
+      padding-top: max(calc(env(safe-area-inset-top) + 8px), 64px) !important;
     }
 
     body.pwa-standalone .top-bar {
@@ -1623,7 +1623,7 @@
     .fab-add-btn {
       position: fixed;
       right: 20px;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+      bottom: 24px;
       width: 54px;
       height: 54px;
       border-radius: 50%;
@@ -3057,7 +3057,7 @@
     // 初始化服務端資料注入（GitHub Pages 極速版：0.01 秒先顯示本地快取畫面，同時背景向 Google Sheet 同步最新資料）
     window.onload = function() {
       // 📱 PWA / iOS 獨立主畫面防遮擋與快取自動更新機制（向上微調）
-      const PWA_VERSION = "20261114_v8";
+      const PWA_VERSION = "20261114_v9";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -3070,9 +3070,9 @@
       if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
         document.body.classList.add('pwa-standalone');
         try {
-          document.body.style.paddingTop = 'max(calc(env(safe-area-inset-top) + 6px), 54px)';
+          document.body.style.paddingTop = 'max(calc(env(safe-area-inset-top) + 8px), 64px)';
         } catch(e) {
-          document.body.style.paddingTop = '54px';
+          document.body.style.paddingTop = '64px';
         }
       }
       // 支援網址帶 ?user=定成 或 ?user=妤珊 鎖定專屬個人頁面
