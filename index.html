@@ -162,7 +162,7 @@
 
     @media all and (display-mode: standalone) {
       body {
-        padding-top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 24px) !important;
       }
       .top-bar {
         margin-top: 0 !important;
@@ -170,7 +170,7 @@
     }
 
     body.pwa-standalone {
-      padding-top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+      padding-top: calc(env(safe-area-inset-top, 0px) + 24px) !important;
     }
 
     body.pwa-standalone .top-bar {
@@ -1854,14 +1854,23 @@
       visibility: hidden;
       pointer-events: none;
       position: fixed;
-      inset: 0;
-      background: rgba(2, 6, 23, 0.68);
-      backdrop-filter: blur(5px);
-      display: none;
-      align-items: center;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: -120px;
+      width: 100vw;
+      min-height: calc(100vh + 120px);
+      min-height: calc(-webkit-fill-available + 120px);
+      background: rgba(2, 6, 23, 0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      align-items: flex-start;
       justify-content: center;
       z-index: 1500;
       padding: 12px;
+      padding-top: calc(env(safe-area-inset-top, 0px) + 26px) !important;
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px) !important;
+      box-sizing: border-box;
     }
 
     .report-modal-overlay.open {
@@ -1873,14 +1882,16 @@
     .report-modal-box {
       width: 100%;
       max-width: 450px;
-      max-height: 88vh;
+      max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 60px);
+      max-height: calc(-webkit-fill-available - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 60px);
       overflow-y: auto;
       overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
       background: var(--card);
       border: 1.5px solid var(--card-border);
       border-radius: 20px;
-      padding: 16px 12px;
+      padding: 16px 14px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.48);
       color: var(--text);
       display: flex;
@@ -2897,6 +2908,17 @@
         </div>
       </div>
 
+            <!-- 📱 當前系統版本資訊與強制檢查更新 -->
+      <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261114_v12</span>
+        </div>
+        <button type="button" onclick="localStorage.removeItem('money_pwa_version'); window.location.replace(window.location.pathname + '?v=' + Date.now());" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
+          🔄 強制檢查更新
+        </button>
+      </div>
+
       <div class="form-btn-group">
         <button type="button" class="btn-cancel" onclick="closeSettingsModal()">關閉</button>
       </div>
@@ -3093,7 +3115,7 @@
     // 初始化服務端資料注入（GitHub Pages 極速版：0.01 秒先顯示本地快取畫面，同時背景向 Google Sheet 同步最新資料）
     window.onload = function() {
       // 📱 PWA / iOS 獨立主畫面防遮擋與快取自動更新機制（向上微調）
-      const PWA_VERSION = "20261114_v11";
+      const PWA_VERSION = "20261114_v12";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -3106,7 +3128,7 @@
       if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
         document.body.classList.add('pwa-standalone');
         try {
-          document.body.style.paddingTop = 'calc(env(safe-area-inset-top, 0px) + 6px)';
+          document.body.style.paddingTop = 'calc(env(safe-area-inset-top, 0px) + 24px)';
         } catch(e) {
           document.body.style.paddingTop = '54px';
         }
@@ -5225,6 +5247,8 @@
       document.getElementById("rep-tab-monthly").className = "report-seg-btn" + (currentReportTab === "monthly" ? " active" : "");
       document.getElementById("rep-tab-yearly").className = "report-seg-btn" + (currentReportTab === "yearly" ? " active" : "");
       document.getElementById("report-modal-overlay").classList.add("open");
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
 
       // 若尚未載入完整歷史資料，點選年報或翻查前期時自動在背景補齊
       if (currentReportTab === "yearly" || reportWeekOffset !== 0 || reportMonthOffset !== 0) {
@@ -5237,6 +5261,8 @@
 
     function closeReportModal() {
       document.getElementById("report-modal-overlay").classList.remove("open");
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     }
 
     function switchReportTab(tab) {
