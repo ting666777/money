@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="智慧記帳">
   <meta name="mobile-web-app-capable" content="yes">
   <title>定成 & 妤珊 記帳</title>
-  <meta name="theme-color" content="#0b0f19">
+  <meta name="theme-color" id="theme-color-meta" content="#0b0f19">
   <link rel="apple-touch-icon" sizes="180x180" href="PIC1.jpg">
   <link rel="icon" type="image/jpeg" href="PIC1.jpg">
   <style>
@@ -101,6 +101,10 @@
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
+    }
+
+    html {
+      background-color: var(--bg);
     }
 
     body {
@@ -3027,7 +3031,7 @@
     // 初始化服務端資料注入（GitHub Pages 極速版：0.01 秒先顯示本地快取畫面，同時背景向 Google Sheet 同步最新資料）
     window.onload = function() {
       // 📱 PWA / iOS 獨立主畫面防遮擋與快取自動更新機制（向上微調）
-      const PWA_VERSION = "20261114_v4";
+      const PWA_VERSION = "20261114_v5";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -4805,6 +4809,17 @@
       const safeTheme = VALID_THEMES.indexOf(currentTheme) !== -1 ? currentTheme : defaultTheme;
 
       document.body.setAttribute("data-theme", safeTheme);
+      const THEME_BG_MAP = {
+        "dark": "#0b0f19",
+        "white": "#f8fafc",
+        "milktea": "#f6efe6",
+        "pink": "#fdf2f8",
+        "cyberpunk": "#080012"
+      };
+      const themeColorMeta = document.getElementById("theme-color-meta") || document.querySelector('meta[name="theme-color"]');
+      if (themeColorMeta) {
+        themeColorMeta.setAttribute("content", THEME_BG_MAP[safeTheme] || "#0b0f19");
+      }
 
       VALID_THEMES.forEach(t => {
         const btn = document.getElementById("theme-btn-" + t);
