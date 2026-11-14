@@ -9,13 +9,14 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>定成 & 妤珊 記帳</title>
   <meta name="theme-color" id="theme-color-meta" content="#0b0f19">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
+  <link rel="manifest" href="manifest.json">
   <script>
     (function() {
       try {
-        var u = localStorage.getItem("active_user") || "定成";
+        var searchStr = decodeURIComponent(window.location.search || "");
+        var u = (searchStr.indexOf("妤珊") !== -1 || searchStr.indexOf("珊") !== -1)
+          ? "妤珊"
+          : (searchStr.indexOf("定成") !== -1 ? "定成" : (localStorage.getItem("active_user") || "定成"));
         var t = localStorage.getItem("theme_" + u) || (u === "妤珊" ? "milktea" : "dark");
         var valids = ["dark", "white", "milktea", "pink", "cyberpunk"];
         var safe = valids.indexOf(t) !== -1 ? t : (u === "妤珊" ? "milktea" : "dark");
@@ -2927,9 +2928,9 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261114_v15</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261115_v16 (SW極速版)</span>
         </div>
-        <button type="button" onclick="localStorage.removeItem('money_pwa_version'); window.location.replace(window.location.pathname + '?v=' + Date.now());" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
+        <button type="button" onclick="forceUpdatePwa();" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
         </button>
       </div>
@@ -3127,15 +3128,132 @@
       "妤珊": {}
     };
 
-    // 初始化服務端資料注入（GitHub Pages 極速版：0.01 秒先顯示本地快取畫面，同時背景向 Google Sheet 同步最新資料）
-    window.onload = function() {
-      // 📱 PWA / iOS 獨立主畫面防遮擋與快取自動更新機制（向上微調）
-      const PWA_VERSION = "20261114_v15";
+    // 🔄 強制清除 Service Worker 與本地快取並重新載入最新版（保留個人網址參數）
+    function forceUpdatePwa() {
+      try {
+        localStorage.removeItem("money_pwa_version");
+      } catch (e) {}
+      const reloadNow = function() {
+        const sp = new URLSearchParams(window.location.search);
+        sp.set("force_reload", String(Date.now()));
+        window.location.replace(window.location.pathname + "?" + sp.toString());
+      };
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          return Promise.all(regs.map(function(r) { return r.unregister(); }));
+        }).then(function() {
+          if (window.caches && caches.keys) {
+            return caches.keys().then(function(keys) {
+              return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+            });
+          }
+        }).finally(reloadNow);
+      } else {
+        reloadNow();
+      }
+    }
+
+    // 💾 將最新本地資料即時同步回 localStorage 快取，確保下次點開 App 0.005 秒呈現最新狀態
+    function saveLocalDashboardCache() {
+      try {
+        const cachePayload = {
+          allRecords: allRecords.slice(0, 250),
+          monthlyExpenses: monthlyExpensesMap,
+          userSettings: userSettingsMap
+        };
+        localStorage.setItem("github_fast_dash_cache_v2", JSON.stringify(cachePayload));
+      } catch (e) {}
+    }
+
+    // 📦 離線記帳佇列 (Offline Pending Queue)：斷網時先存手機，恢復網路自動背景補傳至 Google Sheets
+    const OFFLINE_QUEUE_KEY = "money_offline_queue_v1";
+
+    function getOfflineQueue() {
+      try {
+        const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function enqueueOfflineAction(actionItem) {
+      try {
+        const q = getOfflineQueue();
+        q.push(actionItem);
+        localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(q));
+      } catch (e) {}
+    }
+
+    let isSyncingOfflineQueue = false;
+    function flushOfflineQueue() {
+      if (isSyncingOfflineQueue || !navigator.onLine) return;
+      const q = getOfflineQueue();
+      if (!q || q.length === 0) return;
+
+      isSyncingOfflineQueue = true;
+      const currentItem = q[0];
+
+      function onSyncedSuccess() {
+        const latestQ = getOfflineQueue();
+        latestQ.shift();
+        try {
+          localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(latestQ));
+        } catch (e) {}
+        isSyncingOfflineQueue = false;
+        if (latestQ.length > 0) {
+          setTimeout(flushOfflineQueue, 250);
+        } else {
+          loadDataFromServer();
+        }
+      }
+
+      function onSyncedFailure() {
+        isSyncingOfflineQueue = false;
+      }
+
+      if (currentItem.type === "add") {
+        google.script.run
+          .withSuccessHandler(onSyncedSuccess)
+          .withFailureHandler(onSyncedFailure)
+          .addStructuredRecord(currentItem.payload);
+      } else if (currentItem.type === "update") {
+        google.script.run
+          .withSuccessHandler(onSyncedSuccess)
+          .withFailureHandler(onSyncedFailure)
+          .updateStructuredRecord(currentItem.user, currentItem.rowIndex, currentItem.payload, currentItem.matchCriteria);
+      } else if (currentItem.type === "delete") {
+        google.script.run
+          .withSuccessHandler(onSyncedSuccess)
+          .withFailureHandler(onSyncedFailure)
+          .deleteRecordByRow(currentItem.user, currentItem.rowIndex, currentItem.matchCriteria);
+      } else {
+        onSyncedSuccess();
+      }
+    }
+
+    window.addEventListener("online", function() {
+      flushOfflineQueue();
+    });
+
+    // ⚡ 極速初始化：不等圖片與外部資源載入，DOM 解析完畢 0.001 秒立即渲染本地快取畫面！
+    function initApp() {
+      if (window.__moneyAppInitialized) return;
+      window.__moneyAppInitialized = true;
+
+      // 註冊 Service Worker 實現本機快閃記憶體秒開與離線支援
+      if ("serviceWorker" in navigator && (window.location.protocol === "https:" || window.location.hostname === "localhost")) {
+        navigator.serviceWorker.register("./sw.js").catch(function() {});
+      }
+
+      const PWA_VERSION = "20261115_v16";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
         if (oldVer) {
-          window.location.replace(window.location.pathname + "?v=" + PWA_VERSION);
+          const sp = new URLSearchParams(window.location.search);
+          sp.set("v", PWA_VERSION);
+          window.location.replace(window.location.pathname + "?" + sp.toString());
           return;
         }
       }
@@ -3197,7 +3315,7 @@
         searchEl.addEventListener("search", function(e) { onSearchInput(e.target.value); });
       }
 
-      // 1. 先從本地快取 0.01 秒瞬間渲染上次畫面（完全不白畫面等待）
+      // 1. 先從本地快取 0.001 秒瞬間渲染上次畫面（完全不等待圖片或網路）
       try {
         const cachedRaw = localStorage.getItem("github_fast_dash_cache_v2");
         if (cachedRaw) {
@@ -3216,10 +3334,21 @@
         }
       } catch (e) {}
 
-      // 2. 接著立即向 Google Apps Script 抓取最新 15 筆紀錄與最新設定
-      loadDataFromServer();
-      setTimeout(checkRecentAuditIssues, 1200);
-    };
+      // 2. 接著在背景同步：若有離線暫存佇列則優先補傳，否則直接抓取最新 15 筆紀錄
+      if (getOfflineQueue().length > 0 && navigator.onLine) {
+        flushOfflineQueue();
+      } else {
+        loadDataFromServer();
+      }
+      setTimeout(checkRecentAuditIssues, 1500);
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initApp);
+    } else {
+      initApp();
+    }
+    window.addEventListener("load", initApp);
 
     // 🩺 背景靜態檢查：若發現有重複或錯誤則亮起紅色橫幅，但只要點開查看過就會消失！
     function checkRecentAuditIssues() {
@@ -4455,7 +4584,29 @@
       };
       rec.Category = newCategory;
       closeCategorySheet();
+      saveLocalDashboardCache();
       refreshView();
+
+      const updatePayload = {
+        Category: newCategory,
+        Account: rec.Account,
+        Amount: rec.Amount,
+        Currency: rec.Currency,
+        "Recorded At": rec["Recorded At"],
+        note: rec.note,
+        "Account ID": rec["Account ID"]
+      };
+
+      if (!navigator.onLine) {
+        enqueueOfflineAction({
+          type: "update",
+          user: rec.user,
+          rowIndex: rec.rowIndex,
+          payload: updatePayload,
+          matchCriteria: matchCriteria
+        });
+        return;
+      }
 
       // 啟動全螢幕流動霓虹光暈轉圈圈動畫直到儲存完成
       startProgress();
@@ -4467,22 +4618,27 @@
           if (updatedRec && updatedRec.rowIndex) {
             rec.rowIndex = updatedRec.rowIndex;
           }
+          saveLocalDashboardCache();
         })
         .withFailureHandler(function(err) {
           finishProgress();
-          alert("更新失敗：" + err.message);
-          rec.Category = oldCat;
-          refreshView();
+          const msg = (err && err.message) ? err.message : String(err);
+          if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
+            enqueueOfflineAction({
+              type: "update",
+              user: rec.user,
+              rowIndex: rec.rowIndex,
+              payload: updatePayload,
+              matchCriteria: matchCriteria
+            });
+          } else {
+            alert("更新失敗：" + msg);
+            rec.Category = oldCat;
+            saveLocalDashboardCache();
+            refreshView();
+          }
         })
-        .updateStructuredRecord(rec.user, rec.rowIndex, {
-          Category: newCategory,
-          Account: rec.Account,
-          Amount: rec.Amount,
-          Currency: rec.Currency,
-          "Recorded At": rec["Recorded At"],
-          note: rec.note,
-          "Account ID": rec["Account ID"]
-        }, matchCriteria);
+        .updateStructuredRecord(rec.user, rec.rowIndex, updatePayload, matchCriteria);
     }
 
     // =====================================================
@@ -4566,10 +4722,11 @@
       const account = document.getElementById("form-account").value;
       const timeVal = document.getElementById("form-time").value;
       const recordedAt = timeVal.replace("T", " ").replace(/-/g, "/");
+      const finalNote = note || category;
 
       const saveBtn = document.getElementById("form-save-btn");
-      saveBtn.disabled = true;
-      saveBtn.innerText = "儲存中...";
+      saveBtn.disabled = false;
+      saveBtn.innerText = "儲存";
 
       const payload = {
         user: user,
@@ -4578,46 +4735,163 @@
         Amount: amount,
         Currency: "TWD",
         "Recorded At": recordedAt,
-        note: note,
+        note: finalNote,
         "Account ID": editingModalAccountId || 0
       };
 
-      startProgress();
+      // ⚡ 1. 樂觀更新 (Optimistic UI)：0.01 秒立即關閉彈窗並更新畫面與本地快取，不再空等網路！
+      closeEditModal();
+      if (currentDimension === "day" && recordedAt.length >= 10) {
+        currentTimeKey = recordedAt.slice(0, 10);
+      }
 
       if (rowIndex) {
+        const numRow = Number(rowIndex);
+        const criteriaCopy = editingModalMatchCriteria ? Object.assign({}, editingModalMatchCriteria) : null;
+        const targetRec = allRecords.find(r =>
+          r.user === user && (
+            Number(r.rowIndex) === numRow ||
+            (criteriaCopy &&
+             String(r["Recorded At"] || "") === String(criteriaCopy.recordedAt || "") &&
+             Math.abs(Number(r.Amount) - Number(criteriaCopy.amount)) < 0.01 &&
+             String(r.note || "") === String(criteriaCopy.note || ""))
+          )
+        );
+
+        let oldSnap = null;
+        if (targetRec) {
+          oldSnap = Object.assign({}, targetRec);
+          const oldYm = String(targetRec["Recorded At"] || "").slice(0, 7);
+          const newYm = recordedAt.slice(0, 7);
+          if (!monthlyExpensesMap[user]) monthlyExpensesMap[user] = {};
+          if (targetRec.Category !== "收入" && oldYm && monthlyExpensesMap[user][oldYm] !== undefined) {
+            monthlyExpensesMap[user][oldYm] = Math.max(0, Math.round((Number(monthlyExpensesMap[user][oldYm]) || 0) - (Number(targetRec.Amount) || 0)));
+          }
+          if (category !== "收入" && newYm && monthlyExpensesMap[user][newYm] !== undefined) {
+            monthlyExpensesMap[user][newYm] = Math.round((Number(monthlyExpensesMap[user][newYm]) || 0) + amount);
+          }
+
+          targetRec.Account = account;
+          targetRec.Category = category;
+          targetRec.Amount = amount;
+          targetRec["Recorded At"] = recordedAt;
+          targetRec.note = finalNote;
+        }
+
+        saveLocalDashboardCache();
+        refreshView();
+
+        if (!navigator.onLine) {
+          enqueueOfflineAction({
+            type: "update",
+            user: user,
+            rowIndex: rowIndex,
+            payload: payload,
+            matchCriteria: criteriaCopy
+          });
+          return;
+        }
+
+        startProgress();
         google.script.run
-          .withSuccessHandler(function() {
-            closeEditModal();
-            saveBtn.disabled = false;
-            saveBtn.innerText = "儲存";
-            if (currentDimension === "day" && recordedAt.length >= 10) {
-              currentTimeKey = recordedAt.slice(0, 10);
+          .withSuccessHandler(function(updatedServerRec) {
+            finishProgress();
+            if (targetRec && updatedServerRec && updatedServerRec.rowIndex) {
+              targetRec.rowIndex = updatedServerRec.rowIndex;
             }
-            triggerManualRefresh();
+            saveLocalDashboardCache();
           })
           .withFailureHandler(function(err) {
             finishProgress();
-            saveBtn.disabled = false;
-            saveBtn.innerText = "儲存";
-            alert("修改失敗：" + err.message);
+            const msg = (err && err.message) ? err.message : String(err);
+            if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
+              enqueueOfflineAction({
+                type: "update",
+                user: user,
+                rowIndex: rowIndex,
+                payload: payload,
+                matchCriteria: criteriaCopy
+              });
+            } else {
+              if (targetRec && oldSnap) {
+                Object.assign(targetRec, oldSnap);
+                saveLocalDashboardCache();
+                refreshView();
+              }
+              alert("修改失敗：" + msg);
+            }
           })
-          .updateStructuredRecord(user, rowIndex, payload, editingModalMatchCriteria);
+          .updateStructuredRecord(user, rowIndex, payload, criteriaCopy);
       } else {
+        // 新增紀錄：立即將新紀錄插入本地第一筆並更新當月總花費
+        allRecords.forEach(function(r) {
+          if (r.user === user && Number(r.rowIndex) >= 2) {
+            r.rowIndex = Number(r.rowIndex) + 1;
+          }
+        });
+
+        const optimisticRec = {
+          rowIndex: 2,
+          user: user,
+          Account: account,
+          Category: category,
+          Amount: amount,
+          Currency: "TWD",
+          "Recorded At": recordedAt,
+          note: finalNote,
+          "Account ID": editingModalAccountId || 0
+        };
+        allRecords.unshift(optimisticRec);
+
+        const newYm = recordedAt.slice(0, 7);
+        if (category !== "收入" && newYm) {
+          if (!monthlyExpensesMap[user]) monthlyExpensesMap[user] = {};
+          if (monthlyExpensesMap[user][newYm] !== undefined) {
+            monthlyExpensesMap[user][newYm] = Math.round((Number(monthlyExpensesMap[user][newYm]) || 0) + amount);
+          }
+        }
+
+        saveLocalDashboardCache();
+        refreshView();
+
+        if (!navigator.onLine) {
+          enqueueOfflineAction({
+            type: "add",
+            payload: payload
+          });
+          return;
+        }
+
+        startProgress();
         google.script.run
-          .withSuccessHandler(function() {
-            closeEditModal();
-            saveBtn.disabled = false;
-            saveBtn.innerText = "儲存";
-            if (currentDimension === "day" && recordedAt.length >= 10) {
-              currentTimeKey = recordedAt.slice(0, 10);
+          .withSuccessHandler(function(savedServerRec) {
+            finishProgress();
+            if (savedServerRec && savedServerRec.rowIndex) {
+              optimisticRec.rowIndex = savedServerRec.rowIndex;
             }
-            triggerManualRefresh();
+            if (savedServerRec && savedServerRec["Account ID"] !== undefined) {
+              optimisticRec["Account ID"] = savedServerRec["Account ID"];
+            }
+            saveLocalDashboardCache();
           })
           .withFailureHandler(function(err) {
             finishProgress();
-            saveBtn.disabled = false;
-            saveBtn.innerText = "儲存";
-            alert("新增失敗：" + err.message);
+            const msg = (err && err.message) ? err.message : String(err);
+            if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
+              enqueueOfflineAction({
+                type: "add",
+                payload: payload
+              });
+            } else {
+              const idx = allRecords.indexOf(optimisticRec);
+              if (idx !== -1) allRecords.splice(idx, 1);
+              if (category !== "收入" && newYm && monthlyExpensesMap[user] && monthlyExpensesMap[user][newYm] !== undefined) {
+                monthlyExpensesMap[user][newYm] = Math.max(0, Math.round((Number(monthlyExpensesMap[user][newYm]) || 0) - amount));
+              }
+              saveLocalDashboardCache();
+              refreshView();
+              alert("新增失敗：" + msg);
+            }
           })
           .addStructuredRecord(payload);
       }
@@ -4634,24 +4908,70 @@
 
       if (!rowIndex || !confirm("確定要刪除這筆記帳紀錄嗎？")) return;
 
-      const delBtn = document.getElementById("form-del-btn");
-      const trashSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>';
-      delBtn.innerText = "刪除中...";
-      delBtn.disabled = true;
-      startProgress();
+      // ⚡ 1. 樂觀刪除：立即關閉彈窗、從本地清單移除並更新當月花費
+      closeEditModal();
 
+      const numRow = Number(rowIndex);
+      const targetIdx = allRecords.findIndex(r =>
+        r.user === user && (
+          Number(r.rowIndex) === numRow ||
+          (criteria &&
+           String(r["Recorded At"] || "") === String(criteria.recordedAt || "") &&
+           Math.abs(Number(r.Amount) - Number(criteria.amount)) < 0.01 &&
+           String(r.note || "") === String(criteria.note || ""))
+        )
+      );
+
+      let removedRec = null;
+      if (targetIdx !== -1) {
+        removedRec = allRecords.splice(targetIdx, 1)[0];
+        const delYm = String(removedRec["Recorded At"] || "").slice(0, 7);
+        if (removedRec.Category !== "收入" && delYm && monthlyExpensesMap[user] && monthlyExpensesMap[user][delYm] !== undefined) {
+          monthlyExpensesMap[user][delYm] = Math.max(0, Math.round((Number(monthlyExpensesMap[user][delYm]) || 0) - (Number(removedRec.Amount) || 0)));
+        }
+      }
+
+      saveLocalDashboardCache();
+      refreshView();
+
+      if (!navigator.onLine) {
+        enqueueOfflineAction({
+          type: "delete",
+          user: user,
+          rowIndex: rowIndex,
+          matchCriteria: criteria
+        });
+        return;
+      }
+
+      startProgress();
       google.script.run
         .withSuccessHandler(function() {
-          delBtn.innerHTML = trashSvg;
-          delBtn.disabled = false;
-          closeEditModal();
-          triggerManualRefresh();
+          finishProgress();
+          saveLocalDashboardCache();
         })
         .withFailureHandler(function(err) {
           finishProgress();
-          delBtn.innerHTML = trashSvg;
-          delBtn.disabled = false;
-          alert("刪除失敗：" + err.message);
+          const msg = (err && err.message) ? err.message : String(err);
+          if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
+            enqueueOfflineAction({
+              type: "delete",
+              user: user,
+              rowIndex: rowIndex,
+              matchCriteria: criteria
+            });
+          } else {
+            if (removedRec) {
+              allRecords.splice(targetIdx, 0, removedRec);
+              const delYm = String(removedRec["Recorded At"] || "").slice(0, 7);
+              if (removedRec.Category !== "收入" && delYm && monthlyExpensesMap[user] && monthlyExpensesMap[user][delYm] !== undefined) {
+                monthlyExpensesMap[user][delYm] = Math.round((Number(monthlyExpensesMap[user][delYm]) || 0) + (Number(removedRec.Amount) || 0));
+              }
+              saveLocalDashboardCache();
+              refreshView();
+            }
+            alert("刪除失敗：" + msg);
+          }
         })
         .deleteRecordByRow(user, rowIndex, criteria);
     }

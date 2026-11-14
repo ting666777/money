@@ -1,0 +1,17 @@
+{
+  "name": "定成 & 妤珊 智慧記帳",
+  "short_name": "智慧記帳",
+  "description": "定成 & 妤珊 雙人雲端極速記帳 PWA（支援離線秒開與樂觀同步）",
+  "display": "standalone",
+  "background_color": "#0b0f19",
+  "theme_color": "#0b0f19",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "PIC1.jpg",
+      "sizes": "256x256",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
