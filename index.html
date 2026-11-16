@@ -2960,7 +2960,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v19 (SW極速版)</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v20 (SW極速版)</span>
         </div>
         <button type="button" onclick="forceUpdatePwa();" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -3304,7 +3304,7 @@
         navigator.serviceWorker.register("./sw.js").catch(function() {});
       }
 
-      const PWA_VERSION = "20261116_v19";
+      const PWA_VERSION = "20261116_v20";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -3413,6 +3413,52 @@
       initApp();
     }
     window.addEventListener("load", initApp);
+
+    // 📱 當使用者從 iPhone 捷徑、LINE 或其他 App 切回本記帳 App 時，自動觸發背景最新資料同步！
+    let lastResumeSyncTime = 0;
+    let resumeSyncTimer = null;
+    function handleAppForegroundResume() {
+      const now = Date.now();
+      // 避免 2 秒內重複觸發
+      if (now - lastResumeSyncTime < 2000) return;
+      lastResumeSyncTime = now;
+
+      // 若目前正有手動編輯、刪除或新增佇列正在向後端提交，不打擾樂觀更新
+      if (isRunningMutationQueue || (typeof pendingMutationQueue !== "undefined" && pendingMutationQueue.length > 0)) {
+        return;
+      }
+      // 若編輯彈窗正開啟中（使用者可能正在輸入修改），暫時不覆蓋
+      const editModal = document.getElementById("edit-modal");
+      if (editModal && editModal.classList.contains("open")) {
+        return;
+      }
+
+      // 1. 立即背景同步一次（若捷徑早已寫入完成，切回來 0.5 秒內自動更新畫面，無須手動按重整）
+      loadDataFromServer();
+
+      // 2. 延遲 2.5 秒再複查一次（防範剛從捷徑秒切回來時，Google 試算表還在最後 1 秒寫入中的微小時間差）
+      if (resumeSyncTimer) clearTimeout(resumeSyncTimer);
+      resumeSyncTimer = setTimeout(function() {
+        if (!document.hidden && !isRunningMutationQueue && !(typeof pendingMutationQueue !== "undefined" && pendingMutationQueue.length > 0)) {
+          const m = document.getElementById("edit-modal");
+          if (!m || !m.classList.contains("open")) {
+            loadDataFromServer();
+          }
+        }
+      }, 2500);
+    }
+
+    document.addEventListener("visibilitychange", function() {
+      if (!document.hidden && document.visibilityState === "visible") {
+        handleAppForegroundResume();
+      }
+    });
+    window.addEventListener("pageshow", function() {
+      handleAppForegroundResume();
+    });
+    window.addEventListener("focus", function() {
+      handleAppForegroundResume();
+    });
 
     // 🩺 本地毫秒級重複/異常靜態檢查（0 次網路請求，不搶佔後端資源，耗時 < 0.1ms！）
     function checkRecentAuditIssues() {
