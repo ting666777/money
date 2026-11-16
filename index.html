@@ -2960,7 +2960,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v18 (SW極速版)</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v19 (SW極速版)</span>
         </div>
         <button type="button" onclick="forceUpdatePwa();" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -3189,12 +3189,38 @@
     function saveLocalDashboardCache() {
       try {
         const cachePayload = {
-          allRecords: allRecords.slice(0, 250),
+          allRecords: allRecords.slice(0, 300),
           monthlyExpenses: monthlyExpensesMap,
           userSettings: userSettingsMap
         };
         localStorage.setItem("github_fast_dash_cache_v2", JSON.stringify(cachePayload));
       } catch (e) {}
+    }
+
+    // 🔗 背景寫入排隊佇列 (Sequential Mutation Queue)：
+    // 確保連續快速「新增 -> 馬上改分類 / 修改 / 刪除」時，背景請求嚴格依序排隊執行，
+    // 後續修改動作會自動讀取第一筆新增回傳的最新真實 rowIndex，永遠不會撞車報錯！
+    const pendingMutationQueue = [];
+    let isRunningMutationQueue = false;
+
+    function enqueueServerMutation(taskFn) {
+      pendingMutationQueue.push(taskFn);
+      runNextServerMutation();
+    }
+
+    function runNextServerMutation() {
+      if (isRunningMutationQueue || pendingMutationQueue.length === 0) return;
+      isRunningMutationQueue = true;
+      const currentTask = pendingMutationQueue.shift();
+      try {
+        currentTask(function onTaskDone() {
+          isRunningMutationQueue = false;
+          runNextServerMutation();
+        });
+      } catch (e) {
+        isRunningMutationQueue = false;
+        runNextServerMutation();
+      }
     }
 
     // 📦 離線記帳佇列 (Offline Pending Queue)：斷網時先存手機，恢復網路自動背景補傳至 Google Sheets
@@ -3278,7 +3304,7 @@
         navigator.serviceWorker.register("./sw.js").catch(function() {});
       }
 
-      const PWA_VERSION = "20261116_v18";
+      const PWA_VERSION = "20261116_v19";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -3323,6 +3349,28 @@
           }
         });
       } catch (e) {}
+
+      // 1. 最優先載入本地快取紀錄與初始化今日日期，避免第一次渲染先閃過 $0 空白畫面！
+      setDefaultTimeKey();
+      try {
+        const cachedRaw = localStorage.getItem("github_fast_dash_cache_v2");
+        if (cachedRaw) {
+          const cachedData = JSON.parse(cachedRaw);
+          if (cachedData && cachedData.monthlyExpenses) {
+            monthlyExpensesMap = cachedData.monthlyExpenses;
+          }
+          if (cachedData && cachedData.userSettings) {
+            syncUserSettingsFromServer(cachedData.userSettings);
+          }
+          if (cachedData && cachedData.allRecords && cachedData.allRecords.length > 0) {
+            allRecords = normalizeRecords(cachedData.allRecords);
+            if (allRecords.length >= 100) {
+              isMonthHistoryLoaded = true;
+            }
+          }
+        }
+      } catch (e) {}
+
       applyUserTheme(currentUser);
 
       // 若為專人網址，隱藏切換分頁，顯示個人標題（純文字名字，不放表情符號）
@@ -3332,7 +3380,8 @@
         titleBox.style.display = "flex";
         document.getElementById("locked-user-name").innerText = currentUser;
       } else {
-        switchUser(currentUser);
+        document.getElementById("pill-ding").className = "user-pill" + (currentUser === "定成" ? " active-ding" : "");
+        document.getElementById("pill-yu").className = "user-pill" + (currentUser === "妤珊" ? " active-yu" : "");
       }
 
       initCategoryGrid();
@@ -3347,32 +3396,15 @@
         searchEl.addEventListener("search", function(e) { onSearchInput(e.target.value); });
       }
 
-      // 1. 先從本地快取 0.001 秒瞬間渲染上次畫面（完全不等待圖片或網路）
-      try {
-        const cachedRaw = localStorage.getItem("github_fast_dash_cache_v2");
-        if (cachedRaw) {
-          const cachedData = JSON.parse(cachedRaw);
-          if (cachedData && cachedData.monthlyExpenses) {
-            monthlyExpensesMap = cachedData.monthlyExpenses;
-          }
-          if (cachedData && cachedData.userSettings) {
-            syncUserSettingsFromServer(cachedData.userSettings);
-          }
-          if (cachedData && cachedData.allRecords && cachedData.allRecords.length > 0) {
-            allRecords = normalizeRecords(cachedData.allRecords);
-            setDefaultTimeKey();
-            refreshView();
-          }
-        }
-      } catch (e) {}
+      // 立即渲染首屏畫面（0.001 秒完成）
+      refreshView();
 
-      // 2. 接著在背景同步：若有離線暫存佇列則優先補傳，否則直接抓取最新 15 筆紀錄
+      // 2. 接著在背景靜默同步：若有離線暫存佇列則優先補傳，否則抓取最新 200 筆紀錄
       if (getOfflineQueue().length > 0 && navigator.onLine) {
         flushOfflineQueue();
       } else {
         loadDataFromServer();
       }
-      setTimeout(checkRecentAuditIssues, 1500);
     }
 
     if (document.readyState === "loading") {
@@ -3382,33 +3414,74 @@
     }
     window.addEventListener("load", initApp);
 
-    // 🩺 背景靜態檢查：若發現有重複或錯誤則亮起紅色橫幅，但只要點開查看過就會消失！
+    // 🩺 本地毫秒級重複/異常靜態檢查（0 次網路請求，不搶佔後端資源，耗時 < 0.1ms！）
     function checkRecentAuditIssues() {
-      google.script.run
-        .withSuccessHandler(function(report) {
-          if (!report) return;
-          const issues = report.issues || [];
-          const total = issues.length;
-          const banner = document.getElementById("main-alert-banner");
-          const badge = document.getElementById("audit-badge");
+      try {
+        const nowMs = Date.now();
+        const cutoffMs = nowMs - 7 * 24 * 60 * 60 * 1000;
+        const userRecs = allRecords.filter(r => r.user === currentUser).slice(0, 60);
+        const issues = [];
 
-          const sig = issues.map(x => `${x.user}_${x.rowIndex}_${x.recordedAt}_${x.amount}`).join("|");
-          lastAuditIssueSig = sig;
-          let dismissedSig = "";
-          try {
-            dismissedSig = localStorage.getItem("dismissed_audit_sig") || "";
-          } catch (e) {}
+        function parseRecMs(str) {
+          if (!str) return 0;
+          const t = new Date(String(str).replace(/\//g, "-")).getTime();
+          return isNaN(t) ? 0 : t;
+        }
 
-          if (total > 0 && !hasViewedAuditBanner && sig !== dismissedSig) {
-            badge.style.display = "block";
-            document.getElementById("alert-banner-message").innerText = `⚠️ 系統發現 ${total} 筆重複或異常資料（點此查看）`;
-            banner.style.display = "block";
-          } else {
-            badge.style.display = "none";
-            banner.style.display = "none";
+        const recentRows = userRecs.filter(r => {
+          const ms = parseRecMs(r["Recorded At"]);
+          return ms >= cutoffMs;
+        });
+
+        for (let i = 0; i < recentRows.length; i++) {
+          for (let j = i + 1; j < recentRows.length; j++) {
+            const a = recentRows[i];
+            const b = recentRows[j];
+            const amtA = Number(a.Amount) || 0;
+            const amtB = Number(b.Amount) || 0;
+            if (amtA <= 0 || amtA !== amtB) continue;
+
+            const timeA = String(a["Recorded At"] || "");
+            const timeB = String(b["Recorded At"] || "");
+            const noteA = String(a.note || "");
+            const noteB = String(b.note || "");
+
+            if (timeA === timeB && (noteA === noteB || a.Category === b.Category)) {
+              issues.push({ user: currentUser, rowIndex: a.rowIndex, recordedAt: timeA, amount: amtA });
+              continue;
+            }
+            const msA = parseRecMs(timeA);
+            const msB = parseRecMs(timeB);
+            if (msA && msB) {
+              const diffMin = Math.abs(msA - msB) / 60000;
+              if (diffMin <= 5 && (noteA === noteB || (a.Account !== "現金" && a.Account === b.Account))) {
+                issues.push({ user: currentUser, rowIndex: a.rowIndex, recordedAt: timeA, amount: amtA });
+              }
+            }
           }
-        })
-        .scanDuplicatesAndAnomalies(7, currentUser);
+        }
+
+        const total = issues.length;
+        const banner = document.getElementById("main-alert-banner");
+        const badge = document.getElementById("audit-badge");
+        if (!banner || !badge) return;
+
+        const sig = issues.map(x => `${x.user}_${x.rowIndex}_${x.recordedAt}_${x.amount}`).join("|");
+        lastAuditIssueSig = sig;
+        let dismissedSig = "";
+        try {
+          dismissedSig = localStorage.getItem("dismissed_audit_sig") || "";
+        } catch (e) {}
+
+        if (total > 0 && !hasViewedAuditBanner && sig !== dismissedSig) {
+          badge.style.display = "block";
+          document.getElementById("alert-banner-message").innerText = `⚠️ 系統發現 ${total} 筆重複或異常資料（點此查看）`;
+          banner.style.display = "block";
+        } else {
+          badge.style.display = "none";
+          banner.style.display = "none";
+        }
+      } catch (e) {}
     }
 
     function setDefaultTimeKey() {
@@ -4646,6 +4719,18 @@
         amount: rec.Amount,
         note: rec.note
       };
+
+      // 若在「收入」與「支出」之間切換，同步即時調整當月支出快取
+      const ym = String(rec["Recorded At"] || "").slice(0, 7);
+      const amt = Number(rec.Amount) || 0;
+      if (ym && monthlyExpensesMap[rec.user] && monthlyExpensesMap[rec.user][ym] !== undefined) {
+        if (oldCat === "收入" && newCategory !== "收入") {
+          monthlyExpensesMap[rec.user][ym] = Math.round((Number(monthlyExpensesMap[rec.user][ym]) || 0) + amt);
+        } else if (oldCat !== "收入" && newCategory === "收入") {
+          monthlyExpensesMap[rec.user][ym] = Math.max(0, Math.round((Number(monthlyExpensesMap[rec.user][ym]) || 0) - amt));
+        }
+      }
+
       rec.Category = newCategory;
       closeCategorySheet();
       saveLocalDashboardCache();
@@ -4672,37 +4757,36 @@
         return;
       }
 
-      // 啟動全螢幕流動霓虹光暈轉圈圈動畫直到儲存完成
-      startProgress();
-
-      // 背景發送更新至 Google Sheet（附帶 matchCriteria 確保即使手機剛新增一筆也不會改錯列！）
-      google.script.run
-        .withSuccessHandler(function(updatedRec) {
-          finishProgress();
-          if (updatedRec && updatedRec.rowIndex) {
-            rec.rowIndex = updatedRec.rowIndex;
-          }
-          saveLocalDashboardCache();
-        })
-        .withFailureHandler(function(err) {
-          finishProgress();
-          const msg = (err && err.message) ? err.message : String(err);
-          if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
-            enqueueOfflineAction({
-              type: "update",
-              user: rec.user,
-              rowIndex: rec.rowIndex,
-              payload: updatePayload,
-              matchCriteria: matchCriteria
-            });
-          } else {
-            alert("更新失敗：" + msg);
-            rec.Category = oldCat;
+      // 透過背景序列佇列靜默更新至 Google Sheet（即使剛新增馬上改分類也依序排隊不撞車！）
+      enqueueServerMutation(function(done) {
+        google.script.run
+          .withSuccessHandler(function(updatedRec) {
+            if (updatedRec && updatedRec.rowIndex) {
+              rec.rowIndex = updatedRec.rowIndex;
+            }
             saveLocalDashboardCache();
-            refreshView();
-          }
-        })
-        .updateStructuredRecord(rec.user, rec.rowIndex, updatePayload, matchCriteria);
+            done();
+          })
+          .withFailureHandler(function(err) {
+            const msg = (err && err.message) ? err.message : String(err);
+            if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
+              enqueueOfflineAction({
+                type: "update",
+                user: rec.user,
+                rowIndex: rec.rowIndex,
+                payload: updatePayload,
+                matchCriteria: matchCriteria
+              });
+            } else {
+              rec.Category = oldCat;
+              saveLocalDashboardCache();
+              refreshView();
+              alert("更新失敗：" + msg);
+            }
+            done();
+          })
+          .updateStructuredRecord(rec.user, rec.rowIndex, updatePayload, matchCriteria);
+      });
     }
 
     // =====================================================
@@ -4849,61 +4933,65 @@
           if (targetRec.Category !== "收入" && oldYm && monthlyExpensesMap[user][oldYm] !== undefined) {
             monthlyExpensesMap[user][oldYm] = Math.max(0, Math.round((Number(monthlyExpensesMap[user][oldYm]) || 0) - (Number(targetRec.Amount) || 0)));
           }
-          if (category !== "收入" && newYm && monthlyExpensesMap[user][newYm] !== undefined) {
+          if (finalCategory !== "收入" && newYm && monthlyExpensesMap[user][newYm] !== undefined) {
             monthlyExpensesMap[user][newYm] = Math.round((Number(monthlyExpensesMap[user][newYm]) || 0) + amount);
           }
 
           targetRec.Account = account;
-          targetRec.Category = category;
+          targetRec.Category = finalCategory;
           targetRec.Amount = amount;
           targetRec["Recorded At"] = recordedAt;
           targetRec.note = finalNote;
+          targetRec["Account ID"] = finalAccountId;
         }
 
         saveLocalDashboardCache();
         refreshView();
+        checkRecentAuditIssues();
 
         if (!navigator.onLine) {
           enqueueOfflineAction({
             type: "update",
             user: user,
-            rowIndex: rowIndex,
+            rowIndex: targetRec ? targetRec.rowIndex : rowIndex,
             payload: payload,
             matchCriteria: criteriaCopy
           });
           return;
         }
 
-        startProgress();
-        google.script.run
-          .withSuccessHandler(function(updatedServerRec) {
-            finishProgress();
-            if (targetRec && updatedServerRec && updatedServerRec.rowIndex) {
-              targetRec.rowIndex = updatedServerRec.rowIndex;
-            }
-            saveLocalDashboardCache();
-          })
-          .withFailureHandler(function(err) {
-            finishProgress();
-            const msg = (err && err.message) ? err.message : String(err);
-            if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
-              enqueueOfflineAction({
-                type: "update",
-                user: user,
-                rowIndex: rowIndex,
-                payload: payload,
-                matchCriteria: criteriaCopy
-              });
-            } else {
-              if (targetRec && oldSnap) {
-                Object.assign(targetRec, oldSnap);
-                saveLocalDashboardCache();
-                refreshView();
+        enqueueServerMutation(function(done) {
+          const latestRowIdx = targetRec ? targetRec.rowIndex : rowIndex;
+          google.script.run
+            .withSuccessHandler(function(updatedServerRec) {
+              if (targetRec && updatedServerRec && updatedServerRec.rowIndex) {
+                targetRec.rowIndex = updatedServerRec.rowIndex;
               }
-              alert("修改失敗：" + msg);
-            }
-          })
-          .updateStructuredRecord(user, rowIndex, payload, criteriaCopy);
+              saveLocalDashboardCache();
+              done();
+            })
+            .withFailureHandler(function(err) {
+              const msg = (err && err.message) ? err.message : String(err);
+              if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
+                enqueueOfflineAction({
+                  type: "update",
+                  user: user,
+                  rowIndex: latestRowIdx,
+                  payload: payload,
+                  matchCriteria: criteriaCopy
+                });
+              } else {
+                if (targetRec && oldSnap) {
+                  Object.assign(targetRec, oldSnap);
+                  saveLocalDashboardCache();
+                  refreshView();
+                }
+                alert("修改失敗：" + msg);
+              }
+              done();
+            })
+            .updateStructuredRecord(user, latestRowIdx, payload, criteriaCopy);
+        });
       } else {
         // 新增紀錄：立即將新紀錄插入本地第一筆並更新當月總花費
         allRecords.forEach(function(r) {
@@ -4935,6 +5023,7 @@
 
         saveLocalDashboardCache();
         refreshView();
+        checkRecentAuditIssues();
 
         if (!navigator.onLine) {
           enqueueOfflineAction({
@@ -4944,55 +5033,43 @@
           return;
         }
 
-        startProgress();
-        google.script.run
-          .withSuccessHandler(function(savedServerRec) {
-            finishProgress();
-            if (savedServerRec && savedServerRec.rowIndex) {
-              optimisticRec.rowIndex = savedServerRec.rowIndex;
-            }
-            if (savedServerRec && savedServerRec["Account ID"] !== undefined) {
-              optimisticRec["Account ID"] = savedServerRec["Account ID"];
-            }
-            saveLocalDashboardCache();
-          })
-          .withFailureHandler(function(err) {
-            finishProgress();
-            const msg = (err && err.message) ? err.message : String(err);
-            if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
-              enqueueOfflineAction({
-                type: "add",
-                payload: payload
-              });
-            } else {
-              const idx = allRecords.indexOf(optimisticRec);
-              if (idx !== -1) allRecords.splice(idx, 1);
-              if (category !== "收入" && newYm && monthlyExpensesMap[user] && monthlyExpensesMap[user][newYm] !== undefined) {
-                monthlyExpensesMap[user][newYm] = Math.max(0, Math.round((Number(monthlyExpensesMap[user][newYm]) || 0) - amount));
+        enqueueServerMutation(function(done) {
+          google.script.run
+            .withSuccessHandler(function(savedServerRec) {
+              if (savedServerRec && savedServerRec.rowIndex) {
+                optimisticRec.rowIndex = savedServerRec.rowIndex;
+              }
+              if (savedServerRec && savedServerRec["Account ID"] !== undefined) {
+                optimisticRec["Account ID"] = savedServerRec["Account ID"];
               }
               saveLocalDashboardCache();
-              refreshView();
-              alert("新增失敗：" + msg);
-            }
-          })
-          .addStructuredRecord(payload);
+              done();
+            })
+            .withFailureHandler(function(err) {
+              const msg = (err && err.message) ? err.message : String(err);
+              if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
+                enqueueOfflineAction({
+                  type: "add",
+                  payload: payload
+                });
+              } else {
+                const idx = allRecords.indexOf(optimisticRec);
+                if (idx !== -1) allRecords.splice(idx, 1);
+                if (finalCategory !== "收入" && newYm && monthlyExpensesMap[user] && monthlyExpensesMap[user][newYm] !== undefined) {
+                  monthlyExpensesMap[user][newYm] = Math.max(0, Math.round((Number(monthlyExpensesMap[user][newYm]) || 0) - amount));
+                }
+                saveLocalDashboardCache();
+                refreshView();
+                alert("新增失敗：" + msg);
+              }
+              done();
+            })
+            .addStructuredRecord(payload);
+        });
       }
     }
 
-    function handleDeleteCurrentRecord() {
-      const rowIndex = document.getElementById("form-row-index").value;
-      const user = document.getElementById("form-user").value || currentUser;
-      const criteria = editingModalMatchCriteria || {
-        recordedAt: document.getElementById("form-time").value.replace("T", " ").replace(/-/g, "/"),
-        amount: parseFloat(document.getElementById("form-amount").value),
-        note: document.getElementById("form-note").value.trim()
-      };
-
-      if (!rowIndex || !confirm("確定要刪除這筆記帳紀錄嗎？")) return;
-
-      // ⚡ 1. 樂觀刪除：立即關閉彈窗、從本地清單移除並更新當月花費
-      closeEditModal();
-
+    function executeOptimisticDelete(user, rowIndex, criteria) {
       const numRow = Number(rowIndex);
       const targetIdx = allRecords.findIndex(r =>
         r.user === user && (
@@ -5007,6 +5084,12 @@
       let removedRec = null;
       if (targetIdx !== -1) {
         removedRec = allRecords.splice(targetIdx, 1)[0];
+        // 將後方列號自動往上遞補 -1，保持本地列號與試算表一致
+        allRecords.forEach(function(r) {
+          if (r.user === user && Number(r.rowIndex) > Number(removedRec.rowIndex)) {
+            r.rowIndex = Number(r.rowIndex) - 1;
+          }
+        });
         const delYm = String(removedRec["Recorded At"] || "").slice(0, 7);
         if (removedRec.Category !== "收入" && delYm && monthlyExpensesMap[user] && monthlyExpensesMap[user][delYm] !== undefined) {
           monthlyExpensesMap[user][delYm] = Math.max(0, Math.round((Number(monthlyExpensesMap[user][delYm]) || 0) - (Number(removedRec.Amount) || 0)));
@@ -5015,47 +5098,65 @@
 
       saveLocalDashboardCache();
       refreshView();
+      checkRecentAuditIssues();
 
+      const effectiveRow = removedRec ? removedRec.rowIndex : rowIndex;
       if (!navigator.onLine) {
         enqueueOfflineAction({
           type: "delete",
           user: user,
-          rowIndex: rowIndex,
+          rowIndex: effectiveRow,
           matchCriteria: criteria
         });
         return;
       }
 
-      startProgress();
-      google.script.run
-        .withSuccessHandler(function() {
-          finishProgress();
-          saveLocalDashboardCache();
-        })
-        .withFailureHandler(function(err) {
-          finishProgress();
-          const msg = (err && err.message) ? err.message : String(err);
-          if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
-            enqueueOfflineAction({
-              type: "delete",
-              user: user,
-              rowIndex: rowIndex,
-              matchCriteria: criteria
-            });
-          } else {
-            if (removedRec) {
-              allRecords.splice(targetIdx, 0, removedRec);
-              const delYm = String(removedRec["Recorded At"] || "").slice(0, 7);
-              if (removedRec.Category !== "收入" && delYm && monthlyExpensesMap[user] && monthlyExpensesMap[user][delYm] !== undefined) {
-                monthlyExpensesMap[user][delYm] = Math.round((Number(monthlyExpensesMap[user][delYm]) || 0) + (Number(removedRec.Amount) || 0));
+      enqueueServerMutation(function(done) {
+        google.script.run
+          .withSuccessHandler(function() {
+            saveLocalDashboardCache();
+            done();
+          })
+          .withFailureHandler(function(err) {
+            const msg = (err && err.message) ? err.message : String(err);
+            if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
+              enqueueOfflineAction({
+                type: "delete",
+                user: user,
+                rowIndex: effectiveRow,
+                matchCriteria: criteria
+              });
+            } else {
+              if (removedRec) {
+                allRecords.splice(targetIdx, 0, removedRec);
+                const delYm = String(removedRec["Recorded At"] || "").slice(0, 7);
+                if (removedRec.Category !== "收入" && delYm && monthlyExpensesMap[user] && monthlyExpensesMap[user][delYm] !== undefined) {
+                  monthlyExpensesMap[user][delYm] = Math.round((Number(monthlyExpensesMap[user][delYm]) || 0) + (Number(removedRec.Amount) || 0));
+                }
+                saveLocalDashboardCache();
+                refreshView();
               }
-              saveLocalDashboardCache();
-              refreshView();
+              alert("刪除失敗：" + msg);
             }
-            alert("刪除失敗：" + msg);
-          }
-        })
-        .deleteRecordByRow(user, rowIndex, criteria);
+            done();
+          })
+          .deleteRecordByRow(user, effectiveRow, criteria);
+      });
+    }
+
+    function handleDeleteCurrentRecord() {
+      const rowIndex = document.getElementById("form-row-index").value;
+      const user = document.getElementById("form-user").value || currentUser;
+      const criteria = editingModalMatchCriteria || {
+        recordedAt: document.getElementById("form-time").value.replace("T", " ").replace(/-/g, "/"),
+        amount: parseFloat(document.getElementById("form-amount").value),
+        note: document.getElementById("form-note").value.trim()
+      };
+
+      if (!rowIndex || !confirm("確定要刪除這筆記帳紀錄嗎？")) return;
+
+      closeEditModal();
+      executeOptimisticDelete(user, rowIndex, criteria);
     }
 
     // =====================================================
@@ -5156,27 +5257,17 @@
         .splitRecordAndSyncDebt(rec.user, rec.rowIndex, splitAmt, criteria);
     }
 
-    // 快捷刪除按鈕
+    // 快捷刪除按鈕（0.01 秒樂觀刪除）
     function quickDeleteRecord(recordIndex) {
       const rec = renderedRecordsPool[recordIndex] || getFilteredRecords()[recordIndex];
       if (!rec) return;
       if (!confirm(`確定要刪除【${rec.note || rec.Category}】$${rec.Amount} 的紀錄嗎？`)) return;
 
-      startProgress();
-
-      google.script.run
-        .withSuccessHandler(function() {
-          triggerManualRefresh();
-        })
-        .withFailureHandler(function(err) {
-          finishProgress();
-          alert("刪除失敗：" + err.message);
-        })
-        .deleteRecordByRow(rec.user, rec.rowIndex, {
-          recordedAt: rec["Recorded At"],
-          amount: rec.Amount,
-          note: rec.note
-        });
+      executeOptimisticDelete(rec.user, rec.rowIndex, {
+        recordedAt: rec["Recorded At"],
+        amount: rec.Amount,
+        note: rec.note
+      });
     }
 
     function getFilteredRecords() {
@@ -5207,12 +5298,10 @@
       btn.classList.add("spinning");
       startProgress();
       const queryUser = isLockedUser ? currentUser : "";
-      // 三段式載入：搜尋或看「年」載入全部，看「月」或非今日的「天」載入 200 筆，看今日「天」只極速撈取最新 15 筆
-      let fetchParams = { user: queryUser, limit: 15 };
-      if (searchQuery.length > 0 || currentDimension === "year") {
+      // 預設一次拉取 200 筆（涵蓋近兩個月），避免洗掉本地快取；看「年」或搜尋則載入全部
+      let fetchParams = { user: queryUser, limit: 200 };
+      if (searchQuery.length > 0 || currentDimension === "year" || isFullHistoryLoaded) {
         fetchParams = { user: queryUser, all: true };
-      } else if (currentDimension === "month" || isMonthHistoryLoaded || currentTimeKey !== getTodayString()) {
-        fetchParams = { user: queryUser, limit: 200 };
       }
       google.script.run
         .withSuccessHandler(function(data) {
@@ -5227,8 +5316,10 @@
           if (data && data.allRecords) {
             allRecords = normalizeRecords(data.allRecords);
             isFullHistoryLoaded = !!data.isCompleteHistory;
-            isMonthHistoryLoaded = isFullHistoryLoaded || (fetchParams.limit >= 200);
+            isMonthHistoryLoaded = true;
+            saveLocalDashboardCache();
             refreshView();
+            checkRecentAuditIssues();
           }
         })
         .withFailureHandler(function(err) {
@@ -5240,17 +5331,18 @@
     }
 
     function loadDataFromServer() {
-      startProgress();
       const queryUser = isLockedUser ? currentUser : "";
-      let fetchParams = { user: queryUser, limit: 15 };
+      // 預設背景同步拉取 200 筆（後端已有 CacheService 快取，耗時僅 0.01 秒，且不會把本地 200 筆快取洗成 15 筆！）
+      let fetchParams = { user: queryUser, limit: 200 };
       if (searchQuery.length > 0 || currentDimension === "year") {
         fetchParams = { user: queryUser, all: true };
-      } else if (currentDimension === "month") {
-        fetchParams = { user: queryUser, limit: 200 };
       }
       google.script.run
         .withSuccessHandler(function(data) {
-          finishProgress();
+          // 若使用者在背景同步期間正在進行新增/修改/刪除，不讓舊的讀取結果覆蓋樂觀更新！
+          if (isRunningMutationQueue || pendingMutationQueue.length > 0) {
+            return;
+          }
           if (data && data.monthlyExpenses) {
             monthlyExpensesMap = data.monthlyExpenses;
           }
@@ -5260,14 +5352,17 @@
           if (data && data.allRecords) {
             allRecords = normalizeRecords(data.allRecords);
             isFullHistoryLoaded = !!data.isCompleteHistory;
-            isMonthHistoryLoaded = isFullHistoryLoaded || (fetchParams.limit >= 200);
-            setDefaultTimeKey();
+            isMonthHistoryLoaded = true;
+            // 僅在尚未設定 currentTimeKey 時才設為預設今日，避免使用者已經滑去別天卻被強制拉回今天！
+            if (!currentTimeKey) {
+              setDefaultTimeKey();
+            }
+            saveLocalDashboardCache();
             refreshView();
+            checkRecentAuditIssues();
           }
         })
-        .withFailureHandler(function() {
-          finishProgress();
-        })
+        .withFailureHandler(function() {})
         .getDashboardData(fetchParams);
     }
 
@@ -5400,14 +5495,11 @@
       } catch (e) {}
 
       applyUserTheme(user);
-      startProgress();
+      saveLocalDashboardCache();
 
       google.script.run
-        .withSuccessHandler(function() {
-          finishProgress();
-        })
+        .withSuccessHandler(function() {})
         .withFailureHandler(function(err) {
-          finishProgress();
           alert("設定儲存失敗：" + err.message);
         })
         .saveUserSettings(user, { theme: themeKey });
@@ -5434,30 +5526,14 @@
 
       applyUserTheme(user);
       renderMonthlyBudgetBar();
+      saveLocalDashboardCache();
 
-      const btn = document.getElementById("settings-budget-save-btn");
-      if (btn) {
-        btn.disabled = true;
-        btn.innerText = "儲存中...";
-      }
-      startProgress();
+      const budgetItem = document.getElementById("settings-item-budget");
+      if (budgetItem) budgetItem.classList.remove("open");
 
       google.script.run
-        .withSuccessHandler(function() {
-          finishProgress();
-          if (btn) {
-            btn.disabled = false;
-            btn.innerText = "儲存";
-          }
-          const budgetItem = document.getElementById("settings-item-budget");
-          if (budgetItem) budgetItem.classList.remove("open");
-        })
+        .withSuccessHandler(function() {})
         .withFailureHandler(function(err) {
-          finishProgress();
-          if (btn) {
-            btn.disabled = false;
-            btn.innerText = "儲存";
-          }
           alert("預算儲存失敗：" + err.message);
         })
         .saveUserSettings(user, { monthlyBudget: parsed });
@@ -5625,22 +5701,24 @@
       if (!item) return;
       if (!confirm(`確定要刪除【${item.user}】第 ${item.rowIndex} 列（${item.note} $${item.amount}）的重複紀錄嗎？`)) return;
 
-      startProgress();
-      google.script.run
-        .withSuccessHandler(function() {
-          finishProgress();
-          triggerManualRefresh();
-          runAuditWithDays(currentAuditDays);
-        })
-        .withFailureHandler(function(err) {
-          finishProgress();
-          alert("刪除失敗：" + err.message);
-        })
-        .deleteRecordByRow(item.user, item.rowIndex, {
-          recordedAt: item.recordedAt,
-          amount: item.amount,
-          note: item.note
-        });
+      lastAuditIssues.splice(issueIdx, 1);
+      executeOptimisticDelete(item.user, item.rowIndex, {
+        recordedAt: item.recordedAt,
+        amount: item.amount,
+        note: item.note
+      });
+
+      const box = document.getElementById("audit-results-container");
+      if (lastAuditIssues.length === 0 && box) {
+        box.innerHTML = `
+          <div style="background:rgba(74,140,111,0.12); border:1px solid #4a8c6f; border-radius:12px; padding:20px; text-align:center; color:#386e56;">
+            <div style="font-size:2rem; margin-bottom:6px;">✅</div>
+            <strong style="font-size:0.92rem;">已刪除重複項目，目前沒有任何重複或異常資料！</strong>
+          </div>
+        `;
+      } else {
+        setTimeout(function() { runAuditWithDays(currentAuditDays); }, 800);
+      }
     }
 
     function escapeHtml(str) {
