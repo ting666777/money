@@ -970,7 +970,7 @@
       background: var(--card-soft);
       border: 1px solid var(--card-border);
       border-radius: 9px;
-      padding: 0 26px 0 30px;
+      padding: 0 40px 0 30px;
       color: var(--text);
       font-size: 0.84rem;
       font-weight: 600;
@@ -996,17 +996,41 @@
 
     .search-inline-clear {
       position: absolute;
-      right: 7px;
-      top: 50%;
-      transform: translateY(-50%);
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 40px;
+      height: 100%;
       border: none;
       background: transparent;
-      color: var(--text-muted);
-      font-size: 0.76rem;
+      padding: 0;
+      margin: 0;
       cursor: pointer;
       display: none;
       align-items: center;
       justify-content: center;
+      z-index: 3;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .search-clear-icon-wrap {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--card-border);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .search-inline-clear:active .search-clear-icon-wrap {
+      transform: scale(0.9);
+      background: var(--accent);
+      color: #ffffff;
     }
 
     /* 三條線排序按鈕＋點擊彈出文字選單 */
@@ -2671,7 +2695,14 @@
             </svg>
           </span>
           <input type="text" id="search-input" class="search-inline-input" placeholder="" oninput="onSearchInput(this.value)">
-          <button type="button" id="search-clear-btn" class="search-inline-clear" style="display:none;" onclick="clearSearchInput()" title="清除搜尋">✕</button>
+          <button type="button" id="search-clear-btn" class="search-inline-clear" style="display:none;" onclick="clearSearchInput(event)" aria-label="清除搜尋">
+            <span class="search-clear-icon-wrap">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </span>
+          </button>
         </div>
 
         <div class="sort-menu-wrap" id="sort-menu-wrap">
@@ -2929,7 +2960,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v17 (SW極速版)</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v18 (SW極速版)</span>
         </div>
         <button type="button" onclick="forceUpdatePwa();" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -3247,7 +3278,7 @@
         navigator.serviceWorker.register("./sw.js").catch(function() {});
       }
 
-      const PWA_VERSION = "20261116_v17";
+      const PWA_VERSION = "20261116_v18";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -3792,9 +3823,15 @@
       }
     }
 
-    function clearSearchInput() {
+    function clearSearchInput(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       const inp = document.getElementById("search-input");
-      if (inp) inp.value = "";
+      if (inp) {
+        inp.value = "";
+      }
       searchQuery = "";
       expandedClusters = { exact: false, similar: false };
       showAllClusterLimit = { exact: 100, similar: 100 };
@@ -3928,6 +3965,11 @@
       const qTrim = query.trim();
       const qUpper = qTrim.toUpperCase();
 
+      // 檢查是否為價錢/數字搜尋（例如輸入 "160"、"$160"）
+      const cleanNumStr = qTrim.replace(/^[$\s]+/, "").replace(/,/g, "");
+      const isNumericQuery = cleanNumStr.length > 0 && !isNaN(Number(cleanNumStr)) && /^\d+(?:\.\d+)?$/.test(cleanNumStr);
+      const queryNum = isNumericQuery ? parseFloat(cleanNumStr) : null;
+
       // 搜尋當前使用者的全部歷史紀錄
       const userAll = allRecords.filter(r => r.user === currentUser);
       let exactList = [];
@@ -3936,10 +3978,27 @@
       userAll.forEach(r => {
         const noteText = String(r.note || r.Category || "").trim();
         const noteUpper = noteText.toUpperCase();
-        if (noteUpper === qUpper) {
+        const catUpper = String(r.Category || "").trim().toUpperCase();
+        const accUpper = String(r.Account || "").trim().toUpperCase();
+        const amt = Number(r.Amount) || 0;
+        const amtRound = Math.round(amt);
+        const amtStr = String(Math.abs(amtRound));
+        const amtFullStr = String(Math.abs(amt));
+
+        // 1. 完全相符判斷：品項名稱完全相同，或搜尋價錢時金額完全一致
+        const isExactNote = (noteUpper === qUpper);
+        const isExactAmount = isNumericQuery && (amtRound === Math.round(queryNum) || Math.abs(amt - queryNum) < 0.001);
+
+        if (isExactNote || isExactAmount) {
           exactList.push(r);
-        } else if (noteUpper.indexOf(qUpper) !== -1) {
-          similarList.push(r);
+        } else {
+          // 2. 類似項目判斷：品項/分類/帳戶包含關鍵字，或金額數字包含該字串
+          const isSimilarNote = (noteUpper.indexOf(qUpper) !== -1 || catUpper.indexOf(qUpper) !== -1 || accUpper.indexOf(qUpper) !== -1);
+          const isSimilarAmount = isNumericQuery && (amtStr.indexOf(cleanNumStr) !== -1 || amtFullStr.indexOf(cleanNumStr) !== -1);
+
+          if (isSimilarNote || isSimilarAmount) {
+            similarList.push(r);
+          }
         }
       });
 
@@ -3969,7 +4028,7 @@
         return;
       }
 
-      // 群集 1：一模一樣的字 (例如「晚餐」)
+      // 群集 1：一模一樣的字 (例如「晚餐」或完全相符價錢)
       if (exactList.length > 0) {
         const isExp = !!expandedClusters.exact;
         const limit = showAllClusterLimit.exact || 100;
@@ -3984,12 +4043,14 @@
           ? `<button type="button" class="rec-btn-mini" style="width:100%; padding:10px; margin-top:4px; text-align:center;" onclick="expandClusterLimit('exact', event)">👇 顯示更多（還有 ${(exactList.length - limit).toLocaleString()} 項）</button>`
           : "";
 
+        const exactTitleText = isNumericQuery ? `金額相符「$${cleanNumStr}」` : escapeHtml(qTrim);
+
         html += `
           <div class="cluster-card">
             <div class="cluster-header" onclick="toggleSearchCluster('exact')">
               <div class="cluster-left">
                 <div class="cluster-title">
-                  <span>${escapeHtml(qTrim)}</span>
+                  <span>${exactTitleText}</span>
                 </div>
               </div>
               <div class="cluster-right">
@@ -4008,7 +4069,7 @@
         `;
       }
 
-      // 群集 2：類似的字 (例如「晚餐...」)
+      // 群集 2：類似的字 (例如「晚餐...」或類似金額)
       if (similarList.length > 0) {
         const isExp = !!expandedClusters.similar;
         const limit = showAllClusterLimit.similar || 100;
@@ -4024,12 +4085,14 @@
           ? `<button type="button" class="rec-btn-mini" style="width:100%; padding:10px; margin-top:4px; text-align:center;" onclick="expandClusterLimit('similar', event)">👇 顯示更多（還有 ${(similarList.length - limit).toLocaleString()} 項）</button>`
           : "";
 
+        const similarTitleText = isNumericQuery ? `金額或備註包含「${cleanNumStr}」` : `${escapeHtml(qTrim)}...`;
+
         html += `
           <div class="cluster-card">
             <div class="cluster-header" onclick="toggleSearchCluster('similar')">
               <div class="cluster-left">
                 <div class="cluster-title">
-                  <span>${escapeHtml(qTrim)}...</span>
+                  <span>${similarTitleText}</span>
                 </div>
               </div>
               <div class="cluster-right">
@@ -4734,7 +4797,15 @@
       const account = document.getElementById("form-account").value;
       const timeVal = document.getElementById("form-time").value;
       const recordedAt = timeVal.replace("T", " ").replace(/-/g, "/");
-      const finalNote = note || category;
+      let finalNote = note || category;
+      let finalCategory = category;
+      // 💡 只要輸入或包含 google one，一律自動轉寫為 "Gemini" 並歸為 3C
+      if (/Google[\s\*]*One/i.test(finalNote)) {
+        finalNote = "Gemini";
+        if (!finalCategory || finalCategory === "食物" || finalCategory === "消費" || finalCategory === "其他") {
+          finalCategory = "3C";
+        }
+      }
       const finalAccountId = editingModalAccountId || inferAccountIdFromName(account);
 
       const saveBtn = document.getElementById("form-save-btn");
@@ -4744,7 +4815,7 @@
       const payload = {
         user: user,
         Account: account,
-        Category: category,
+        Category: finalCategory,
         Amount: amount,
         Currency: "TWD",
         "Recorded At": recordedAt,
@@ -4847,7 +4918,7 @@
           rowIndex: 2,
           user: user,
           Account: account,
-          Category: category,
+          Category: finalCategory,
           Amount: amount,
           Currency: "TWD",
           "Recorded At": recordedAt,
@@ -4857,7 +4928,7 @@
         allRecords.unshift(optimisticRec);
 
         const newYm = recordedAt.slice(0, 7);
-        if (category !== "收入" && newYm) {
+        if (finalCategory !== "收入" && newYm) {
           if (!monthlyExpensesMap[user]) monthlyExpensesMap[user] = {};
           if (monthlyExpensesMap[user][newYm] !== undefined) {
             monthlyExpensesMap[user][newYm] = Math.round((Number(monthlyExpensesMap[user][newYm]) || 0) + amount);
