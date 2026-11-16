@@ -4799,12 +4799,10 @@
       const recordedAt = timeVal.replace("T", " ").replace(/-/g, "/");
       let finalNote = note || category;
       let finalCategory = category;
-      // 💡 只要輸入或包含 google one，一律自動轉寫為 "Gemini" 並歸為 3C
-      if (/Google[\s\*]*One/i.test(finalNote)) {
+      // 💡 只要輸入或包含 google one 或 gemini，一律自動轉寫為 "Gemini" 並強制歸類為 3C
+      if (/Google[\s\*]*One|Gemini/i.test(finalNote)) {
         finalNote = "Gemini";
-        if (!finalCategory || finalCategory === "食物" || finalCategory === "消費" || finalCategory === "其他") {
-          finalCategory = "3C";
-        }
+        finalCategory = "3C";
       }
       const finalAccountId = editingModalAccountId || inferAccountIdFromName(account);
 
