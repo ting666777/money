@@ -2796,6 +2796,7 @@
               <option value="全支付">全支付</option>
               <option value="國泰世華信用卡">國泰世華信用卡(7488)</option>
               <option value="郵局">郵局(14071)</option>
+              <option value="LINE Bank">LINE Bank快點卡</option>
             </select>
           </div>
         </div>
@@ -2928,7 +2929,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261115_v16 (SW極速版)</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v17 (SW極速版)</span>
         </div>
         <button type="button" onclick="forceUpdatePwa();" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -3246,7 +3247,7 @@
         navigator.serviceWorker.register("./sw.js").catch(function() {});
       }
 
-      const PWA_VERSION = "20261115_v16";
+      const PWA_VERSION = "20261116_v17";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -4712,6 +4713,17 @@
       document.body.classList.remove("modal-open");
     }
 
+    function inferAccountIdFromName(accountName) {
+      const s = String(accountName || "").trim();
+      if (/富邦|0493/.test(s)) return 1;
+      if (/台新|Richart|5403/i.test(s)) return 2;
+      if (/全支付|PXPAY/i.test(s)) return 3;
+      if (/國泰|7488/.test(s)) return 4;
+      if (/郵局|中華郵政|14071/.test(s)) return 5;
+      if (/LINE\s*Bank|連線銀行|快點卡/i.test(s)) return 6;
+      return 0;
+    }
+
     function handleFormSubmit(e) {
       e.preventDefault();
       const rowIndex = document.getElementById("form-row-index").value;
@@ -4723,6 +4735,7 @@
       const timeVal = document.getElementById("form-time").value;
       const recordedAt = timeVal.replace("T", " ").replace(/-/g, "/");
       const finalNote = note || category;
+      const finalAccountId = editingModalAccountId || inferAccountIdFromName(account);
 
       const saveBtn = document.getElementById("form-save-btn");
       saveBtn.disabled = false;
@@ -4736,7 +4749,7 @@
         Currency: "TWD",
         "Recorded At": recordedAt,
         note: finalNote,
-        "Account ID": editingModalAccountId || 0
+        "Account ID": finalAccountId
       };
 
       // ⚡ 1. 樂觀更新 (Optimistic UI)：0.01 秒立即關閉彈窗並更新畫面與本地快取，不再空等網路！
@@ -4839,7 +4852,7 @@
           Currency: "TWD",
           "Recorded At": recordedAt,
           note: finalNote,
-          "Account ID": editingModalAccountId || 0
+          "Account ID": finalAccountId
         };
         allRecords.unshift(optimisticRec);
 

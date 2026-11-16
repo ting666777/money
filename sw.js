@@ -1,4 +1,4 @@
-const CACHE_NAME = "money-pwa-cache-20261115_v16";
+const CACHE_NAME = "money-pwa-cache-20261116_v17";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -91,3 +91,4 @@ self.addEventListener("fetch", function(event) {
     })
   );
 });
+
