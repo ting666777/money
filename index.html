@@ -1710,7 +1710,8 @@
     body:has(.edit-modal-overlay.open) .fab-add-btn,
     body:has(.audit-modal-overlay.open) .fab-add-btn,
     body:has(.calendar-picker-overlay.open) .fab-add-btn,
-    body:has(.category-picker-overlay.open) .fab-add-btn {
+    body:has(.category-picker-overlay.open) .fab-add-btn,
+    body:has(.quick-add-overlay.open) .fab-add-btn {
       display: none !important;
       visibility: hidden !important;
       pointer-events: none !important;
@@ -2564,6 +2565,428 @@
       justify-content: center;
       flex-shrink: 0;
     }
+
+    /* ⚡ 網頁版快速記帳全頁彈窗（跟隨當前網頁主題色系） */
+    .quick-add-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1050;
+      background: var(--bg);
+      color: var(--text);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(32px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .quick-add-overlay.open {
+      display: block;
+    }
+
+    .qa-container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .qa-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 2px 2px 14px;
+    }
+
+    .qa-brand-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+
+    .qa-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 14px 15px;
+      margin-bottom: 11px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+    }
+
+    .qa-section-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.4px;
+    }
+
+    .qa-amount-card {
+      padding: 16px;
+      border-color: var(--card-border);
+    }
+
+    .qa-amount-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .qa-cat-preview-pill {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .qa-amount-input-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin: 2px 0 12px;
+    }
+
+    .qa-currency-symbol {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .qa-amount-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .qa-amount-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.45;
+    }
+
+    .qa-quick-amt-row {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .qa-quick-amt-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .qa-amt-chip {
+      flex: 1 0 auto;
+      text-align: center;
+      background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 7px 11px;
+      border-radius: 10px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.12s ease, opacity 0.15s ease;
+    }
+
+    .qa-amt-chip:active {
+      transform: scale(0.95);
+    }
+
+    .qa-amt-chip.clear-btn {
+      color: var(--expense);
+    }
+
+    .qa-cat-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 9px;
+    }
+
+    .qa-cat-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 9px 4px;
+      border-radius: 13px;
+      background: var(--card-soft);
+      border: 1.5px solid var(--card-border);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .qa-cat-tile:active {
+      transform: scale(0.94);
+    }
+
+    .qa-cat-emoji {
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .qa-cat-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .qa-cat-tile.selected .qa-cat-name {
+      color: var(--text);
+    }
+
+    .qa-note-input-box {
+      display: flex;
+      align-items: center;
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 4px 10px;
+      margin-top: 9px;
+      transition: border-color 0.2s;
+    }
+
+    .qa-note-input-box:focus-within {
+      border-color: var(--accent);
+    }
+
+    .qa-note-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 16px;
+      padding: 9px 4px;
+    }
+
+    .qa-note-input::placeholder {
+      color: var(--text-muted);
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    .qa-note-clear {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      padding: 4px 6px;
+      cursor: pointer;
+      display: none;
+    }
+
+    .qa-tags-scroll {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .qa-tags-empty {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 4px 2px;
+    }
+
+    .qa-tag-chip {
+      flex: 0 0 auto;
+      background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 999px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .qa-tag-chip.active,
+    .qa-tag-chip:active {
+      background: var(--pill-active-bg);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 700;
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    .qa-acc-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 9px;
+    }
+
+    .qa-acc-chip {
+      background: var(--card-soft);
+      border: 1.5px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 12px;
+      border-radius: 11px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .qa-acc-chip.selected {
+      background: var(--pill-active-bg);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 800;
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .qa-submit-btn {
+      width: 100%;
+      border: none;
+      border-radius: 16px;
+      padding: 15px 18px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #ffffff;
+      background: var(--accent);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .qa-submit-btn.income-mode {
+      background: var(--income) !important;
+      color: #ffffff !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .qa-submit-btn:active {
+      transform: scale(0.98);
+    }
+
+    .qa-submit-btn:disabled {
+      opacity: 0.45;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .qa-error-toast {
+      display: none;
+      margin-bottom: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      color: var(--expense);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .qa-success-view {
+      display: none;
+      text-align: center;
+      padding: 28px 6px 10px;
+    }
+
+    .qa-check-circle {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--income) 18%, transparent);
+      border: 2px solid var(--income);
+      color: var(--income);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      font-weight: 800;
+    }
+
+    .qa-success-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .qa-success-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .qa-summary-card {
+      text-align: left;
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+
+    .qa-sum-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 14px;
+    }
+
+    .qa-sum-key {
+      color: var(--text-muted);
+    }
+
+    .qa-sum-val {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .qa-sum-amt {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .qa-action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .qa-btn-primary-soft {
+      background: var(--pill-active-bg);
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+      padding: 13px;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .qa-btn-secondary {
+      background: var(--card-soft);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      padding: 13px;
+      border-radius: 14px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -2843,6 +3266,91 @@
     </div>
   </div>
 
+  <!-- ⚡ 網頁版快速記帳 Modal（點選右下角 ＋ 開啟，介面與小工具一致、色系跟隨網頁主題） -->
+  <div class="quick-add-overlay" id="quick-add-modal">
+    <div class="qa-container">
+      <div id="qa-form-view">
+        <div class="qa-header">
+          <div class="qa-brand-title"><span id="qa-header-user">定成</span> 記帳</div>
+          <button type="button" class="icon-btn" style="width:32px;height:32px;" onclick="closeQuickAddModal()" title="關閉">✕</button>
+        </div>
+
+        <div id="qa-error-toast" class="qa-error-toast"></div>
+
+        <div class="qa-card qa-amount-card">
+          <div class="qa-amount-label-row">
+            <span class="qa-section-label">消費金額</span>
+            <span class="qa-cat-preview-pill" id="qa-cat-badge">🍽️ 食物</span>
+          </div>
+          <div class="qa-amount-input-wrap">
+            <span class="qa-currency-symbol">$</span>
+            <input id="qa-amount-input" class="qa-amount-input" type="number" inputmode="decimal" step="any" min="0" placeholder="0" oninput="qaUpdateSubmitButton()">
+          </div>
+          <div class="qa-quick-amt-row">
+            <div class="qa-amt-chip" onclick="qaAddQuickAmount(50)">+50</div>
+            <div class="qa-amt-chip" onclick="qaAddQuickAmount(100)">+100</div>
+            <div class="qa-amt-chip" onclick="qaAddQuickAmount(200)">+200</div>
+            <div class="qa-amt-chip" onclick="qaAddQuickAmount(500)">+500</div>
+            <div class="qa-amt-chip clear-btn" onclick="qaClearAmount()">清除</div>
+          </div>
+        </div>
+
+        <div class="qa-card">
+          <div class="qa-section-label">分類</div>
+          <div class="qa-cat-grid" id="qa-cat-grid"></div>
+        </div>
+
+        <div class="qa-card">
+          <div class="qa-section-label">備註</div>
+          <div class="qa-note-input-box">
+            <input id="qa-note-input" class="qa-note-input" type="text" placeholder="輸入品項或店家" oninput="qaOnNoteInput(this.value)">
+            <button type="button" class="qa-note-clear" id="qa-note-clear" onclick="qaClearNote()">✕</button>
+          </div>
+          <div class="qa-tags-scroll" id="qa-tags-scroll"></div>
+        </div>
+
+        <div class="qa-card">
+          <div class="qa-section-label">付款帳戶</div>
+          <div class="qa-acc-wrap" id="qa-acc-wrap"></div>
+        </div>
+
+        <button type="button" class="qa-submit-btn" id="qa-submit-btn" onclick="submitWebQuickRecord()" disabled>
+          <span id="qa-submit-text">請輸入金額</span>
+        </button>
+      </div>
+
+      <div id="qa-success-view" class="qa-success-view">
+        <div class="qa-check-circle">✓</div>
+        <div class="qa-success-title">記帳成功！</div>
+        <div class="qa-success-sub" id="qa-success-msg">已即時寫入並同步至雲端</div>
+
+        <div class="qa-card qa-summary-card">
+          <div class="qa-sum-row">
+            <span class="qa-sum-key">記帳人</span>
+            <span class="qa-sum-val" id="qa-sum-user">-</span>
+          </div>
+          <div class="qa-sum-row">
+            <span class="qa-sum-key">項目 / 分類</span>
+            <span class="qa-sum-val" id="qa-sum-item">-</span>
+          </div>
+          <div class="qa-sum-row">
+            <span class="qa-sum-key">付款帳戶</span>
+            <span class="qa-sum-val" id="qa-sum-acc">-</span>
+          </div>
+          <div class="qa-sum-row">
+            <span class="qa-sum-key">金額</span>
+            <span class="qa-sum-amt" id="qa-sum-amt">$0</span>
+          </div>
+        </div>
+
+        <div class="qa-action-grid">
+          <button type="button" class="qa-btn-primary-soft" onclick="qaResetForAnother()">＋ 再記一筆</button>
+          <button type="button" class="qa-btn-secondary" onclick="closeQuickAddModal()">📊 返回儀表板</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 欠錢 Modal -->
   <div class="edit-modal-overlay" id="split-debt-modal" onclick="closeDebtSplitModal(event)">
     <div class="edit-modal" onclick="event.stopPropagation()">
@@ -2960,7 +3468,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v20 (SW極速版)</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v21 (SW極速版)</span>
         </div>
         <button type="button" onclick="forceUpdatePwa();" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -3304,7 +3812,7 @@
         navigator.serviceWorker.register("./sw.js").catch(function() {});
       }
 
-      const PWA_VERSION = "20261116_v20";
+      const PWA_VERSION = "20261116_v21";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -3427,9 +3935,10 @@
       if (isRunningMutationQueue || (typeof pendingMutationQueue !== "undefined" && pendingMutationQueue.length > 0)) {
         return;
       }
-      // 若編輯彈窗正開啟中（使用者可能正在輸入修改），暫時不覆蓋
+      // 若編輯或快速記帳彈窗正開啟中（使用者可能正在輸入），暫時不覆蓋
       const editModal = document.getElementById("edit-modal");
-      if (editModal && editModal.classList.contains("open")) {
+      const quickAddModal = document.getElementById("quick-add-modal");
+      if ((editModal && editModal.classList.contains("open")) || (quickAddModal && quickAddModal.classList.contains("open"))) {
         return;
       }
 
@@ -3441,7 +3950,8 @@
       resumeSyncTimer = setTimeout(function() {
         if (!document.hidden && !isRunningMutationQueue && !(typeof pendingMutationQueue !== "undefined" && pendingMutationQueue.length > 0)) {
           const m = document.getElementById("edit-modal");
-          if (!m || !m.classList.contains("open")) {
+          const q = document.getElementById("quick-add-modal");
+          if ((!m || !m.classList.contains("open")) && (!q || !q.classList.contains("open"))) {
             loadDataFromServer();
           }
         }
@@ -4616,6 +5126,7 @@
           document.getElementById("report-modal-overlay").classList.contains("open") ||
           document.getElementById("category-sheet-overlay").classList.contains("open") ||
           document.getElementById("edit-modal").classList.contains("open") ||
+          document.getElementById("quick-add-modal").classList.contains("open") ||
           document.getElementById("split-debt-modal").classList.contains("open") ||
           document.getElementById("settings-modal").classList.contains("open") ||
           document.getElementById("audit-modal").classList.contains("open")
@@ -4843,30 +5354,444 @@
       sel.innerHTML = Object.keys(CATEGORY_META).map(cat => `<option value="${cat}">${CATEGORY_META[cat].icon} ${cat}</option>`).join("");
     }
 
+    // =====================================================
+    // ⚡ 網頁版快速記帳（與 Scriptable 小工具一致，使用網頁主題色系）
+    // =====================================================
+    const REQUIRED_CATEGORY_NOTES = {
+      "食物": ["晚餐", "午餐"],
+      "飲品": ["咖啡", "綠茶", "水"],
+      "交通": ["停車費", "加油站", "Youbike", "保養"],
+      "收入": ["利息", "發票中獎", "薪水"]
+    };
+
+    const QA_ACCOUNTS = [
+      { label: "現金", value: "現金" },
+      { label: "富邦 0493", value: "富邦信用卡" },
+      { label: "台新 Richart", value: "台新Richart" },
+      { label: "全支付", value: "全支付" },
+      { label: "國泰 7488", value: "國泰世華信用卡" },
+      { label: "郵局", value: "郵局" },
+      { label: "LINE Bank", value: "LINE Bank" }
+    ];
+
+    let qaState = {
+      user: "定成",
+      category: "食物",
+      account: "現金",
+      targetDateStr: ""
+    };
+    let webCategoryNotesCacheByUser = {};
+    let webCategoryNotesSyncInFlight = {};
+
+    function loadWebCategoryNotesCache(user) {
+      if (webCategoryNotesCacheByUser[user]) return webCategoryNotesCacheByUser[user];
+      try {
+        const raw = localStorage.getItem("accounting_web_cat_notes_" + user);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            webCategoryNotesCacheByUser[user] = parsed;
+            return parsed;
+          }
+        }
+      } catch (e) {}
+      webCategoryNotesCacheByUser[user] = {};
+      return webCategoryNotesCacheByUser[user];
+    }
+
+    function saveWebCategoryNotesCache(user, map) {
+      webCategoryNotesCacheByUser[user] = map || {};
+      try {
+        localStorage.setItem("accounting_web_cat_notes_" + user, JSON.stringify(webCategoryNotesCacheByUser[user]));
+      } catch (e) {}
+    }
+
+    function mergeWebCategoryNotesFromRecords(user, records, isFullRebuild) {
+      const existingMap = loadWebCategoryNotesCache(user);
+      const result = isFullRebuild ? {} : Object.assign({}, existingMap);
+      const userRecs = [];
+      for (let i = 0; i < records.length; i++) {
+        const r = records[i];
+        if (!r || r.user !== user) continue;
+        userRecs.push({ rec: r, idx: i });
+      }
+      // 依紀錄時間新到舊排序（時間相同時保留原有順序，確保最新新增的在最前）
+      userRecs.sort(function(a, b) {
+        const ta = String(a.rec["Recorded At"] || a.rec.recordedAt || "");
+        const tb = String(b.rec["Recorded At"] || b.rec.recordedAt || "");
+        if (tb !== ta) return tb > ta ? 1 : -1;
+        return a.idx - b.idx;
+      });
+
+      const freshByCat = {};
+      for (let i = 0; i < userRecs.length; i++) {
+        const r = userRecs[i].rec;
+        const cat = String(r.Category || r.category || "").trim();
+        const note = String(r.note || r.Note || "").trim();
+        if (!cat || !note || note === cat) continue;
+        if (!freshByCat[cat]) freshByCat[cat] = [];
+        const low = note.toLowerCase();
+        const exists = freshByCat[cat].some(function(x) { return x.toLowerCase() === low; });
+        if (!exists && freshByCat[cat].length < 10) {
+          freshByCat[cat].push(note);
+        }
+      }
+
+      Object.keys(freshByCat).forEach(function(cat) {
+        const freshList = freshByCat[cat];
+        if (isFullRebuild) {
+          result[cat] = freshList.slice(0, 10);
+        } else {
+          const oldList = Array.isArray(result[cat]) ? result[cat] : [];
+          const merged = freshList.slice();
+          for (let j = 0; j < oldList.length && merged.length < 10; j++) {
+            const oldLow = String(oldList[j] || "").toLowerCase();
+            if (!merged.some(function(x) { return x.toLowerCase() === oldLow; })) {
+              merged.push(oldList[j]);
+            }
+          }
+          result[cat] = merged.slice(0, 10);
+        }
+      });
+
+      saveWebCategoryNotesCache(user, result);
+      return result;
+    }
+
+    function updateWebCategoryNotesAfterAdd(user, category, note) {
+      const cat = String(category || "").trim();
+      const cleanNote = String(note || "").trim();
+      if (!user || !cat || !cleanNote || cleanNote === cat) return;
+      const map = Object.assign({}, loadWebCategoryNotesCache(user));
+      const list = Array.isArray(map[cat]) ? map[cat].slice() : [];
+      const low = cleanNote.toLowerCase();
+      const filtered = list.filter(function(item) { return String(item || "").toLowerCase() !== low; });
+      filtered.unshift(cleanNote);
+      map[cat] = filtered.slice(0, 10);
+      saveWebCategoryNotesCache(user, map);
+    }
+
+    function syncWebFullCategoryNotesIfNeeded(user) {
+      if (!user || !navigator.onLine) return;
+      if (isFullHistoryLoaded) {
+        mergeWebCategoryNotesFromRecords(user, allRecords, true);
+        try { localStorage.setItem("accounting_web_cat_notes_full_" + user, "1"); } catch (e) {}
+        return;
+      }
+      try {
+        if (localStorage.getItem("accounting_web_cat_notes_full_" + user) === "1") return;
+      } catch (e) {}
+      if (webCategoryNotesSyncInFlight[user]) return;
+      webCategoryNotesSyncInFlight[user] = true;
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          webCategoryNotesSyncInFlight[user] = false;
+          if (data && Array.isArray(data.allRecords)) {
+            mergeWebCategoryNotesFromRecords(user, normalizeRecords(data.allRecords), true);
+            try { localStorage.setItem("accounting_web_cat_notes_full_" + user, "1"); } catch (e) {}
+            const modal = document.getElementById("quick-add-modal");
+            if (modal && modal.classList.contains("open") && qaState.user === user) {
+              qaRenderQuickTags();
+            }
+          }
+        })
+        .withFailureHandler(function() {
+          webCategoryNotesSyncInFlight[user] = false;
+        })
+        .getDashboardData({ user: user, all: true });
+    }
+
+    function getWebDisplayQuickTags(user, catName) {
+      const map = loadWebCategoryNotesCache(user);
+      const hist = Array.isArray(map[catName]) ? map[catName] : [];
+      const req = REQUIRED_CATEGORY_NOTES[catName] || [];
+      const chosen = [];
+      const seenLower = {};
+      const reqLowerSet = {};
+
+      for (let r = 0; r < req.length; r++) {
+        reqLowerSet[req[r].toLowerCase()] = true;
+      }
+      for (let i = 0; i < hist.length; i++) {
+        const item = String(hist[i] || "").trim();
+        if (!item || item === catName) continue;
+        const low = item.toLowerCase();
+        if (seenLower[low]) continue;
+        seenLower[low] = true;
+        chosen.push(item);
+        if (chosen.length >= 10) break;
+      }
+
+      const missingReq = [];
+      for (let j = 0; j < req.length; j++) {
+        const rq = req[j];
+        if (!seenLower[rq.toLowerCase()]) {
+          missingReq.push(rq);
+        }
+      }
+
+      while (chosen.length + missingReq.length > 10) {
+        let removedIdx = -1;
+        for (let k = chosen.length - 1; k >= 0; k--) {
+          if (!reqLowerSet[chosen[k].toLowerCase()]) {
+            removedIdx = k;
+            break;
+          }
+        }
+        if (removedIdx !== -1) {
+          chosen.splice(removedIdx, 1);
+        } else {
+          break;
+        }
+      }
+
+      for (let m = 0; m < missingReq.length; m++) {
+        chosen.push(missingReq[m]);
+      }
+      return chosen;
+    }
+
+    function qaRenderCategories() {
+      const grid = document.getElementById("qa-cat-grid");
+      const cats = Object.keys(CATEGORY_META);
+      let html = "";
+      for (let i = 0; i < cats.length; i++) {
+        const catName = cats[i];
+        const meta = CATEGORY_META[catName];
+        const isSel = (qaState.category === catName);
+        const style = isSel
+          ? `border-color:${meta.color}; background:${meta.color}24; box-shadow:0 0 10px ${meta.color}30;`
+          : "";
+        html += `<div class="qa-cat-tile${isSel ? " selected" : ""}" style="${style}" onclick="qaSelectCategory('${catName}')">` +
+                `<span class="qa-cat-emoji">${meta.icon}</span>` +
+                `<span class="qa-cat-name">${catName}</span>` +
+                `</div>`;
+      }
+      grid.innerHTML = html;
+
+      const curMeta = CATEGORY_META[qaState.category] || CATEGORY_META["食物"];
+      const badge = document.getElementById("qa-cat-badge");
+      badge.innerText = `${curMeta.icon} ${qaState.category}`;
+      badge.style.color = curMeta.color;
+      badge.style.background = `${curMeta.color}24`;
+      qaUpdateSubmitButton();
+    }
+
+    function qaSelectCategory(catName) {
+      qaState.category = catName;
+      qaRenderCategories();
+      qaRenderQuickTags();
+    }
+
+    function qaRenderQuickTags() {
+      const wrap = document.getElementById("qa-tags-scroll");
+      const curNote = document.getElementById("qa-note-input").value.trim();
+      const list = getWebDisplayQuickTags(qaState.user, qaState.category);
+      if (list.length === 0) {
+        wrap.innerHTML = '<div class="qa-tags-empty">此分類尚無過去備註紀錄</div>';
+        return;
+      }
+      let html = "";
+      for (let i = 0; i < list.length; i++) {
+        const txt = list[i];
+        const isAct = (curNote === txt);
+        html += `<div class="qa-tag-chip${isAct ? " active" : ""}" onclick="qaApplyQuickTag(${i})">${escapeHtml(txt)}</div>`;
+      }
+      wrap.innerHTML = html;
+    }
+
+    function qaApplyQuickTag(idx) {
+      const list = getWebDisplayQuickTags(qaState.user, qaState.category);
+      const text = list[idx];
+      if (!text) return;
+      const input = document.getElementById("qa-note-input");
+      input.value = text;
+      document.getElementById("qa-note-clear").style.display = "block";
+      qaRenderQuickTags();
+    }
+
+    function qaOnNoteInput(val) {
+      document.getElementById("qa-note-clear").style.display = val ? "block" : "none";
+      qaRenderQuickTags();
+    }
+
+    function qaClearNote() {
+      document.getElementById("qa-note-input").value = "";
+      document.getElementById("qa-note-clear").style.display = "none";
+      qaRenderQuickTags();
+    }
+
+    function qaRenderAccounts() {
+      const wrap = document.getElementById("qa-acc-wrap");
+      let html = "";
+      for (let i = 0; i < QA_ACCOUNTS.length; i++) {
+        const a = QA_ACCOUNTS[i];
+        const isSel = (qaState.account === a.value);
+        html += `<div class="qa-acc-chip${isSel ? " selected" : ""}" onclick="qaSelectAccount('${a.value}')">${escapeHtml(a.label)}</div>`;
+      }
+      wrap.innerHTML = html;
+    }
+
+    function qaSelectAccount(accVal) {
+      qaState.account = accVal;
+      qaRenderAccounts();
+    }
+
+    function qaAddQuickAmount(delta) {
+      const input = document.getElementById("qa-amount-input");
+      const cur = parseFloat(input.value) || 0;
+      input.value = cur + delta;
+      qaUpdateSubmitButton();
+    }
+
+    function qaClearAmount() {
+      const input = document.getElementById("qa-amount-input");
+      input.value = "";
+      input.focus();
+      qaUpdateSubmitButton();
+    }
+
+    function qaUpdateSubmitButton() {
+      const amt = parseFloat(document.getElementById("qa-amount-input").value);
+      const btn = document.getElementById("qa-submit-btn");
+      const txt = document.getElementById("qa-submit-text");
+
+      if (qaState.category === "收入") {
+        btn.classList.add("income-mode");
+      } else {
+        btn.classList.remove("income-mode");
+      }
+
+      if (!amt || amt <= 0) {
+        btn.disabled = true;
+        txt.innerText = "請輸入金額";
+      } else {
+        btn.disabled = false;
+        const verb = (qaState.category === "收入") ? "儲存這筆收入" : "儲存這筆消費";
+        txt.innerText = `${verb} · $${amt.toLocaleString()}`;
+      }
+    }
+
+    function qaShowError(msg) {
+      const toast = document.getElementById("qa-error-toast");
+      toast.innerText = msg;
+      toast.style.display = "block";
+    }
+
+    function qaHideError() {
+      document.getElementById("qa-error-toast").style.display = "none";
+    }
+
     function openAddModal() {
       if (currentDimension !== "day") return;
-      editingModalMatchCriteria = null;
-      editingModalAccountId = 0;
-      document.getElementById("modal-heading").innerText = `記一筆帳 (${currentUser})`;
-      document.getElementById("form-row-index").value = "";
-      document.getElementById("form-user").value = currentUser;
-      document.getElementById("form-note").value = "";
-      document.getElementById("form-amount").value = "";
-      document.getElementById("form-category").value = "食物";
-      document.getElementById("form-account").value = "現金";
+      const targetDateStr = (/^\d{4}\/\d{2}\/\d{2}$/.test(currentTimeKey))
+        ? currentTimeKey
+        : getTodayString();
 
-      // 依當前畫面所在的「天」日期 + 當下紀錄的時分 (HH:mm) 預設時間
+      qaState = {
+        user: currentUser,
+        category: "食物",
+        account: "現金",
+        targetDateStr: targetDateStr
+      };
+
+      const userSpan = document.getElementById("qa-header-user");
+      userSpan.innerText = currentUser;
+      userSpan.style.color = (currentUser === "妤珊") ? "var(--yu)" : "var(--ding)";
+
+      mergeWebCategoryNotesFromRecords(currentUser, allRecords, false);
+      syncWebFullCategoryNotesIfNeeded(currentUser);
+
+      document.getElementById("qa-amount-input").value = "";
+      document.getElementById("qa-note-input").value = "";
+      document.getElementById("qa-note-clear").style.display = "none";
+      qaHideError();
+
+      document.getElementById("qa-form-view").style.display = "block";
+      document.getElementById("qa-success-view").style.display = "none";
+
+      qaRenderCategories();
+      qaRenderQuickTags();
+      qaRenderAccounts();
+
+      document.getElementById("quick-add-modal").classList.add("open");
+      document.body.classList.add("modal-open");
+      setTimeout(function() {
+        const amtEl = document.getElementById("qa-amount-input");
+        if (amtEl) amtEl.focus();
+      }, 120);
+    }
+
+    function closeQuickAddModal() {
+      document.getElementById("quick-add-modal").classList.remove("open");
+      document.body.classList.remove("modal-open");
+    }
+
+    function qaResetForAnother() {
+      document.getElementById("qa-amount-input").value = "";
+      document.getElementById("qa-note-input").value = "";
+      document.getElementById("qa-note-clear").style.display = "none";
+      qaHideError();
+      qaUpdateSubmitButton();
+      qaRenderQuickTags();
+
+      document.getElementById("qa-success-view").style.display = "none";
+      document.getElementById("qa-form-view").style.display = "block";
+      setTimeout(function() {
+        const amtEl = document.getElementById("qa-amount-input");
+        if (amtEl) amtEl.focus();
+      }, 120);
+    }
+
+    function submitWebQuickRecord() {
+      qaHideError();
+      const amt = parseFloat(document.getElementById("qa-amount-input").value);
+      if (!amt || amt <= 0) {
+        qaShowError("請輸入大於 0 的有效金額");
+        return;
+      }
+
+      const rawNote = document.getElementById("qa-note-input").value.trim();
+      let finalNote = rawNote || qaState.category;
+      let finalCategory = qaState.category;
+      if (/Google[\s\*]*One|Gemini/i.test(finalNote)) {
+        finalNote = "Gemini";
+        finalCategory = "3C";
+      }
+
       const now = new Date();
       const hh = String(now.getHours()).padStart(2, "0");
       const mm = String(now.getMinutes()).padStart(2, "0");
-      const targetDateStr = (/^\d{4}\/\d{2}\/\d{2}$/.test(currentTimeKey))
-        ? currentTimeKey.replace(/\//g, "-")
-        : getTodayString().replace(/\//g, "-");
-      document.getElementById("form-time").value = `${targetDateStr}T${hh}:${mm}`;
+      const baseDate = (/^\d{4}\/\d{2}\/\d{2}$/.test(qaState.targetDateStr))
+        ? qaState.targetDateStr
+        : getTodayString();
+      const recordedAt = `${baseDate} ${hh}:${mm}`;
 
-      document.getElementById("form-del-btn").style.display = "none";
-      document.getElementById("edit-modal").classList.add("open");
-      document.body.classList.add("modal-open");
+      const payload = {
+        user: qaState.user,
+        Account: qaState.account,
+        Category: finalCategory,
+        Amount: amt,
+        Currency: "TWD",
+        "Recorded At": recordedAt,
+        note: finalNote,
+        "Account ID": inferAccountIdFromName(qaState.account)
+      };
+
+      commitNewRecordOptimistically(payload);
+
+      const meta = CATEGORY_META[finalCategory] || CATEGORY_META["食物"];
+      document.getElementById("qa-sum-user").innerText = qaState.user;
+      document.getElementById("qa-sum-item").innerText = `${meta.icon} ${finalNote}（${finalCategory}）`;
+      document.getElementById("qa-sum-acc").innerText = qaState.account;
+      document.getElementById("qa-sum-amt").innerText = (finalCategory === "收入" ? "+$" : "$") + amt.toLocaleString();
+      document.getElementById("qa-success-msg").innerText = navigator.onLine
+        ? "已即時寫入並同步至雲端"
+        : "目前離線，已暫存待連線後自動同步";
+
+      document.getElementById("qa-form-view").style.display = "none";
+      document.getElementById("qa-success-view").style.display = "block";
     }
 
     function openEditModal(index) {
@@ -4915,6 +5840,94 @@
       if (/郵局|中華郵政|14071/.test(s)) return 5;
       if (/LINE\s*Bank|連線銀行|快點卡/i.test(s)) return 6;
       return 0;
+    }
+
+    function commitNewRecordOptimistically(payload) {
+      const user = payload.user || currentUser;
+      const account = payload.Account || "現金";
+      const finalCategory = payload.Category || "食物";
+      const amount = Number(payload.Amount);
+      const recordedAt = payload["Recorded At"] || "";
+      const finalNote = payload.note || finalCategory;
+      const finalAccountId = (payload["Account ID"] !== undefined) ? payload["Account ID"] : inferAccountIdFromName(account);
+
+      if (currentDimension === "day" && recordedAt.length >= 10) {
+        currentTimeKey = recordedAt.slice(0, 10);
+      }
+
+      allRecords.forEach(function(r) {
+        if (r.user === user && Number(r.rowIndex) >= 2) {
+          r.rowIndex = Number(r.rowIndex) + 1;
+        }
+      });
+
+      const optimisticRec = {
+        rowIndex: 2,
+        user: user,
+        Account: account,
+        Category: finalCategory,
+        Amount: amount,
+        Currency: "TWD",
+        "Recorded At": recordedAt,
+        note: finalNote,
+        "Account ID": finalAccountId
+      };
+      allRecords.unshift(optimisticRec);
+      updateWebCategoryNotesAfterAdd(user, finalCategory, finalNote);
+
+      const newYm = recordedAt.slice(0, 7);
+      if (finalCategory !== "收入" && newYm) {
+        if (!monthlyExpensesMap[user]) monthlyExpensesMap[user] = {};
+        if (monthlyExpensesMap[user][newYm] !== undefined) {
+          monthlyExpensesMap[user][newYm] = Math.round((Number(monthlyExpensesMap[user][newYm]) || 0) + amount);
+        }
+      }
+
+      saveLocalDashboardCache();
+      refreshView();
+      checkRecentAuditIssues();
+
+      if (!navigator.onLine) {
+        enqueueOfflineAction({
+          type: "add",
+          payload: payload
+        });
+        return;
+      }
+
+      enqueueServerMutation(function(done) {
+        google.script.run
+          .withSuccessHandler(function(savedServerRec) {
+            if (savedServerRec && savedServerRec.rowIndex) {
+              optimisticRec.rowIndex = savedServerRec.rowIndex;
+            }
+            if (savedServerRec && savedServerRec["Account ID"] !== undefined) {
+              optimisticRec["Account ID"] = savedServerRec["Account ID"];
+            }
+            saveLocalDashboardCache();
+            done();
+          })
+          .withFailureHandler(function(err) {
+            const msg = (err && err.message) ? err.message : String(err);
+            if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
+              enqueueOfflineAction({
+                type: "add",
+                payload: payload
+              });
+            } else {
+              const idx = allRecords.indexOf(optimisticRec);
+              if (idx !== -1) allRecords.splice(idx, 1);
+              if (finalCategory !== "收入" && newYm && monthlyExpensesMap[user] && monthlyExpensesMap[user][newYm] !== undefined) {
+                monthlyExpensesMap[user][newYm] = Math.max(0, Math.round((Number(monthlyExpensesMap[user][newYm]) || 0) - amount));
+              }
+              saveLocalDashboardCache();
+              refreshView();
+              alert("新增失敗：" + msg);
+            }
+            done();
+          })
+          .addStructuredRecord(payload);
+      });
     }
 
     function handleFormSubmit(e) {
@@ -4989,6 +6002,7 @@
           targetRec["Recorded At"] = recordedAt;
           targetRec.note = finalNote;
           targetRec["Account ID"] = finalAccountId;
+          updateWebCategoryNotesAfterAdd(user, finalCategory, finalNote);
         }
 
         saveLocalDashboardCache();
@@ -5039,79 +6053,7 @@
             .updateStructuredRecord(user, latestRowIdx, payload, criteriaCopy);
         });
       } else {
-        // 新增紀錄：立即將新紀錄插入本地第一筆並更新當月總花費
-        allRecords.forEach(function(r) {
-          if (r.user === user && Number(r.rowIndex) >= 2) {
-            r.rowIndex = Number(r.rowIndex) + 1;
-          }
-        });
-
-        const optimisticRec = {
-          rowIndex: 2,
-          user: user,
-          Account: account,
-          Category: finalCategory,
-          Amount: amount,
-          Currency: "TWD",
-          "Recorded At": recordedAt,
-          note: finalNote,
-          "Account ID": finalAccountId
-        };
-        allRecords.unshift(optimisticRec);
-
-        const newYm = recordedAt.slice(0, 7);
-        if (finalCategory !== "收入" && newYm) {
-          if (!monthlyExpensesMap[user]) monthlyExpensesMap[user] = {};
-          if (monthlyExpensesMap[user][newYm] !== undefined) {
-            monthlyExpensesMap[user][newYm] = Math.round((Number(monthlyExpensesMap[user][newYm]) || 0) + amount);
-          }
-        }
-
-        saveLocalDashboardCache();
-        refreshView();
-        checkRecentAuditIssues();
-
-        if (!navigator.onLine) {
-          enqueueOfflineAction({
-            type: "add",
-            payload: payload
-          });
-          return;
-        }
-
-        enqueueServerMutation(function(done) {
-          google.script.run
-            .withSuccessHandler(function(savedServerRec) {
-              if (savedServerRec && savedServerRec.rowIndex) {
-                optimisticRec.rowIndex = savedServerRec.rowIndex;
-              }
-              if (savedServerRec && savedServerRec["Account ID"] !== undefined) {
-                optimisticRec["Account ID"] = savedServerRec["Account ID"];
-              }
-              saveLocalDashboardCache();
-              done();
-            })
-            .withFailureHandler(function(err) {
-              const msg = (err && err.message) ? err.message : String(err);
-              if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
-                enqueueOfflineAction({
-                  type: "add",
-                  payload: payload
-                });
-              } else {
-                const idx = allRecords.indexOf(optimisticRec);
-                if (idx !== -1) allRecords.splice(idx, 1);
-                if (finalCategory !== "收入" && newYm && monthlyExpensesMap[user] && monthlyExpensesMap[user][newYm] !== undefined) {
-                  monthlyExpensesMap[user][newYm] = Math.max(0, Math.round((Number(monthlyExpensesMap[user][newYm]) || 0) - amount));
-                }
-                saveLocalDashboardCache();
-                refreshView();
-                alert("新增失敗：" + msg);
-              }
-              done();
-            })
-            .addStructuredRecord(payload);
-        });
+        commitNewRecordOptimistically(payload);
       }
     }
 
