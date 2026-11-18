@@ -3468,7 +3468,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v21 (SW極速版)</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v22 (SW極速版)</span>
         </div>
         <button type="button" onclick="forceUpdatePwa();" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -3532,11 +3532,9 @@
                 return;
               }
               const resultData = extractField ? json[extractField] : json;
-              // 若成功抓回儀表板資料，順便快取至瀏覽器本地，讓下次打開 GitHub 網頁 0.01 秒瞬間顯示！
-              if (payload.action === "getDashboardData" && resultData && resultData.allRecords) {
-                try {
-                  localStorage.setItem("github_fast_dash_cache_v2", JSON.stringify(resultData));
-                } catch (e) {}
+              // 若成功抓回儀表板資料，順便截斷前 300 筆快取至瀏覽器本地，保護手機空間與啟動速度
+              if (payload.action === "getDashboardData" && resultData && Array.isArray(resultData.allRecords) && (isLockedUser || !payload.user)) {
+                saveTrimmedDashboardSnapshot(resultData.allRecords, resultData.monthlyExpenses, resultData.userSettings);
               }
               if (successHandler) successHandler(resultData);
             })
@@ -3693,16 +3691,20 @@
       }
     }
 
-    // 💾 將最新本地資料即時同步回 localStorage 快取，確保下次點開 App 0.005 秒呈現最新狀態
-    function saveLocalDashboardCache() {
+    // 💾 將最新本地資料即時同步回 localStorage 快取（上限 300 筆，確保秒開且不佔滿手機空間）
+    function saveTrimmedDashboardSnapshot(records, monthlyMap, settingsMap) {
       try {
         const cachePayload = {
-          allRecords: allRecords.slice(0, 300),
-          monthlyExpenses: monthlyExpensesMap,
-          userSettings: userSettingsMap
+          allRecords: Array.isArray(records) ? records.slice(0, 300) : [],
+          monthlyExpenses: monthlyMap || {},
+          userSettings: settingsMap || {}
         };
         localStorage.setItem("github_fast_dash_cache_v2", JSON.stringify(cachePayload));
       } catch (e) {}
+    }
+
+    function saveLocalDashboardCache() {
+      saveTrimmedDashboardSnapshot(allRecords, monthlyExpensesMap, userSettingsMap);
     }
 
     // 🔗 背景寫入排隊佇列 (Sequential Mutation Queue)：
@@ -3812,7 +3814,7 @@
         navigator.serviceWorker.register("./sw.js").catch(function() {});
       }
 
-      const PWA_VERSION = "20261116_v21";
+      const PWA_VERSION = "20261116_v22";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -3907,11 +3909,14 @@
       // 立即渲染首屏畫面（0.001 秒完成）
       refreshView();
 
-      // 2. 接著在背景靜默同步：若有離線暫存佇列則優先補傳，否則抓取最新 200 筆紀錄
+      // 標記初始同步時間，避免網頁剛開啟時 pageshow / focus 事件立刻觸發重複同步
+      lastResumeSyncTime = Date.now();
+
+      // 2. 接著在背景靜默同步：若有離線暫存佇列則優先補傳，否則抓取最新紀錄
       if (getOfflineQueue().length > 0 && navigator.onLine) {
         flushOfflineQueue();
       } else {
-        loadDataFromServer();
+        loadDataFromServer({ recentOnly: true });
       }
     }
 
@@ -3926,9 +3931,10 @@
     let lastResumeSyncTime = 0;
     let resumeSyncTimer = null;
     function handleAppForegroundResume() {
+      if (!window.__moneyAppInitialized) return;
       const now = Date.now();
-      // 避免 2 秒內重複觸發
-      if (now - lastResumeSyncTime < 2000) return;
+      // 冷卻時間 4 秒（涵蓋 2.5 秒複查視窗），避免 visibilitychange / pageshow / focus 連續重打
+      if (now - lastResumeSyncTime < 4000) return;
       lastResumeSyncTime = now;
 
       // 若目前正有手動編輯、刪除或新增佇列正在向後端提交，不打擾樂觀更新
@@ -3942,8 +3948,8 @@
         return;
       }
 
-      // 1. 立即背景同步一次（若捷徑早已寫入完成，切回來 0.5 秒內自動更新畫面，無須手動按重整）
-      loadDataFromServer();
+      // 1. 立即背景同步最新 200 筆（即使停留在「年」檢視也不全表重抓，耗時僅 0.01 秒）
+      loadDataFromServer({ recentOnly: true });
 
       // 2. 延遲 2.5 秒再複查一次（防範剛從捷徑秒切回來時，Google 試算表還在最後 1 秒寫入中的微小時間差）
       if (resumeSyncTimer) clearTimeout(resumeSyncTimer);
@@ -3952,7 +3958,7 @@
           const m = document.getElementById("edit-modal");
           const q = document.getElementById("quick-add-modal");
           if ((!m || !m.classList.contains("open")) && (!q || !q.classList.contains("open"))) {
-            loadDataFromServer();
+            loadDataFromServer({ recentOnly: true });
           }
         }
       }, 2500);
@@ -6318,15 +6324,62 @@
         .getDashboardData(fetchParams);
     }
 
-    function loadDataFromServer() {
+    function mergeRecentRecordsWithFullHistory(existingRecords, freshRecords, queriedUsers) {
+      const targetUsers = (Array.isArray(queriedUsers) && queriedUsers.length > 0)
+        ? queriedUsers
+        : ["定成", "妤珊"];
+      let merged = [];
+
+      // 保留未查詢使用者的既有的全部資料
+      for (let i = 0; i < existingRecords.length; i++) {
+        if (targetUsers.indexOf(existingRecords[i].user) === -1) {
+          merged.push(existingRecords[i]);
+        }
+      }
+
+      targetUsers.forEach(function(u) {
+        const freshU = freshRecords.filter(function(r) { return r.user === u; });
+        merged = merged.concat(freshU);
+        if (freshU.length >= 200) {
+          let minTime = String(freshU[0]["Recorded At"] || "");
+          for (let j = 1; j < freshU.length; j++) {
+            const t = String(freshU[j]["Recorded At"] || "");
+            if (t && (!minTime || t < minTime)) minTime = t;
+          }
+          if (minTime) {
+            for (let k = 0; k < existingRecords.length; k++) {
+              const oldR = existingRecords[k];
+              if (oldR.user === u && String(oldR["Recorded At"] || "") < minTime) {
+                merged.push(oldR);
+              }
+            }
+          }
+        }
+      });
+
+      merged.sort(function(a, b) {
+        const tb = String(b["Recorded At"] || "");
+        const ta = String(a["Recorded At"] || "");
+        if (tb !== ta) return tb.localeCompare(ta);
+        return (Number(a.rowIndex) || 0) - (Number(b.rowIndex) || 0);
+      });
+      return merged;
+    }
+
+    let isSyncingFromServer = false;
+    function loadDataFromServer(opts) {
+      if (isSyncingFromServer) return;
+      opts = opts || {};
       const queryUser = isLockedUser ? currentUser : "";
-      // 預設背景同步拉取 200 筆（後端已有 CacheService 快取，耗時僅 0.01 秒，且不會把本地 200 筆快取洗成 15 筆！）
+      // 前背景同步一律只抓最新 200 筆（hit 後端 CacheService 僅 0.01 秒），避免切換 App 就重抓數千筆
       let fetchParams = { user: queryUser, limit: 200 };
-      if (searchQuery.length > 0 || currentDimension === "year") {
+      if (!opts.recentOnly && !isFullHistoryLoaded && (searchQuery.length > 0 || currentDimension === "year")) {
         fetchParams = { user: queryUser, all: true };
       }
+      isSyncingFromServer = true;
       google.script.run
         .withSuccessHandler(function(data) {
+          isSyncingFromServer = false;
           // 若使用者在背景同步期間正在進行新增/修改/刪除，不讓舊的讀取結果覆蓋樂觀更新！
           if (isRunningMutationQueue || pendingMutationQueue.length > 0) {
             return;
@@ -6338,8 +6391,14 @@
             syncUserSettingsFromServer(data.userSettings);
           }
           if (data && data.allRecords) {
-            allRecords = normalizeRecords(data.allRecords);
-            isFullHistoryLoaded = !!data.isCompleteHistory;
+            const freshRecs = normalizeRecords(data.allRecords);
+            if (!data.isCompleteHistory && isFullHistoryLoaded) {
+              const queriedUsers = Array.isArray(data.users) ? data.users : (queryUser ? [queryUser] : ["定成", "妤珊"]);
+              allRecords = mergeRecentRecordsWithFullHistory(allRecords, freshRecs, queriedUsers);
+            } else {
+              allRecords = freshRecs;
+              isFullHistoryLoaded = !!data.isCompleteHistory;
+            }
             isMonthHistoryLoaded = true;
             // 僅在尚未設定 currentTimeKey 時才設為預設今日，避免使用者已經滑去別天卻被強制拉回今天！
             if (!currentTimeKey) {
@@ -6350,7 +6409,9 @@
             checkRecentAuditIssues();
           }
         })
-        .withFailureHandler(function() {})
+        .withFailureHandler(function() {
+          isSyncingFromServer = false;
+        })
         .getDashboardData(fetchParams);
     }
 
