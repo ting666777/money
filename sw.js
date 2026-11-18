@@ -1,4 +1,4 @@
-const CACHE_NAME = "money-pwa-cache-20261116_v22";
+const CACHE_NAME = "money-pwa-cache-20261116_v23";
 const CORE_ASSETS = [
   "./",
   "./index.html",

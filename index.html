@@ -3468,7 +3468,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v22 (SW極速版)</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">20261116_v23 (SW極速版)</span>
         </div>
         <button type="button" onclick="forceUpdatePwa();" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -3569,6 +3569,9 @@
           },
           saveUserSettings: function(user, settings) {
             callGasApi({ action: "saveUserSettings", user: user, settings: settings }, "settings");
+          },
+          getCategoryNotes: function(user) {
+            callGasApi({ action: "getCategoryNotes", user: user });
           },
           scanDuplicatesAndAnomalies: function(days, user) {
             callGasApi({ action: "scanDuplicatesAndAnomalies", days: days, user: user }, "report");
@@ -3814,7 +3817,7 @@
         navigator.serviceWorker.register("./sw.js").catch(function() {});
       }
 
-      const PWA_VERSION = "20261116_v22";
+      const PWA_VERSION = "20261116_v23";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -3898,6 +3901,7 @@
       initFormCategoryOptions();
       bindSwipeGestures();
       bindReportSwipeGestures();
+      bindModalPullDownDismiss();
 
       const searchEl = document.getElementById("search-input");
       if (searchEl) {
@@ -5477,6 +5481,23 @@
       saveWebCategoryNotesCache(user, map);
     }
 
+    function applyCloudCategoryNotes(user, notesMap) {
+      if (!user || !notesMap || typeof notesMap !== "object") return;
+      saveWebCategoryNotesCache(user, notesMap);
+      try { localStorage.setItem("accounting_web_cat_notes_full_" + user, "1"); } catch (e) {}
+      const modal = document.getElementById("quick-add-modal");
+      if (modal && modal.classList.contains("open") && qaState.user === user) {
+        qaRenderQuickTags();
+      }
+    }
+
+    function syncCategoryNotesFromServer(serverNotesMap) {
+      if (!serverNotesMap || typeof serverNotesMap !== "object") return;
+      Object.keys(serverNotesMap).forEach(function(u) {
+        applyCloudCategoryNotes(u, serverNotesMap[u]);
+      });
+    }
+
     function syncWebFullCategoryNotesIfNeeded(user) {
       if (!user || !navigator.onLine) return;
       if (isFullHistoryLoaded) {
@@ -5490,22 +5511,49 @@
       if (webCategoryNotesSyncInFlight[user]) return;
       webCategoryNotesSyncInFlight[user] = true;
 
-      google.script.run
-        .withSuccessHandler(function(data) {
-          webCategoryNotesSyncInFlight[user] = false;
-          if (data && Array.isArray(data.allRecords)) {
-            mergeWebCategoryNotesFromRecords(user, normalizeRecords(data.allRecords), true);
-            try { localStorage.setItem("accounting_web_cat_notes_full_" + user, "1"); } catch (e) {}
-            const modal = document.getElementById("quick-add-modal");
-            if (modal && modal.classList.contains("open") && qaState.user === user) {
-              qaRenderQuickTags();
+      const fallbackFullSync = function() {
+        google.script.run
+          .withSuccessHandler(function(data) {
+            webCategoryNotesSyncInFlight[user] = false;
+            if (data && data.categoryNotes && data.categoryNotes[user]) {
+              applyCloudCategoryNotes(user, data.categoryNotes[user]);
+              return;
             }
-          }
-        })
-        .withFailureHandler(function() {
-          webCategoryNotesSyncInFlight[user] = false;
-        })
-        .getDashboardData({ user: user, all: true });
+            if (data && Array.isArray(data.allRecords)) {
+              mergeWebCategoryNotesFromRecords(user, normalizeRecords(data.allRecords), true);
+              try { localStorage.setItem("accounting_web_cat_notes_full_" + user, "1"); } catch (e) {}
+              const modal = document.getElementById("quick-add-modal");
+              if (modal && modal.classList.contains("open") && qaState.user === user) {
+                qaRenderQuickTags();
+              }
+            }
+          })
+          .withFailureHandler(function() {
+            webCategoryNotesSyncInFlight[user] = false;
+          })
+          .getDashboardData({ user: user, all: true });
+      };
+
+      // 優先讀取雲端統一的「各分類前 10 筆常用備註」輕量快取 (~1.5KB)，無需抓取 all=true 全歷史
+      if (typeof google !== "undefined" && google.script && google.script.run) {
+        const runner = google.script.run
+          .withSuccessHandler(function(res) {
+            if (res && res.success && res.categoryNotes && typeof res.categoryNotes === "object") {
+              webCategoryNotesSyncInFlight[user] = false;
+              applyCloudCategoryNotes(user, res.categoryNotes);
+            } else {
+              fallbackFullSync();
+            }
+          })
+          .withFailureHandler(fallbackFullSync);
+        if (typeof runner.getCategoryNotes === "function") {
+          runner.getCategoryNotes(user);
+        } else {
+          fallbackFullSync();
+        }
+      } else {
+        fallbackFullSync();
+      }
     }
 
     function getWebDisplayQuickTags(user, catName) {
@@ -6307,6 +6355,9 @@
           if (data && data.userSettings) {
             syncUserSettingsFromServer(data.userSettings);
           }
+          if (data && data.categoryNotes) {
+            syncCategoryNotesFromServer(data.categoryNotes);
+          }
           if (data && data.allRecords) {
             allRecords = normalizeRecords(data.allRecords);
             isFullHistoryLoaded = !!data.isCompleteHistory;
@@ -6389,6 +6440,9 @@
           }
           if (data && data.userSettings) {
             syncUserSettingsFromServer(data.userSettings);
+          }
+          if (data && data.categoryNotes) {
+            syncCategoryNotesFromServer(data.categoryNotes);
           }
           if (data && data.allRecords) {
             const freshRecs = normalizeRecords(data.allRecords);
@@ -7016,6 +7070,172 @@
           bodyEl.style.opacity = "";
         }
       }, { passive: true });
+    }
+
+    // 🖐️ 全站彈窗通用「手指往下滑關閉返回主畫面」手勢（支援消費回顧、設定、快速記帳、編輯、欠款拆帳、除錯、日曆與分類選單）
+    function hasScrolledAncestorWithin(targetEl, boundaryEl) {
+      let cur = targetEl;
+      while (cur && cur !== document.body && cur !== document.documentElement) {
+        if (cur.scrollHeight > cur.clientHeight + 2 && cur.scrollTop > 2) {
+          return true;
+        }
+        if (cur === boundaryEl) break;
+        cur = cur.parentElement;
+      }
+      return false;
+    }
+
+    function resetPullDismissStyles(cardEl, isFullSheet) {
+      if (!cardEl) return;
+      cardEl.style.transition = "";
+      cardEl.style.transform = "";
+      cardEl.style.opacity = "";
+      if (isFullSheet) {
+        cardEl.style.borderRadius = "";
+        cardEl.style.boxShadow = "";
+      }
+    }
+
+    function attachPullDownGestureToModal(cfg) {
+      const overlay = document.getElementById(cfg.overlayId);
+      if (!overlay) return;
+      const cardEl = cfg.cardSelector ? overlay.querySelector(cfg.cardSelector) : overlay;
+      if (!cardEl) return;
+
+      let startX = 0;
+      let startY = 0;
+      let startTime = 0;
+      let startTarget = null;
+      let directionLocked = false;
+      let isPullingDown = false;
+      let currentPullY = 0;
+      let animTimer = null;
+
+      overlay.addEventListener("touchstart", function(e) {
+        if (!e.touches || e.touches.length !== 1) return;
+        if (!overlay.classList.contains("open")) return;
+        if (cfg.ignoreFlagFn && cfg.ignoreFlagFn()) return;
+        if (cfg.ignoreSelector && e.target && e.target.closest && e.target.closest(cfg.ignoreSelector)) return;
+
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : "";
+        if (tag === "TEXTAREA" || tag === "SELECT") return;
+        if (hasScrolledAncestorWithin(e.target, overlay)) return;
+
+        if (animTimer) {
+          clearTimeout(animTimer);
+          animTimer = null;
+          resetPullDismissStyles(cardEl, cfg.isFullSheet);
+        }
+
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startTime = Date.now();
+        startTarget = e.target;
+        directionLocked = false;
+        isPullingDown = false;
+        currentPullY = 0;
+      }, { passive: true });
+
+      overlay.addEventListener("touchmove", function(e) {
+        if (!startTime || !e.touches || e.touches.length !== 1) return;
+        if (!overlay.classList.contains("open")) return;
+        if (cfg.ignoreFlagFn && cfg.ignoreFlagFn()) return;
+
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+
+        if (!directionLocked) {
+          if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+          directionLocked = true;
+          const isVerticalDown = (dy > 0) && (Math.abs(dy) > Math.abs(dx) * 1.2);
+          if (!isVerticalDown || hasScrolledAncestorWithin(startTarget, overlay)) {
+            isPullingDown = false;
+            return;
+          }
+          isPullingDown = true;
+          if (document.activeElement && typeof document.activeElement.blur === "function" && overlay.contains(document.activeElement)) {
+            try { document.activeElement.blur(); } catch (errBlur) {}
+          }
+        }
+
+        if (!isPullingDown) return;
+        if (e.cancelable) e.preventDefault();
+
+        currentPullY = Math.max(0, dy);
+        cardEl.style.transition = "none";
+        cardEl.style.transform = `translate3d(0, ${currentPullY}px, 0)`;
+        if (cfg.isFullSheet) {
+          cardEl.style.borderRadius = currentPullY > 0 ? "22px 22px 0 0" : "";
+          cardEl.style.boxShadow = currentPullY > 0 ? "0 -8px 34px rgba(0, 0, 0, 0.28)" : "";
+          cardEl.style.opacity = String(Math.max(0.75, 1 - currentPullY / 720));
+        } else {
+          cardEl.style.opacity = String(Math.max(0.5, 1 - currentPullY / 420));
+        }
+      }, { passive: false });
+
+      const finishPull = function(e, cancelled) {
+        if (!startTime) return;
+        const endTouch = (e && e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+        const finalY = endTouch ? Math.max(0, endTouch.clientY - startY) : currentPullY;
+        const elapsed = Date.now() - startTime;
+        const wasPulling = isPullingDown;
+
+        startTime = 0;
+        startTarget = null;
+        directionLocked = false;
+        isPullingDown = false;
+        currentPullY = 0;
+
+        if (!wasPulling) return;
+
+        const shouldDismiss = !cancelled && overlay.classList.contains("open") && (
+          finalY > 72 ||
+          (elapsed < 340 && finalY > 40)
+        );
+
+        if (shouldDismiss) {
+          const exitDist = Math.max(finalY + 140, Math.min(window.innerHeight || 600, 420));
+          cardEl.style.transition = "transform 0.16s ease-out, opacity 0.16s ease-out";
+          cardEl.style.transform = `translate3d(0, ${exitDist}px, 0)`;
+          cardEl.style.opacity = "0";
+          animTimer = setTimeout(function() {
+            animTimer = null;
+            cfg.closeFn();
+            resetPullDismissStyles(cardEl, cfg.isFullSheet);
+          }, 155);
+        } else {
+          cardEl.style.transition = "transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease";
+          cardEl.style.transform = "translate3d(0, 0, 0)";
+          cardEl.style.opacity = "1";
+          animTimer = setTimeout(function() {
+            animTimer = null;
+            resetPullDismissStyles(cardEl, cfg.isFullSheet);
+          }, 210);
+        }
+      };
+
+      overlay.addEventListener("touchend", function(e) { finishPull(e, false); }, { passive: true });
+      overlay.addEventListener("touchcancel", function(e) { finishPull(e, true); }, { passive: true });
+    }
+
+    function bindModalPullDownDismiss() {
+      const modals = [
+        { overlayId: "quick-add-modal", cardSelector: null, closeFn: function() { closeQuickAddModal(); }, isFullSheet: true },
+        {
+          overlayId: "report-modal-overlay",
+          cardSelector: ".report-modal-box",
+          closeFn: function() { closeReportModal(); },
+          ignoreSelector: "#rep-curve-chart-container",
+          ignoreFlagFn: function() { return typeof isReportCurveDragging !== "undefined" && !!isReportCurveDragging; }
+        },
+        { overlayId: "settings-modal", cardSelector: ".edit-modal", closeFn: function() { closeSettingsModal(); } },
+        { overlayId: "edit-modal", cardSelector: ".edit-modal", closeFn: function() { closeEditModal(); } },
+        { overlayId: "split-debt-modal", cardSelector: ".edit-modal", closeFn: function() { closeDebtSplitModal(); } },
+        { overlayId: "audit-modal", cardSelector: ".audit-modal-card", closeFn: function() { closeAuditModal(); } },
+        { overlayId: "calendar-picker-overlay", cardSelector: ".calendar-modal-card", closeFn: function() { closeCalendarPicker(); } },
+        { overlayId: "category-sheet-overlay", cardSelector: ".category-sheet", closeFn: function() { closeCategorySheet(); } }
+      ];
+      modals.forEach(attachPullDownGestureToModal);
     }
 
     function stepReportPeriod(dir) {
