@@ -1,4 +1,5 @@
-const CACHE_NAME = "money-pwa-cache-20261116_v23";
+// 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
+const CACHE_NAME = "money-pwa-cache-1.0";
 const CORE_ASSETS = [
   "./",
   "./index.html",
