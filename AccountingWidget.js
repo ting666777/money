@@ -17,7 +17,7 @@
  */
 
 // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-const WIDGET_VERSION = "1.2.6";
+const WIDGET_VERSION = "1.2.7";
 
 // 🔗 您的 Google Apps Script 記帳 Web App 部署網址（/exec 結尾）
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-lI8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
@@ -819,13 +819,13 @@ function renderSmallWidget(widget, data) {
   topRow.centerAlignContent();
 
   const title = topRow.addText(`${data.user}記帳`);
-  title.font = Font.boldSystemFont(13);
+  title.font = Font.boldSystemFont(15);
   title.textColor = userColor;
 
   topRow.addSpacer();
 
   const timeText = topRow.addText(data.updatedAt || "");
-  timeText.font = Font.systemFont(10);
+  timeText.font = Font.systemFont(11);
   timeText.textColor = THEME.textMuted;
 
   widget.addSpacer(8);
@@ -833,7 +833,7 @@ function renderSmallWidget(widget, data) {
   // 主焦點：支出（今日無消費時自動切換為「昨日支出」）
   const expenseTitle = data.expenseLabel || (data.isToday === false ? "昨日支出" : "今日支出");
   const todayLabel = widget.addText(expenseTitle);
-  todayLabel.font = Font.systemFont(11);
+  todayLabel.font = Font.systemFont(12);
   todayLabel.textColor = THEME.textSecondary;
 
   widget.addSpacer(2);
@@ -843,11 +843,11 @@ function renderSmallWidget(widget, data) {
   amountRow.bottomAlignContent();
 
   const dollarSign = amountRow.addText("$ ");
-  dollarSign.font = Font.boldSystemFont(14);
+  dollarSign.font = Font.boldSystemFont(15);
   dollarSign.textColor = THEME.accentRose;
 
   const todayAmount = amountRow.addText(`${Number(data.todayTotal || 0).toLocaleString()}`);
-  todayAmount.font = Font.boldSystemFont(25);
+  todayAmount.font = Font.boldSystemFont(27);
   todayAmount.textColor = THEME.textPrimary;
 
   widget.addSpacer(10);
@@ -864,7 +864,7 @@ function renderSmallWidget(widget, data) {
   avgRow.centerAlignContent();
 
   const avgText = avgRow.addText(`日均花費 $${dailyAvg.toLocaleString()}`);
-  avgText.font = Font.mediumSystemFont(11);
+  avgText.font = Font.mediumSystemFont(12);
   avgText.textColor = THEME.accentGreen;
 
   widget.addSpacer(6);
@@ -882,7 +882,7 @@ function renderSmallWidget(widget, data) {
     debtStr = data.debtStatus.text || `${data.debtStatus.debtor}欠${data.debtStatus.creditor} $${data.debtStatus.amount}`;
   }
   const debtText = debtPill.addText(debtStr);
-  debtText.font = Font.boldSystemFont(10);
+  debtText.font = Font.boldSystemFont(12);
   debtText.textColor = (data.debtStatus && data.debtStatus.amount > 0) ? THEME.accentAmber : THEME.textSecondary;
   debtText.lineLimit = 1;
 }
@@ -1049,20 +1049,20 @@ function renderMediumSplitView(widget, data, userColor, displayItems) {
   topHeader.centerAlignContent();
 
   const userTitle = topHeader.addText(`${data.user} 記帳`);
-  userTitle.font = Font.boldSystemFont(13);
+  userTitle.font = Font.boldSystemFont(15);
   userTitle.textColor = userColor;
 
   topHeader.addSpacer();
 
   const timeText = topHeader.addText(data.updatedAt || "");
-  timeText.font = Font.systemFont(9);
+  timeText.font = Font.systemFont(11);
   timeText.textColor = THEME.textMuted;
 
   leftCol.addSpacer(7);
 
   const expenseTitle = data.expenseLabel || (data.isToday === false ? "昨日支出" : "今日支出");
   const todayLabel = leftCol.addText(expenseTitle);
-  todayLabel.font = Font.systemFont(10);
+  todayLabel.font = Font.systemFont(12);
   todayLabel.textColor = THEME.textMuted;
 
   const todayValRow = leftCol.addStack();
@@ -1070,11 +1070,11 @@ function renderMediumSplitView(widget, data, userColor, displayItems) {
   todayValRow.bottomAlignContent();
 
   const dollarSign = todayValRow.addText("$ ");
-  dollarSign.font = Font.boldSystemFont(12);
+  dollarSign.font = Font.boldSystemFont(14);
   dollarSign.textColor = THEME.accentRose;
 
   const todayNum = todayValRow.addText(`${Number(data.todayTotal || 0).toLocaleString()}`);
-  todayNum.font = Font.boldSystemFont(20);
+  todayNum.font = Font.boldSystemFont(22);
   todayNum.textColor = THEME.textPrimary;
 
   leftCol.addSpacer(7);
@@ -1084,14 +1084,14 @@ function renderMediumSplitView(widget, data, userColor, displayItems) {
   monthRow.centerAlignContent();
 
   const myMonthText = monthRow.addText(`本月 $${Number(data.monthTotal || 0).toLocaleString()}`);
-  myMonthText.font = Font.mediumSystemFont(10);
+  myMonthText.font = Font.mediumSystemFont(11);
   myMonthText.textColor = userColor;
 
   monthRow.addSpacer();
 
   const budgetDisplay = getWidgetBudgetDisplay(data);
   const myRemainText = monthRow.addText(budgetDisplay.splitRemainLabel);
-  myRemainText.font = Font.mediumSystemFont(10);
+  myRemainText.font = Font.mediumSystemFont(11);
   myRemainText.textColor = budgetDisplay.remainColor;
 
   leftCol.addSpacer(4);
@@ -1115,7 +1115,7 @@ function renderMediumSplitView(widget, data, userColor, displayItems) {
     debtStr = data.debtStatus.text || `${data.debtStatus.debtor}欠${data.debtStatus.creditor} $${data.debtStatus.amount}`;
   }
   const debtText = debtCard.addText(debtStr);
-  debtText.font = Font.boldSystemFont(10);
+  debtText.font = Font.boldSystemFont(12);
   debtText.textColor = (data.debtStatus && data.debtStatus.amount > 0) ? THEME.accentAmber : THEME.textSecondary;
   debtText.lineLimit = 1;
 
@@ -1139,7 +1139,7 @@ function renderMediumSplitView(widget, data, userColor, displayItems) {
   const countStr = (data.todayCount !== undefined) ? data.todayCount : displayItems.length;
   const listHeaderTitle = (data.isToday === false) ? `昨日明細 (${countStr} 筆)` : `今日明細 (${countStr} 筆)`;
   const listTitle = rightHeader.addText(listHeaderTitle);
-  listTitle.font = Font.boldSystemFont(11);
+  listTitle.font = Font.boldSystemFont(13);
   listTitle.textColor = THEME.textSecondary;
 
   rightHeader.addSpacer();
@@ -1352,7 +1352,7 @@ function renderTransactionRow(parent, item) {
   row.centerAlignContent();
 
   const itemName = row.addText(item.note || item.Category || "消費");
-  itemName.font = Font.mediumSystemFont(11);
+  itemName.font = Font.mediumSystemFont(13);
   itemName.textColor = THEME.textPrimary;
   itemName.lineLimit = 1;
 
@@ -1361,7 +1361,7 @@ function renderTransactionRow(parent, item) {
   const isIncome = (item.Category === "收入");
   const amtSign = isIncome ? "+$" : "$";
   const amtText = row.addText(`${amtSign}${Number(item.Amount || 0).toLocaleString()}`);
-  amtText.font = Font.boldSystemFont(11);
+  amtText.font = Font.boldSystemFont(13);
   amtText.textColor = isIncome ? THEME.accentGreen : THEME.textPrimary;
 }
 
@@ -1380,13 +1380,13 @@ function renderDetailedTransactionRow(parent, item) {
   col.layoutVertically();
 
   const noteText = col.addText(item.note || item.Category || "消費");
-  noteText.font = Font.mediumSystemFont(11);
+  noteText.font = Font.mediumSystemFont(13);
   noteText.textColor = THEME.textPrimary;
   noteText.lineLimit = 1;
 
   const timeStr = item["Recorded At"] ? item["Recorded At"].slice(11, 16) : "";
   const subText = col.addText(`${timeStr} ｜ ${item.Account || "現金"}`);
-  subText.font = Font.systemFont(9);
+  subText.font = Font.systemFont(11);
   subText.textColor = THEME.textMuted;
 
   row.addSpacer();
@@ -1394,7 +1394,7 @@ function renderDetailedTransactionRow(parent, item) {
   const isIncome = (item.Category === "收入");
   const amtSign = isIncome ? "+$" : "$";
   const amtText = row.addText(`${amtSign}${Number(item.Amount || 0).toLocaleString()}`);
-  amtText.font = Font.boldSystemFont(12);
+  amtText.font = Font.boldSystemFont(14);
   amtText.textColor = isIncome ? THEME.accentGreen : THEME.textPrimary;
 }
 
@@ -2161,7 +2161,7 @@ function buildQuickAddHtml(initialUser, initialNotesByUser, hasNotesCache) {
     background: var(--chip-bg);
     border: 1.5px solid var(--card-border);
     color: var(--text-2);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     padding: 6px 12px;
     border-radius: 999px;
@@ -2181,13 +2181,13 @@ function buildQuickAddHtml(initialUser, initialNotesByUser, hasNotesCache) {
     margin-bottom: 2px;
   }
   .section-label {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-2);
     letter-spacing: 0.4px;
   }
   .cat-preview-pill {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     padding: 3px 9px;
     border-radius: 999px;
@@ -2282,7 +2282,7 @@ function buildQuickAddHtml(initialUser, initialNotesByUser, hasNotesCache) {
     transform: translateY(-1px);
   }
   .cat-emoji { font-size: 18px; line-height: 1.1; }
-  .cat-name { font-size: 11px; font-weight: 600; color: var(--text-2); }
+  .cat-name { font-size: 12px; font-weight: 600; color: var(--text-2); }
   .cat-tile.selected .cat-name { color: var(--text-1); }
   .note-input-box {
     display: flex;
