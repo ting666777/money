@@ -17,7 +17,7 @@
  */
 
 // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-const WIDGET_VERSION = "1.2.9";
+const WIDGET_VERSION = "1.3";
 
 // 🔗 您的 Google Apps Script 記帳 Web App 部署網址（/exec 結尾）
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-lI8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
@@ -663,6 +663,190 @@ async function scheduleTestReminderNotification(user, delaySeconds = 5) {
   return { triggerAt: triggerDate.getTime(), openURL: notif.openURL };
 }
 
+const TRANSPARENT_BG_CONFIG_FILE = "accounting_transparent_bg_config.json";
+const TRANSPARENT_WALLPAPER_FILE = "accounting_transparent_wallpaper.jpg";
+
+const TRANSPARENT_PHONE_SIZES = {
+  2868: { small: 510, medium: 1092, large: 1146, left: 114, right: 696, top: 276, middle: 912, bottom: 1548 },
+  2796: { small: 510, medium: 1092, large: 1146, left: 99,  right: 681, top: 276, middle: 912, bottom: 1548 },
+  2778: { small: 510, medium: 1092, large: 1146, left: 96,  right: 678, top: 276, middle: 912, bottom: 1548 },
+  2688: { small: 507, medium: 1080, large: 1122, left: 81,  right: 654, top: 228, middle: 843, bottom: 1458 },
+  2622: { small: 486, medium: 1032, large: 1098, left: 87,  right: 633, top: 264, middle: 876, bottom: 1488 },
+  2556: { small: 474, medium: 1014, large: 1062, left: 84,  right: 621, top: 252, middle: 840, bottom: 1428 },
+  2532: { small: 474, medium: 1014, large: 1062, left: 78,  right: 618, top: 231, middle: 819, bottom: 1407 },
+  2436: { small: 465, medium: 987,  large: 1035, left: 69,  right: 591, top: 213, middle: 783, bottom: 1353 },
+  2340: { small: 438, medium: 942,  large: 978,  left: 69,  right: 573, top: 225, middle: 765, bottom: 1305 },
+  2208: { small: 471, medium: 1044, large: 1071, left: 99,  right: 672, top: 114, middle: 696, bottom: 1278 },
+  1792: { small: 338, medium: 720,  large: 758,  left: 54,  right: 436, top: 160, middle: 580, bottom: 1000 },
+  1334: { small: 296, medium: 642,  large: 648,  left: 54,  right: 400, top: 60,  middle: 412, bottom: 764 }
+};
+
+function computeTransparentCropRect(imgWidth, imgHeight, family, position) {
+  const h = Math.round(Number(imgHeight) || 2556);
+  const w = Math.round(Number(imgWidth) || 1179);
+  const layout = TRANSPARENT_PHONE_SIZES[h] || {
+    small: Math.round(w * 0.402),
+    medium: Math.round(w * 0.860),
+    large: Math.round(h * 0.4155),
+    left: Math.round(w * 0.0712),
+    right: Math.round(w * 0.5267),
+    top: Math.round(h * 0.0986),
+    middle: Math.round(h * 0.3286),
+    bottom: Math.round(h * 0.5587)
+  };
+
+  const pos = String(position || "top").toLowerCase();
+  if (family === "small") {
+    const x = pos.includes("right") ? layout.right : layout.left;
+    const y = pos.includes("bottom") ? layout.bottom : (pos.includes("middle") ? layout.middle : layout.top);
+    return { x: x, y: y, width: layout.small, height: layout.small };
+  }
+  if (family === "large") {
+    const y = pos.includes("bottom") ? layout.middle : layout.top;
+    return { x: layout.left, y: y, width: layout.medium, height: layout.large };
+  }
+  const y = pos.includes("bottom") ? layout.bottom : (pos.includes("middle") ? layout.middle : layout.top);
+  return { x: layout.left, y: y, width: layout.medium, height: layout.small };
+}
+
+function loadTransparentBgConfig() {
+  try {
+    const fm = FileManager.local();
+    const path = fm.joinPath(fm.documentsDirectory(), TRANSPARENT_BG_CONFIG_FILE);
+    if (fm.fileExists(path)) {
+      const parsed = JSON.parse(fm.readString(path));
+      if (parsed && typeof parsed === "object") return parsed;
+    }
+  } catch (e) {}
+  return { enabled: false, family: "medium", position: "top" };
+}
+
+function saveTransparentBgConfig(cfg) {
+  try {
+    const fm = FileManager.local();
+    const path = fm.joinPath(fm.documentsDirectory(), TRANSPARENT_BG_CONFIG_FILE);
+    fm.writeString(path, JSON.stringify(cfg || { enabled: false }));
+  } catch (e) {}
+}
+
+function getTransparentCropFileName(family) {
+  return `accounting_transparent_crop_${family || "medium"}.jpg`;
+}
+
+function cropAndSaveTransparentBg(wallpaperImg, family, position) {
+  const rect = computeTransparentCropRect(wallpaperImg.size.width, wallpaperImg.size.height, family, position);
+  const dc = new DrawContext();
+  dc.size = new Size(rect.width, rect.height);
+  dc.opaque = false;
+  dc.drawImageAtPoint(wallpaperImg, new Point(-rect.x, -rect.y));
+  const cropped = dc.getImage();
+
+  const fm = FileManager.local();
+  const cropPath = fm.joinPath(fm.documentsDirectory(), getTransparentCropFileName(family));
+  fm.writeImage(cropPath, cropped);
+  return cropped;
+}
+
+function loadTransparentBgImage(family) {
+  const cfg = loadTransparentBgConfig();
+  if (!cfg || !cfg.enabled) return null;
+  try {
+    const fm = FileManager.local();
+    const cropPath = fm.joinPath(fm.documentsDirectory(), getTransparentCropFileName(family));
+    if (fm.fileExists(cropPath)) {
+      return fm.readImage(cropPath);
+    }
+    const wallPath = fm.joinPath(fm.documentsDirectory(), TRANSPARENT_WALLPAPER_FILE);
+    if (fm.fileExists(wallPath)) {
+      const wallImg = fm.readImage(wallPath);
+      return cropAndSaveTransparentBg(wallImg, family, cfg.position || "top");
+    }
+  } catch (e) {}
+  return null;
+}
+
+async function openTransparentBgSetupMenu() {
+  const cfg = loadTransparentBgConfig();
+  const menu = new Alert();
+  menu.title = "透明背景無邊框設定";
+  menu.message = cfg.enabled
+    ? `目前狀態：已開啟（${cfg.family || "medium"} / ${cfg.position || "top"}）`
+    : "目前狀態：未開啟（使用漸層卡片）";
+  menu.addAction("從相簿選取空白桌面截圖并設定位置");
+  if (cfg.enabled) {
+    menu.addAction("調整小工具位置（沿用已存截圖）");
+    menu.addAction("關閉透明背景（恢復漸層卡片）");
+  }
+  menu.addCancelAction("取消");
+  const pick = await menu.present();
+  if (pick === -1) return false;
+
+  const fm = FileManager.local();
+  const wallPath = fm.joinPath(fm.documentsDirectory(), TRANSPARENT_WALLPAPER_FILE);
+
+  if (cfg.enabled && pick === 2) {
+    saveTransparentBgConfig({ enabled: false, family: cfg.family || "medium", position: cfg.position || "top" });
+    const offAlert = new Alert();
+    offAlert.title = "已關閉透明背景";
+    offAlert.message = "小工具已恢復原本的主題漸層卡片背景。";
+    offAlert.addAction("確定");
+    await offAlert.present();
+    return true;
+  }
+
+  let wallImg = null;
+  if (pick === 0) {
+    const guide = new Alert();
+    guide.title = "準備空白桌面截圖";
+    guide.message = "請先在 iPhone 主畫面長按進入編輯模式，滑到最右邊的「完全空白頁面」截圖一次，接著從相簿選取該截圖。";
+    guide.addAction("前往相簿選取截圖");
+    guide.addCancelAction("取消");
+    if ((await guide.present()) === -1) return false;
+    wallImg = await Photos.fromLibrary();
+    if (!wallImg) return false;
+    fm.writeImage(wallPath, wallImg);
+  } else if (fm.fileExists(wallPath)) {
+    wallImg = fm.readImage(wallPath);
+  } else {
+    return false;
+  }
+
+  const sizeMenu = new Alert();
+  sizeMenu.title = "選擇這個小工具的尺寸";
+  sizeMenu.addAction("中尺寸（4x2）");
+  sizeMenu.addAction("小尺寸（2x2）");
+  sizeMenu.addAction("大尺寸（4x4）");
+  sizeMenu.addCancelAction("取消");
+  const sIdx = await sizeMenu.present();
+  if (sIdx === -1) return false;
+  const family = sIdx === 1 ? "small" : (sIdx === 2 ? "large" : "medium");
+
+  const posMenu = new Alert();
+  posMenu.title = "選擇小工具放在桌面哪個位置";
+  let posKeys = [];
+  if (family === "small") {
+    posKeys = ["top-left", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-right"];
+    ["左上", "右上", "中左", "中右", "左下", "右下"].forEach((t) => posMenu.addAction(t));
+  } else if (family === "large") {
+    posKeys = ["top", "bottom"];
+    ["上方", "下方"].forEach((t) => posMenu.addAction(t));
+  } else {
+    posKeys = ["top", "middle", "bottom"];
+    ["上方", "中間", "下方"].forEach((t) => posMenu.addAction(t));
+  }
+  posMenu.addCancelAction("取消");
+  const pIdx = await posMenu.present();
+  if (pIdx === -1) return false;
+  const chosenPos = posKeys[pIdx] || "top";
+
+  ["small", "medium", "large"].forEach((f) => {
+    cropAndSaveTransparentBg(wallImg, f, chosenPos);
+  });
+  saveTransparentBgConfig({ enabled: true, family: family, position: chosenPos });
+  config.widgetFamily = family;
+  return true;
+}
+
 // 進入點
 await main();
 
@@ -711,9 +895,10 @@ async function main() {
   const hasQueryParams = args.queryParameters && Object.keys(args.queryParameters).length > 0;
   if (!config.runsInWidget && !hasQueryParams && !actionParam) {
     const remCfg = loadReminderConfig();
+    const transCfg = loadTransparentBgConfig();
     const alert = new Alert();
     alert.title = `📱 ${CURRENT_USER} 記帳`;
-    alert.message = `當前身份：【${CURRENT_USER}】\n目前主題：${THEME.themeName}\n目前版本：v${WIDGET_VERSION}\n每晚 23:00 提醒：${remCfg.enabled ? "已開啟" : "已關閉"}`;
+    alert.message = `當前身份：【${CURRENT_USER}】\n目前主題：${THEME.themeName}\n目前版本：v${WIDGET_VERSION}\n每晚 23:00 提醒：${remCfg.enabled ? "已開啟" : "已關閉"}\n透明背景：${transCfg.enabled ? "已開啟" : "未開啟"}`;
     alert.addAction("⚡ 快速記一筆");
     alert.addAction("🚀 開啟全螢幕儀表板 WebView");
     alert.addAction("🎨 更換主題配色");
@@ -724,6 +909,7 @@ async function main() {
     alert.addAction(`切換預設身份（改為 ${otherUser}）`);
     alert.addAction("發送測試通知（5 秒後跳出）");
     alert.addAction(remCfg.enabled ? "每日 23:00 記帳提醒：已開啟（點此關閉）" : "每日 23:00 記帳提醒：已關閉（點此開啟）");
+    alert.addAction(transCfg.enabled ? "透明背景設定（目前：已開啟）" : "透明背景設定（目前：未開啟）");
     alert.addCancelAction("取消");
     const choice = await alert.present();
     if (choice === 0) {
@@ -786,6 +972,20 @@ async function main() {
         : "已關閉每日 23:00 記帳提醒。";
       toggleAlert.addAction("確定");
       await toggleAlert.present();
+      Script.complete();
+      return;
+    } else if (choice === 9) {
+      const updated = await openTransparentBgSetupMenu();
+      if (!updated) {
+        Script.complete();
+        return;
+      }
+      const previewData = await fetchAccountingData(CURRENT_USER);
+      const previewWidget = await createWidget(previewData);
+      const fam = config.widgetFamily || "medium";
+      if (fam === "small") await previewWidget.presentSmall();
+      else if (fam === "large") await previewWidget.presentLarge();
+      else await previewWidget.presentMedium();
       Script.complete();
       return;
     } else {
@@ -1026,19 +1226,23 @@ async function createWidget(data) {
   const targetUser = data.user || CURRENT_USER;
   loadActiveTheme(targetUser);
 
+  const family = config.widgetFamily || "medium";
   const widget = new ListWidget();
   widget.setPadding(14, 14, 14, 14);
 
-  // 背景漸層
-  const gradient = new LinearGradient();
-  gradient.locations = [0, 1];
-  gradient.colors = THEME.bgGradient;
-  widget.backgroundGradient = gradient;
+  const transparentBg = loadTransparentBgImage(family);
+  if (transparentBg) {
+    widget.backgroundImage = transparentBg;
+  } else {
+    // 背景漸層
+    const gradient = new LinearGradient();
+    gradient.locations = [0, 1];
+    gradient.colors = THEME.bgGradient;
+    widget.backgroundGradient = gradient;
+  }
 
   // 點擊小工具行為：必定帶上當前使用者參數，確保點妤珊跳轉妤珊、點定成跳轉定成！
   widget.url = getMainDashboardActionUrl(targetUser);
-
-  const family = config.widgetFamily || "medium";
 
   if (family === "small") {
     renderSmallWidget(widget, data);
