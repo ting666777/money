@@ -17,7 +17,7 @@
  */
 
 // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-const WIDGET_VERSION = "1.2.2";
+const WIDGET_VERSION = "1.2.3";
 
 // 🔗 您的 Google Apps Script 記帳 Web App 部署網址（/exec 結尾）
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-lI8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
@@ -1898,7 +1898,7 @@ function buildQuickAddHtml(initialUser, initialNotesByUser, hasNotesCache) {
     z-index: 1;
     max-width: 460px;
     margin: 0 auto;
-    padding: calc(env(safe-area-inset-top, 0px) + 52px) 14px calc(14px + env(safe-area-inset-bottom));
+    padding: max(calc(env(safe-area-inset-top, 0px) + 10px), 30px) 14px calc(14px + env(safe-area-inset-bottom));
   }
   .header {
     display: flex;
