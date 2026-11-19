@@ -2623,6 +2623,133 @@
       border-color: var(--card-border);
     }
 
+    .qa-mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 5px;
+      margin-bottom: 11px;
+    }
+
+    .qa-mode-btn {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 9px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+
+    .qa-mode-btn.active {
+      background: var(--pill-active-bg);
+      color: var(--text);
+      border-color: var(--card-border);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .qa-payer-pills {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .qa-payer-pill {
+      background: var(--card-soft);
+      border: 1.5px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .qa-payer-pill.active-ding {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--ding);
+      color: var(--ding);
+    }
+
+    .qa-payer-pill.active-yu {
+      background: rgba(244, 114, 182, 0.15);
+      border-color: var(--yu);
+      color: var(--yu);
+    }
+
+    .qa-split-share-box {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--card-border);
+    }
+
+    .qa-split-mode-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+
+    .qa-split-chip {
+      background: var(--card-soft);
+      border: 1.5px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 11px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .qa-split-chip.active {
+      background: var(--pill-active-bg);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .qa-split-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+
+    .qa-split-input-wrap:focus-within {
+      border-color: var(--accent);
+    }
+
+    .qa-split-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .qa-split-preview {
+      margin-top: 8px;
+      padding: 8px 11px;
+      background: var(--card-soft);
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
     .qa-amount-label-row {
       display: flex;
       justify-content: space-between;
@@ -3277,14 +3404,27 @@
 
         <div id="qa-error-toast" class="qa-error-toast"></div>
 
+        <div class="qa-mode-switch" id="qa-mode-switch">
+          <button type="button" class="qa-mode-btn active" id="qa-mode-normal" onclick="qaSetMode('normal')">📝 一般記帳</button>
+          <button type="button" class="qa-mode-btn" id="qa-mode-split" onclick="qaSetMode('split')">🤝 分攤 / 代墊 (欠錢)</button>
+        </div>
+
+        <div class="qa-card qa-split-payer-card" id="qa-split-payer-card" style="display:none;">
+          <div class="qa-section-label">誰先付錢</div>
+          <div class="qa-payer-pills">
+            <button type="button" class="qa-payer-pill" id="qa-payer-ding" onclick="qaSelectSplitPayer('定成')">👦 定成 先付</button>
+            <button type="button" class="qa-payer-pill" id="qa-payer-yu" onclick="qaSelectSplitPayer('妤珊')">👧 妤珊 先付</button>
+          </div>
+        </div>
+
         <div class="qa-card qa-amount-card">
           <div class="qa-amount-label-row">
-            <span class="qa-section-label">消費金額</span>
+            <span class="qa-section-label" id="qa-amount-label">消費金額</span>
             <span class="qa-cat-preview-pill" id="qa-cat-badge">🍽️ 食物</span>
           </div>
           <div class="qa-amount-input-wrap">
             <span class="qa-currency-symbol">$</span>
-            <input id="qa-amount-input" class="qa-amount-input" type="number" inputmode="decimal" step="any" min="0" placeholder="0" oninput="qaUpdateSubmitButton()">
+            <input id="qa-amount-input" class="qa-amount-input" type="number" inputmode="decimal" step="any" min="0" placeholder="0" oninput="qaOnMainAmountInput()">
           </div>
           <div class="qa-quick-amt-row">
             <div class="qa-amt-chip" onclick="qaAddQuickAmount(50)">+50</div>
@@ -3292,6 +3432,20 @@
             <div class="qa-amt-chip" onclick="qaAddQuickAmount(200)">+200</div>
             <div class="qa-amt-chip" onclick="qaAddQuickAmount(500)">+500</div>
             <div class="qa-amt-chip clear-btn" onclick="qaClearAmount()">清除</div>
+          </div>
+
+          <div class="qa-split-share-box" id="qa-split-share-box" style="display:none;">
+            <div class="qa-section-label" id="qa-split-share-label">【定成】自己花多少（他付多少）？</div>
+            <div class="qa-split-mode-chips">
+              <div class="qa-split-chip active" id="qa-split-chip-half" onclick="qaSetSplitShareMode('half')">⚖️ 一人一半</div>
+              <div class="qa-split-chip" id="qa-split-chip-zero" onclick="qaSetSplitShareMode('zero')">💸 0 元 (全額幫對方代墊)</div>
+              <div class="qa-split-chip" id="qa-split-chip-custom" onclick="qaSetSplitShareMode('custom')">✏️ 自訂金額</div>
+            </div>
+            <div class="qa-split-input-wrap">
+              <span style="font-weight:800; color:var(--accent);">$</span>
+              <input id="qa-payer-amount-input" class="qa-split-input" type="number" inputmode="decimal" step="any" min="0" placeholder="輸入先付者自己花的金額 (沒花填 0)" oninput="qaOnPayerAmountInput()">
+            </div>
+            <div class="qa-split-preview" id="qa-split-preview">請輸入總金額，系統將自動試算雙方記帳與欠款</div>
           </div>
         </div>
 
@@ -3309,7 +3463,7 @@
           <div class="qa-tags-scroll" id="qa-tags-scroll"></div>
         </div>
 
-        <div class="qa-card">
+        <div class="qa-card" id="qa-acc-card">
           <div class="qa-section-label">付款帳戶</div>
           <div class="qa-acc-wrap" id="qa-acc-wrap"></div>
         </div>
@@ -3564,8 +3718,18 @@
           splitLatestExpenseForBoth: function(payer, splitAmount, note, isHalf) {
             callGasApi({ action: "splitExpense", payer: payer, splitAmount: splitAmount, note: note, isHalf: !!isHalf });
           },
-          recordCashExpenseAndDebtSplit: function(payer, totalAmount, payerAmount, note, isHalf) {
-            callGasApi({ action: "cashSplit", payer: payer, totalAmount: totalAmount, payerAmount: payerAmount, note: note, isHalf: !!isHalf });
+          recordCashExpenseAndDebtSplit: function(payer, totalAmount, payerAmount, note, isHalf, category, skipDebtSync, recordedAt) {
+            callGasApi({
+              action: "cashSplit",
+              payer: payer,
+              totalAmount: totalAmount,
+              payerAmount: payerAmount,
+              note: note,
+              isHalf: !!isHalf,
+              category: category || "",
+              skipDebtSync: !!skipDebtSync,
+              recordedAt: recordedAt || ""
+            });
           },
           saveUserSettings: function(user, settings) {
             callGasApi({ action: "saveUserSettings", user: user, settings: settings }, "settings");
@@ -3788,6 +3952,21 @@
           .withSuccessHandler(onSyncedSuccess)
           .withFailureHandler(onSyncedFailure)
           .addStructuredRecord(currentItem.payload);
+      } else if (currentItem.type === "cashSplit") {
+        const cp = currentItem.payload || {};
+        google.script.run
+          .withSuccessHandler(onSyncedSuccess)
+          .withFailureHandler(onSyncedFailure)
+          .recordCashExpenseAndDebtSplit(
+            cp.payer,
+            cp.totalAmount,
+            cp.payerAmount,
+            cp.note,
+            !!cp.isHalf,
+            cp.category || "",
+            !!cp.skipDebtSync,
+            cp.recordedAt || ""
+          );
       } else if (currentItem.type === "update") {
         google.script.run
           .withSuccessHandler(onSyncedSuccess)
@@ -3818,7 +3997,7 @@
       }
 
       // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-      const PWA_VERSION = "1.0";
+      const PWA_VERSION = "1.1";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -5389,7 +5568,10 @@
       user: "定成",
       category: "食物",
       account: "現金",
-      targetDateStr: ""
+      targetDateStr: "",
+      mode: "normal",
+      splitPayer: "定成",
+      splitShareMode: "half"
     };
     let webCategoryNotesCacheByUser = {};
     let webCategoryNotesSyncInFlight = {};
@@ -5487,7 +5669,8 @@
       saveWebCategoryNotesCache(user, notesMap);
       try { localStorage.setItem("accounting_web_cat_notes_full_" + user, "1"); } catch (e) {}
       const modal = document.getElementById("quick-add-modal");
-      if (modal && modal.classList.contains("open") && qaState.user === user) {
+      const activeTagUser = (qaState.mode === "split") ? qaState.splitPayer : qaState.user;
+      if (modal && modal.classList.contains("open") && activeTagUser === user) {
         qaRenderQuickTags();
       }
     }
@@ -5524,7 +5707,8 @@
               mergeWebCategoryNotesFromRecords(user, normalizeRecords(data.allRecords), true);
               try { localStorage.setItem("accounting_web_cat_notes_full_" + user, "1"); } catch (e) {}
               const modal = document.getElementById("quick-add-modal");
-              if (modal && modal.classList.contains("open") && qaState.user === user) {
+              const activeTagUser = (qaState.mode === "split") ? qaState.splitPayer : qaState.user;
+              if (modal && modal.classList.contains("open") && activeTagUser === user) {
                 qaRenderQuickTags();
               }
             }
@@ -5563,47 +5747,28 @@
       const req = REQUIRED_CATEGORY_NOTES[catName] || [];
       const chosen = [];
       const seenLower = {};
-      const reqLowerSet = {};
 
-      for (let r = 0; r < req.length; r++) {
-        reqLowerSet[req[r].toLowerCase()] = true;
+      // 1. 保留備註永遠排在最前面
+      for (let j = 0; j < req.length; j++) {
+        const rq = String(req[j] || "").trim();
+        if (!rq || rq === catName) continue;
+        const low = rq.toLowerCase();
+        if (seenLower[low]) continue;
+        seenLower[low] = true;
+        chosen.push(rq);
       }
+
+      // 2. 接著依序補上最新歷史常用備註（不重複，最多 10 個）
       for (let i = 0; i < hist.length; i++) {
+        if (chosen.length >= 10) break;
         const item = String(hist[i] || "").trim();
         if (!item || item === catName) continue;
         const low = item.toLowerCase();
         if (seenLower[low]) continue;
         seenLower[low] = true;
         chosen.push(item);
-        if (chosen.length >= 10) break;
       }
 
-      const missingReq = [];
-      for (let j = 0; j < req.length; j++) {
-        const rq = req[j];
-        if (!seenLower[rq.toLowerCase()]) {
-          missingReq.push(rq);
-        }
-      }
-
-      while (chosen.length + missingReq.length > 10) {
-        let removedIdx = -1;
-        for (let k = chosen.length - 1; k >= 0; k--) {
-          if (!reqLowerSet[chosen[k].toLowerCase()]) {
-            removedIdx = k;
-            break;
-          }
-        }
-        if (removedIdx !== -1) {
-          chosen.splice(removedIdx, 1);
-        } else {
-          break;
-        }
-      }
-
-      for (let m = 0; m < missingReq.length; m++) {
-        chosen.push(missingReq[m]);
-      }
       return chosen;
     }
 
@@ -5634,6 +5799,10 @@
     }
 
     function qaSelectCategory(catName) {
+      if (qaState.mode === "split" && catName === "收入") {
+        qaShowError("分攤 / 代墊模式不適用「收入」分類");
+        return;
+      }
       qaState.category = catName;
       qaRenderCategories();
       qaRenderQuickTags();
@@ -5642,7 +5811,8 @@
     function qaRenderQuickTags() {
       const wrap = document.getElementById("qa-tags-scroll");
       const curNote = document.getElementById("qa-note-input").value.trim();
-      const list = getWebDisplayQuickTags(qaState.user, qaState.category);
+      const noteOwner = (qaState.mode === "split") ? qaState.splitPayer : qaState.user;
+      const list = getWebDisplayQuickTags(noteOwner, qaState.category);
       if (list.length === 0) {
         wrap.innerHTML = '<div class="qa-tags-empty">此分類尚無過去備註紀錄</div>';
         return;
@@ -5657,7 +5827,8 @@
     }
 
     function qaApplyQuickTag(idx) {
-      const list = getWebDisplayQuickTags(qaState.user, qaState.category);
+      const noteOwner = (qaState.mode === "split") ? qaState.splitPayer : qaState.user;
+      const list = getWebDisplayQuickTags(noteOwner, qaState.category);
       const text = list[idx];
       if (!text) return;
       const input = document.getElementById("qa-note-input");
@@ -5693,25 +5864,261 @@
       qaRenderAccounts();
     }
 
+    function qaCalculateSplitDetails() {
+      const totalAmt = parseFloat(document.getElementById("qa-amount-input").value);
+      const payer = qaState.splitPayer === "妤珊" ? "妤珊" : "定成";
+      const debtor = (payer === "定成") ? "妤珊" : "定成";
+      const isHalf = (qaState.splitShareMode === "half");
+
+      if (!totalAmt || totalAmt <= 0 || isNaN(totalAmt)) {
+        return { valid: false, reason: "invalid_total", payer: payer, debtor: debtor, isHalf: isHalf };
+      }
+
+      let payerAmt = 0;
+      let debtorAmt = 0;
+      let dingShare = 0;
+      let yuShare = 0;
+
+      if (isHalf) {
+        // 奇數定成+1，與 tingYu3.gs / Code.gs 完全一致
+        dingShare = Math.ceil(totalAmt / 2);
+        yuShare = Math.floor(totalAmt / 2);
+        if (payer === "定成") {
+          payerAmt = dingShare;
+          debtorAmt = yuShare;
+        } else {
+          payerAmt = yuShare;
+          debtorAmt = dingShare;
+        }
+      } else if (qaState.splitShareMode === "zero") {
+        payerAmt = 0;
+        debtorAmt = Math.round(totalAmt * 100) / 100;
+        dingShare = (payer === "定成") ? 0 : debtorAmt;
+        yuShare = (payer === "定成") ? debtorAmt : 0;
+      } else {
+        const rawPayerStr = document.getElementById("qa-payer-amount-input").value.trim();
+        if (rawPayerStr === "") {
+          return { valid: false, reason: "missing_payer_amount", payer: payer, debtor: debtor, totalAmount: totalAmt, isHalf: false };
+        }
+        const parsedPayer = parseFloat(rawPayerStr);
+        if (isNaN(parsedPayer) || parsedPayer < 0) {
+          return { valid: false, reason: "negative_payer_amount", payer: payer, debtor: debtor, totalAmount: totalAmt, isHalf: false };
+        }
+        if (parsedPayer > totalAmt) {
+          return { valid: false, reason: "exceeds_total", payer: payer, debtor: debtor, totalAmount: totalAmt, isHalf: false };
+        }
+        payerAmt = Math.round(parsedPayer * 100) / 100;
+        debtorAmt = Math.round((totalAmt - payerAmt) * 100) / 100;
+        dingShare = (payer === "定成") ? payerAmt : debtorAmt;
+        yuShare = (payer === "定成") ? debtorAmt : payerAmt;
+      }
+
+      return {
+        valid: true,
+        payer: payer,
+        debtor: debtor,
+        isHalf: isHalf,
+        totalAmount: Math.round(totalAmt * 100) / 100,
+        payerAmount: payerAmt,
+        debtorAmount: debtorAmt,
+        dingShare: dingShare,
+        yuShare: yuShare
+      };
+    }
+
+    function qaSyncSplitPayerInputDisplay() {
+      const inputEl = document.getElementById("qa-payer-amount-input");
+      if (!inputEl) return;
+      if (qaState.splitShareMode === "zero") {
+        inputEl.value = "0";
+      } else if (qaState.splitShareMode === "half") {
+        const totalAmt = parseFloat(document.getElementById("qa-amount-input").value);
+        if (totalAmt && totalAmt > 0 && !isNaN(totalAmt)) {
+          const share = (qaState.splitPayer === "定成") ? Math.ceil(totalAmt / 2) : Math.floor(totalAmt / 2);
+          inputEl.value = share;
+        } else {
+          inputEl.value = "";
+        }
+      }
+    }
+
+    function qaRenderSplitUI() {
+      const isSplit = (qaState.mode === "split");
+      const modeNormalBtn = document.getElementById("qa-mode-normal");
+      const modeSplitBtn = document.getElementById("qa-mode-split");
+      if (modeNormalBtn) modeNormalBtn.className = "qa-mode-btn" + (!isSplit ? " active" : "");
+      if (modeSplitBtn) modeSplitBtn.className = "qa-mode-btn" + (isSplit ? " active" : "");
+
+      const payerCard = document.getElementById("qa-split-payer-card");
+      const shareBox = document.getElementById("qa-split-share-box");
+      const accCard = document.getElementById("qa-acc-card");
+      const amtLabel = document.getElementById("qa-amount-label");
+
+      if (payerCard) payerCard.style.display = isSplit ? "block" : "none";
+      if (shareBox) shareBox.style.display = isSplit ? "block" : "none";
+      if (accCard) accCard.style.display = isSplit ? "none" : "block";
+      if (amtLabel) amtLabel.innerText = isSplit ? "總共付多少錢 (總金額)" : "消費金額";
+
+      if (!isSplit) return;
+
+      const payer = qaState.splitPayer === "妤珊" ? "妤珊" : "定成";
+      const dingBtn = document.getElementById("qa-payer-ding");
+      const yuBtn = document.getElementById("qa-payer-yu");
+      if (dingBtn) dingBtn.className = "qa-payer-pill" + (payer === "定成" ? " active-ding" : "");
+      if (yuBtn) yuBtn.className = "qa-payer-pill" + (payer === "妤珊" ? " active-yu" : "");
+
+      const shareLabel = document.getElementById("qa-split-share-label");
+      if (shareLabel) {
+        shareLabel.innerText = `【${payer}】自己花多少（0 = 全額幫對方代墊）？`;
+      }
+
+      const halfChip = document.getElementById("qa-split-chip-half");
+      const zeroChip = document.getElementById("qa-split-chip-zero");
+      const customChip = document.getElementById("qa-split-chip-custom");
+      if (halfChip) halfChip.className = "qa-split-chip" + (qaState.splitShareMode === "half" ? " active" : "");
+      if (zeroChip) zeroChip.className = "qa-split-chip" + (qaState.splitShareMode === "zero" ? " active" : "");
+      if (customChip) customChip.className = "qa-split-chip" + (qaState.splitShareMode === "custom" ? " active" : "");
+
+      qaUpdateSplitPreview();
+    }
+
+    function qaUpdateSplitPreview() {
+      const previewEl = document.getElementById("qa-split-preview");
+      if (!previewEl || qaState.mode !== "split") return;
+      const info = qaCalculateSplitDetails();
+      if (!info.valid) {
+        if (info.reason === "exceeds_total") {
+          previewEl.innerHTML = `<span style="color:var(--expense); font-weight:700;">⚠️ 先付者自己花的金額不可大於總金額 $${info.totalAmount.toLocaleString()}</span>`;
+        } else if (info.reason === "negative_payer_amount") {
+          previewEl.innerHTML = `<span style="color:var(--expense); font-weight:700;">⚠️ 金額不可為負數</span>`;
+        } else if (info.reason === "missing_payer_amount") {
+          previewEl.innerText = `請輸入【${info.payer}】自己花的金額（若沒花請填 0 或點上方「0 元」）`;
+        } else {
+          previewEl.innerText = "請輸入總金額，系統將自動試算雙方記帳與欠款";
+        }
+        return;
+      }
+
+      const payerPartText = (info.payerAmount === 0)
+        ? `<b>${info.payer}</b> 自付 <b>$0</b>（不記帳，全額幫 <b>${info.debtor}</b> 代墊）`
+        : `<b>${info.payer}</b> 記帳 <b>$${info.payerAmount.toLocaleString()}</b>`;
+      const debtorPartText = `<b>${info.debtor}</b> 記帳 <b>$${info.debtorAmount.toLocaleString()}</b>`;
+      const debtText = (info.debtorAmount > 0)
+        ? `<b>${info.debtor}</b> 欠 ${info.payer} <b>+$${info.debtorAmount.toLocaleString()}</b>`
+        : "雙方無欠款變動";
+      previewEl.innerHTML = `${payerPartText} · ${debtorPartText}<br>🤝 ${debtText}`;
+    }
+
+    function qaSetMode(mode) {
+      qaHideError();
+      qaState.mode = (mode === "split") ? "split" : "normal";
+      if (qaState.mode === "split" && qaState.category === "收入") {
+        qaState.category = "食物";
+      }
+      if (qaState.mode === "split") {
+        mergeWebCategoryNotesFromRecords(qaState.splitPayer, allRecords, false);
+        syncWebFullCategoryNotesIfNeeded(qaState.splitPayer);
+        qaSyncSplitPayerInputDisplay();
+      }
+      qaRenderCategories();
+      qaRenderQuickTags();
+      qaRenderSplitUI();
+      qaUpdateSubmitButton();
+    }
+
+    function qaSelectSplitPayer(payer) {
+      qaHideError();
+      qaState.splitPayer = (payer === "妤珊") ? "妤珊" : "定成";
+      mergeWebCategoryNotesFromRecords(qaState.splitPayer, allRecords, false);
+      syncWebFullCategoryNotesIfNeeded(qaState.splitPayer);
+      qaSyncSplitPayerInputDisplay();
+      qaRenderQuickTags();
+      qaRenderSplitUI();
+      qaUpdateSubmitButton();
+    }
+
+    function qaSetSplitShareMode(shareMode) {
+      qaHideError();
+      qaState.splitShareMode = shareMode;
+      qaSyncSplitPayerInputDisplay();
+      qaRenderSplitUI();
+      qaUpdateSubmitButton();
+      if (shareMode === "custom") {
+        const inp = document.getElementById("qa-payer-amount-input");
+        if (inp) {
+          inp.focus();
+          inp.select();
+        }
+      }
+    }
+
+    function qaOnPayerAmountInput() {
+      qaHideError();
+      qaState.splitShareMode = "custom";
+      const halfChip = document.getElementById("qa-split-chip-half");
+      const zeroChip = document.getElementById("qa-split-chip-zero");
+      const customChip = document.getElementById("qa-split-chip-custom");
+      if (halfChip) halfChip.className = "qa-split-chip";
+      if (zeroChip) zeroChip.className = "qa-split-chip";
+      if (customChip) customChip.className = "qa-split-chip active";
+      qaUpdateSplitPreview();
+      qaUpdateSubmitButton();
+    }
+
+    function qaOnMainAmountInput() {
+      qaHideError();
+      if (qaState.mode === "split" && qaState.splitShareMode !== "custom") {
+        qaSyncSplitPayerInputDisplay();
+      }
+      qaUpdateSplitPreview();
+      qaUpdateSubmitButton();
+    }
+
     function qaAddQuickAmount(delta) {
       const input = document.getElementById("qa-amount-input");
       const cur = parseFloat(input.value) || 0;
       input.value = cur + delta;
-      qaUpdateSubmitButton();
+      qaOnMainAmountInput();
     }
 
     function qaClearAmount() {
       const input = document.getElementById("qa-amount-input");
       input.value = "";
       input.focus();
-      qaUpdateSubmitButton();
+      qaOnMainAmountInput();
     }
 
     function qaUpdateSubmitButton() {
-      const amt = parseFloat(document.getElementById("qa-amount-input").value);
       const btn = document.getElementById("qa-submit-btn");
       const txt = document.getElementById("qa-submit-text");
 
+      if (qaState.mode === "split") {
+        btn.classList.remove("income-mode");
+        const info = qaCalculateSplitDetails();
+        if (!info.valid) {
+          btn.disabled = true;
+          if (info.reason === "exceeds_total") {
+            txt.innerText = "自付金額不可大於總金額";
+          } else if (info.reason === "missing_payer_amount") {
+            txt.innerText = "請輸入先付者自己花的金額";
+          } else if (info.reason === "negative_payer_amount") {
+            txt.innerText = "金額不可為負數";
+          } else {
+            txt.innerText = "請輸入總金額";
+          }
+        } else {
+          btn.disabled = false;
+          if (info.payerAmount === 0) {
+            txt.innerText = `確認代墊全額 · ${info.debtor}欠$${info.debtorAmount.toLocaleString()}`;
+          } else {
+            txt.innerText = `儲存分攤 · ${info.debtor}欠$${info.debtorAmount.toLocaleString()}`;
+          }
+        }
+        qaUpdateSplitPreview();
+        return;
+      }
+
+      const amt = parseFloat(document.getElementById("qa-amount-input").value);
       if (qaState.category === "收入") {
         btn.classList.add("income-mode");
       } else {
@@ -5748,7 +6155,10 @@
         user: currentUser,
         category: "食物",
         account: "現金",
-        targetDateStr: targetDateStr
+        targetDateStr: targetDateStr,
+        mode: "normal",
+        splitPayer: currentUser,
+        splitShareMode: "half"
       };
 
       const userSpan = document.getElementById("qa-header-user");
@@ -5759,6 +6169,8 @@
       syncWebFullCategoryNotesIfNeeded(currentUser);
 
       document.getElementById("qa-amount-input").value = "";
+      const payerInput = document.getElementById("qa-payer-amount-input");
+      if (payerInput) payerInput.value = "";
       document.getElementById("qa-note-input").value = "";
       document.getElementById("qa-note-clear").style.display = "none";
       qaHideError();
@@ -5769,6 +6181,8 @@
       qaRenderCategories();
       qaRenderQuickTags();
       qaRenderAccounts();
+      qaRenderSplitUI();
+      qaUpdateSubmitButton();
 
       document.getElementById("quick-add-modal").classList.add("open");
       document.body.classList.add("modal-open");
@@ -5785,9 +6199,12 @@
 
     function qaResetForAnother() {
       document.getElementById("qa-amount-input").value = "";
+      const payerInput = document.getElementById("qa-payer-amount-input");
+      if (payerInput) payerInput.value = (qaState.splitShareMode === "zero") ? "0" : "";
       document.getElementById("qa-note-input").value = "";
       document.getElementById("qa-note-clear").style.display = "none";
       qaHideError();
+      qaRenderSplitUI();
       qaUpdateSubmitButton();
       qaRenderQuickTags();
 
@@ -5799,17 +6216,149 @@
       }, 120);
     }
 
-    function submitWebQuickRecord() {
-      qaHideError();
-      const amt = parseFloat(document.getElementById("qa-amount-input").value);
-      if (!amt || amt <= 0) {
-        qaShowError("請輸入大於 0 的有效金額");
+    function commitCashSplitOptimistically(splitInfo, finalCategory, finalNote, recordedAt) {
+      const payer = splitInfo.payer;
+      const debtor = splitInfo.debtor;
+      const payerAmt = splitInfo.payerAmount;
+      const debtorAmt = splitInfo.debtorAmount;
+      const newYm = recordedAt.slice(0, 7);
+
+      if (currentDimension === "day" && recordedAt.length >= 10) {
+        currentTimeKey = recordedAt.slice(0, 10);
+      }
+
+      let optPayerRec = null;
+      let optDebtorRec = null;
+
+      if (payerAmt > 0) {
+        allRecords.forEach(function(r) {
+          if (r.user === payer && Number(r.rowIndex) >= 2) {
+            r.rowIndex = Number(r.rowIndex) + 1;
+          }
+        });
+        optPayerRec = {
+          rowIndex: 2,
+          user: payer,
+          Account: "現金",
+          Category: finalCategory,
+          Amount: payerAmt,
+          Currency: "TWD",
+          "Recorded At": recordedAt,
+          note: finalNote,
+          "Account ID": 0
+        };
+        allRecords.unshift(optPayerRec);
+        updateWebCategoryNotesAfterAdd(payer, finalCategory, finalNote);
+        if (finalCategory !== "收入" && newYm && monthlyExpensesMap[payer] && monthlyExpensesMap[payer][newYm] !== undefined) {
+          monthlyExpensesMap[payer][newYm] = Math.round((Number(monthlyExpensesMap[payer][newYm]) || 0) + payerAmt);
+        }
+      }
+
+      if (debtorAmt > 0) {
+        allRecords.forEach(function(r) {
+          if (r.user === debtor && Number(r.rowIndex) >= 2) {
+            r.rowIndex = Number(r.rowIndex) + 1;
+          }
+        });
+        optDebtorRec = {
+          rowIndex: 2,
+          user: debtor,
+          Account: "現金",
+          Category: finalCategory,
+          Amount: debtorAmt,
+          Currency: "TWD",
+          "Recorded At": recordedAt,
+          note: finalNote,
+          "Account ID": 0
+        };
+        allRecords.unshift(optDebtorRec);
+        updateWebCategoryNotesAfterAdd(debtor, finalCategory, finalNote);
+        if (finalCategory !== "收入" && newYm && monthlyExpensesMap[debtor] && monthlyExpensesMap[debtor][newYm] !== undefined) {
+          monthlyExpensesMap[debtor][newYm] = Math.round((Number(monthlyExpensesMap[debtor][newYm]) || 0) + debtorAmt);
+        }
+      }
+
+      saveLocalDashboardCache();
+      refreshView();
+      checkRecentAuditIssues();
+
+      const cashSplitPayload = {
+        payer: payer,
+        totalAmount: splitInfo.totalAmount,
+        payerAmount: payerAmt,
+        note: finalNote,
+        isHalf: !!splitInfo.isHalf,
+        category: finalCategory,
+        skipDebtSync: false,
+        recordedAt: recordedAt
+      };
+
+      if (!navigator.onLine) {
+        enqueueOfflineAction({
+          type: "cashSplit",
+          payload: cashSplitPayload
+        });
         return;
       }
 
+      enqueueServerMutation(function(done) {
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (optPayerRec && res && res.payerRecord && res.payerRecord.rowIndex) {
+              optPayerRec.rowIndex = res.payerRecord.rowIndex;
+            }
+            if (optDebtorRec && res && res.debtorRecord && res.debtorRecord.rowIndex) {
+              optDebtorRec.rowIndex = res.debtorRecord.rowIndex;
+            }
+            saveLocalDashboardCache();
+            done();
+          })
+          .withFailureHandler(function(err) {
+            const msg = (err && err.message) ? err.message : String(err);
+            if (!navigator.onLine || /Failed to fetch|NetworkError|網路/i.test(msg)) {
+              enqueueOfflineAction({
+                type: "cashSplit",
+                payload: cashSplitPayload
+              });
+            } else {
+              if (optPayerRec) {
+                const idxP = allRecords.indexOf(optPayerRec);
+                if (idxP !== -1) allRecords.splice(idxP, 1);
+                if (finalCategory !== "收入" && newYm && monthlyExpensesMap[payer] && monthlyExpensesMap[payer][newYm] !== undefined) {
+                  monthlyExpensesMap[payer][newYm] = Math.max(0, Math.round((Number(monthlyExpensesMap[payer][newYm]) || 0) - payerAmt));
+                }
+              }
+              if (optDebtorRec) {
+                const idxD = allRecords.indexOf(optDebtorRec);
+                if (idxD !== -1) allRecords.splice(idxD, 1);
+                if (finalCategory !== "收入" && newYm && monthlyExpensesMap[debtor] && monthlyExpensesMap[debtor][newYm] !== undefined) {
+                  monthlyExpensesMap[debtor][newYm] = Math.max(0, Math.round((Number(monthlyExpensesMap[debtor][newYm]) || 0) - debtorAmt));
+                }
+              }
+              saveLocalDashboardCache();
+              refreshView();
+              alert("分攤記帳失敗：" + msg);
+            }
+            done();
+          })
+          .recordCashExpenseAndDebtSplit(
+            cashSplitPayload.payer,
+            cashSplitPayload.totalAmount,
+            cashSplitPayload.payerAmount,
+            cashSplitPayload.note,
+            cashSplitPayload.isHalf,
+            cashSplitPayload.category,
+            cashSplitPayload.skipDebtSync,
+            cashSplitPayload.recordedAt
+          );
+      });
+    }
+
+    function submitWebQuickRecord() {
+      qaHideError();
       const rawNote = document.getElementById("qa-note-input").value.trim();
-      let finalNote = rawNote || qaState.category;
       let finalCategory = qaState.category;
+      let finalNote = rawNote || finalCategory;
       if (/Google[\s\*]*One|Gemini/i.test(finalNote)) {
         finalNote = "Gemini";
         finalCategory = "3C";
@@ -5822,6 +6371,43 @@
         ? qaState.targetDateStr
         : getTodayString();
       const recordedAt = `${baseDate} ${hh}:${mm}`;
+      const meta = CATEGORY_META[finalCategory] || CATEGORY_META["食物"];
+
+      if (qaState.mode === "split") {
+        const splitInfo = qaCalculateSplitDetails();
+        if (!splitInfo.valid) {
+          if (splitInfo.reason === "exceeds_total") {
+            qaShowError("先付者自己花的金額不可大於總金額");
+          } else if (splitInfo.reason === "missing_payer_amount") {
+            qaShowError("請輸入先付者自己花的金額（沒花請填 0）");
+          } else if (splitInfo.reason === "negative_payer_amount") {
+            qaShowError("先付者自己花的金額不可為負數");
+          } else {
+            qaShowError("請輸入大於 0 的有效總金額");
+          }
+          return;
+        }
+
+        commitCashSplitOptimistically(splitInfo, finalCategory, finalNote, recordedAt);
+
+        document.getElementById("qa-sum-user").innerText = `${splitInfo.payer} 先付 (${splitInfo.debtor}欠 +$${splitInfo.debtorAmount.toLocaleString()})`;
+        document.getElementById("qa-sum-item").innerText = `${meta.icon} ${finalNote}（${finalCategory}）`;
+        document.getElementById("qa-sum-acc").innerText = `定成 $${splitInfo.dingShare.toLocaleString()} / 妤珊 $${splitInfo.yuShare.toLocaleString()} (現金分攤)`;
+        document.getElementById("qa-sum-amt").innerText = `$${splitInfo.totalAmount.toLocaleString()}`;
+        document.getElementById("qa-success-msg").innerText = navigator.onLine
+          ? "已寫入雙方帳本並同步更新欠款與 LINE"
+          : "目前離線，已暫存待連線後自動同步";
+
+        document.getElementById("qa-form-view").style.display = "none";
+        document.getElementById("qa-success-view").style.display = "block";
+        return;
+      }
+
+      const amt = parseFloat(document.getElementById("qa-amount-input").value);
+      if (!amt || amt <= 0) {
+        qaShowError("請輸入大於 0 的有效金額");
+        return;
+      }
 
       const payload = {
         user: qaState.user,
@@ -5836,7 +6422,6 @@
 
       commitNewRecordOptimistically(payload);
 
-      const meta = CATEGORY_META[finalCategory] || CATEGORY_META["食物"];
       document.getElementById("qa-sum-user").innerText = qaState.user;
       document.getElementById("qa-sum-item").innerText = `${meta.icon} ${finalNote}（${finalCategory}）`;
       document.getElementById("qa-sum-acc").innerText = qaState.account;
