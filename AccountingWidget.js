@@ -17,7 +17,7 @@
  */
 
 // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-const WIDGET_VERSION = "1.2.3";
+const WIDGET_VERSION = "1.2.4";
 
 // 🔗 您的 Google Apps Script 記帳 Web App 部署網址（/exec 結尾）
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-lI8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
@@ -80,10 +80,8 @@ if (INITIAL_WIDGET_PARAM_USER) {
   saveLastWidgetUser(INITIAL_WIDGET_PARAM_USER);
 }
 
-// 當前使用者：優先讀取點擊時傳入的 user 參數，其次讀取桌面小組件設定的參數，最後預設「定成」
-const CURRENT_USER = (args.queryParameters && args.queryParameters.user)
-  || INITIAL_WIDGET_PARAM_USER
-  || "定成";
+// 當前使用者：優先讀取點擊時傳入的 user 參數，其次讀取桌面小組件設定的參數與本機紀錄，最後預設「定成」
+const CURRENT_USER = resolveTargetUser("定成");
 
 // --------------------------------------------------------------------
 // 📱 點擊互動模式設定 (Interaction Mode)
@@ -500,7 +498,9 @@ async function main() {
     alert.addAction("🎨 更換主題配色");
     alert.addAction("🔍 預覽 中尺寸 Widget (推薦)");
     alert.addAction("🔍 預覽 大尺寸 Widget");
+    const otherUser = CURRENT_USER === "妤珊" ? "定成" : "妤珊";
     alert.addAction("🔍 預覽 小尺寸 Widget");
+    alert.addAction(`切換預設身份（改為 ${otherUser}）`);
     alert.addCancelAction("取消");
     const choice = await alert.present();
     if (choice === 0) {
@@ -533,6 +533,15 @@ async function main() {
       config.widgetFamily = "large";
     } else if (choice === 5) {
       config.widgetFamily = "small";
+    } else if (choice === 6) {
+      saveLastWidgetUser(otherUser);
+      const okAlert = new Alert();
+      okAlert.title = "已切換預設身份";
+      okAlert.message = `本機預設身份已改為「${otherUser}」，下次開啟將自動套用。\n（若桌面小工具仍顯示舊名字，請長按桌面小工具 > 編輯小工具，將 Parameter 填入「${otherUser}」）`;
+      okAlert.addAction("確定");
+      await okAlert.present();
+      Script.complete();
+      return;
     } else {
       Script.complete();
       return;
