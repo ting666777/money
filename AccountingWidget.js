@@ -17,7 +17,7 @@
  */
 
 // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-const WIDGET_VERSION = "1.3";
+const WIDGET_VERSION = "1.3.1";
 
 // 🔗 您的 Google Apps Script 記帳 Web App 部署網址（/exec 結尾）
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-lI8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
@@ -896,21 +896,22 @@ async function main() {
   if (!config.runsInWidget && !hasQueryParams && !actionParam) {
     const remCfg = loadReminderConfig();
     const transCfg = loadTransparentBgConfig();
-    const alert = new Alert();
-    alert.title = `📱 ${CURRENT_USER} 記帳`;
-    alert.message = `當前身份：【${CURRENT_USER}】\n目前主題：${THEME.themeName}\n目前版本：v${WIDGET_VERSION}\n每晚 23:00 提醒：${remCfg.enabled ? "已開啟" : "已關閉"}\n透明背景：${transCfg.enabled ? "已開啟" : "未開啟"}`;
-    alert.addAction("⚡ 快速記一筆");
-    alert.addAction("🚀 開啟全螢幕儀表板 WebView");
-    alert.addAction("🎨 更換主題配色");
-    alert.addAction("🔍 預覽 中尺寸 Widget (推薦)");
-    alert.addAction("🔍 預覽 大尺寸 Widget");
     const otherUser = CURRENT_USER === "妤珊" ? "定成" : "妤珊";
-    alert.addAction("🔍 預覽 小尺寸 Widget");
-    alert.addAction(`切換預設身份（改為 ${otherUser}）`);
-    alert.addAction("發送測試通知（5 秒後跳出）");
-    alert.addAction(remCfg.enabled ? "每日 23:00 記帳提醒：已開啟（點此關閉）" : "每日 23:00 記帳提醒：已關閉（點此開啟）");
-    alert.addAction(transCfg.enabled ? "透明背景設定（目前：已開啟）" : "透明背景設定（目前：未開啟）");
+
+    const alert = new Alert();
+    alert.title = `${CURRENT_USER} 記帳 (v${WIDGET_VERSION})`;
+    alert.message = [
+      `主題：${THEME.themeName}`,
+      `提醒：${remCfg.enabled ? "每日 23:00 已開啟" : "每日 23:00 已關閉"}`,
+      `透明：${transCfg.enabled ? "已開啟" : "未開啟"}`
+    ].join("\n");
+    alert.addAction("快速記一筆");
+    alert.addAction("開啟記帳主畫面");
+    alert.addAction("預覽桌面小工具");
+    alert.addAction("外觀與透明背景");
+    alert.addAction("系統與提醒設定");
     alert.addCancelAction("取消");
+
     const choice = await alert.present();
     if (choice === 0) {
       await openQuickAddWebView(CURRENT_USER);
@@ -921,71 +922,96 @@ async function main() {
       Script.complete();
       return;
     } else if (choice === 2) {
-      const presetUser = resolveTargetUser("");
-      const changed = await openThemePickerMenu(presetUser);
-      if (!changed) {
+      const previewMenu = new Alert();
+      previewMenu.title = "預覽桌面小工具";
+      previewMenu.addAction("中尺寸（推薦）");
+      previewMenu.addAction("大尺寸");
+      previewMenu.addAction("小尺寸");
+      previewMenu.addCancelAction("返回");
+      const pChoice = await previewMenu.present();
+      if (pChoice === 0) config.widgetFamily = "medium";
+      else if (pChoice === 1) config.widgetFamily = "large";
+      else if (pChoice === 2) config.widgetFamily = "small";
+      else {
         Script.complete();
         return;
       }
-      const activeUserAfterPick = loadLastWidgetUser() || presetUser || "定成";
-      loadActiveTheme(activeUserAfterPick);
-      const previewData = await fetchAccountingData(activeUserAfterPick);
-      previewData.user = activeUserAfterPick;
-      const previewWidget = await createWidget(previewData);
-      config.widgetFamily = "medium";
-      await previewWidget.presentMedium();
-      Script.complete();
-      return;
     } else if (choice === 3) {
-      config.widgetFamily = "medium";
-    } else if (choice === 4) {
-      config.widgetFamily = "large";
-    } else if (choice === 5) {
-      config.widgetFamily = "small";
-    } else if (choice === 6) {
-      saveLastWidgetUser(otherUser);
-      const okAlert = new Alert();
-      okAlert.title = "已切換預設身份";
-      okAlert.message = `本機預設身份已改為「${otherUser}」，下次開啟將自動套用。\n（若桌面小工具仍顯示舊名字，請長按桌面小工具 > 編輯小工具，將 Parameter 填入「${otherUser}」）`;
-      okAlert.addAction("確定");
-      await okAlert.present();
-      Script.complete();
-      return;
-    } else if (choice === 7) {
-      await scheduleTestReminderNotification(CURRENT_USER, 5);
-      const testAlert = new Alert();
-      testAlert.title = "測試通知已排程";
-      testAlert.message = "通知將在 5 秒後跳出，請現在切回主畫面或鎖定螢幕查看；點選通知即可直接跳到記帳主畫面。";
-      testAlert.addAction("確定");
-      await testAlert.present();
-      Script.complete();
-      return;
-    } else if (choice === 8) {
-      const nextEnabled = !remCfg.enabled;
-      saveReminderConfig({ enabled: nextEnabled, hour: 23, minute: 0 });
-      const freshData = await fetchAccountingData(CURRENT_USER);
-      await syncDailyReminderNotification(CURRENT_USER, freshData, false);
-      const toggleAlert = new Alert();
-      toggleAlert.title = "提醒設定已更新";
-      toggleAlert.message = nextEnabled
-        ? "已開啟每日 23:00 提醒：若當天尚無網頁或小工具手動記帳，將於 23:00 跳通知提醒您。"
-        : "已關閉每日 23:00 記帳提醒。";
-      toggleAlert.addAction("確定");
-      await toggleAlert.present();
-      Script.complete();
-      return;
-    } else if (choice === 9) {
-      const updated = await openTransparentBgSetupMenu();
-      if (!updated) {
+      const styleMenu = new Alert();
+      styleMenu.title = "外觀與透明背景";
+      styleMenu.addAction(`更換主題配色（目前：${THEME.themeName}）`);
+      styleMenu.addAction(`透明背景設定（目前：${transCfg.enabled ? "已開啟" : "未開啟"}）`);
+      styleMenu.addCancelAction("返回");
+      const sChoice = await styleMenu.present();
+      if (sChoice === 0) {
+        const presetUser = resolveTargetUser("");
+        const changed = await openThemePickerMenu(presetUser);
+        if (!changed) {
+          Script.complete();
+          return;
+        }
+        const activeUserAfterPick = loadLastWidgetUser() || presetUser || "定成";
+        loadActiveTheme(activeUserAfterPick);
+        const previewData = await fetchAccountingData(activeUserAfterPick);
+        previewData.user = activeUserAfterPick;
+        const previewWidget = await createWidget(previewData);
+        config.widgetFamily = "medium";
+        await previewWidget.presentMedium();
+        Script.complete();
+        return;
+      } else if (sChoice === 1) {
+        const updated = await openTransparentBgSetupMenu();
+        if (!updated) {
+          Script.complete();
+          return;
+        }
+        const previewData = await fetchAccountingData(CURRENT_USER);
+        const previewWidget = await createWidget(previewData);
+        const fam = config.widgetFamily || "medium";
+        if (fam === "small") await previewWidget.presentSmall();
+        else if (fam === "large") await previewWidget.presentLarge();
+        else await previewWidget.presentMedium();
+        Script.complete();
+        return;
+      } else {
         Script.complete();
         return;
       }
-      const previewData = await fetchAccountingData(CURRENT_USER);
-      const previewWidget = await createWidget(previewData);
-      const fam = config.widgetFamily || "medium";
-      if (fam === "small") await previewWidget.presentSmall();
-      else if (fam === "large") await previewWidget.presentLarge();
-      else await previewWidget.presentMedium();
+    } else if (choice === 4) {
+      const sysMenu = new Alert();
+      sysMenu.title = "系統與提醒設定";
+      sysMenu.addAction(`切換預設身份（改為 ${otherUser}）`);
+      sysMenu.addAction(`每日 23:00 記帳提醒（${remCfg.enabled ? "已開啟" : "已關閉"}）`);
+      sysMenu.addAction("發送測試通知（5 秒後跳出）");
+      sysMenu.addCancelAction("返回");
+      const sysChoice = await sysMenu.present();
+      if (sysChoice === 0) {
+        saveLastWidgetUser(otherUser);
+        const okAlert = new Alert();
+        okAlert.title = "已切換預設身份";
+        okAlert.message = `本機預設身份已改為「${otherUser}」，下次開啟將自動套用。\n（若桌面小工具仍顯示舊名字，請長按桌面小工具 > 編輯小工具，將 Parameter 填入「${otherUser}」）`;
+        okAlert.addAction("確定");
+        await okAlert.present();
+      } else if (sysChoice === 1) {
+        const nextEnabled = !remCfg.enabled;
+        saveReminderConfig({ enabled: nextEnabled, hour: 23, minute: 0 });
+        const freshData = await fetchAccountingData(CURRENT_USER);
+        await syncDailyReminderNotification(CURRENT_USER, freshData, false);
+        const toggleAlert = new Alert();
+        toggleAlert.title = "提醒設定已更新";
+        toggleAlert.message = nextEnabled
+          ? "已開啟每日 23:00 提醒：若當天尚無網頁或小工具手動記帳，將於 23:00 跳通知提醒您。"
+          : "已關閉每日 23:00 記帳提醒。";
+        toggleAlert.addAction("確定");
+        await toggleAlert.present();
+      } else if (sysChoice === 2) {
+        await scheduleTestReminderNotification(CURRENT_USER, 5);
+        const testAlert = new Alert();
+        testAlert.title = "測試通知已排程";
+        testAlert.message = "通知將在 5 秒後跳出，請現在切回主畫面或鎖定螢幕查看；點選通知即可直接跳到記帳主畫面。";
+        testAlert.addAction("確定");
+        await testAlert.present();
+      }
       Script.complete();
       return;
     } else {
