@@ -2576,7 +2576,7 @@
       color: var(--text);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(32px + env(safe-area-inset-bottom, 0px));
+      padding: calc(8px + env(safe-area-inset-top, 0px)) 14px calc(16px + env(safe-area-inset-bottom, 0px));
     }
 
     .quick-add-overlay.open {
@@ -2592,11 +2592,17 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin: 2px 2px 14px;
+      margin: 0 2px 8px;
+    }
+
+    .qa-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .qa-brand-title {
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: 800;
       letter-spacing: -0.3px;
       color: var(--text);
@@ -2605,9 +2611,9 @@
     .qa-card {
       background: var(--card);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 14px 15px;
-      margin-bottom: 11px;
+      border-radius: 16px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
     }
 
@@ -2619,19 +2625,18 @@
     }
 
     .qa-amount-card {
-      padding: 16px;
+      padding: 11px 13px;
       border-color: var(--card-border);
     }
 
     .qa-mode-switch {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
       background: var(--card);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 5px;
-      margin-bottom: 11px;
+      border-radius: 11px;
+      padding: 3px;
     }
 
     .qa-mode-btn {
@@ -2640,8 +2645,8 @@
       color: var(--text-muted);
       font-size: 13px;
       font-weight: 700;
-      padding: 9px 10px;
-      border-radius: 12px;
+      padding: 4px 12px;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.16s ease;
     }
@@ -2650,24 +2655,32 @@
       background: var(--pill-active-bg);
       color: var(--text);
       border-color: var(--card-border);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .qa-split-payer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--card-border);
     }
 
     .qa-payer-pills {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 8px;
+      display: inline-flex;
+      gap: 6px;
     }
 
     .qa-payer-pill {
       background: var(--card-soft);
       border: 1.5px solid var(--card-border);
       color: var(--text-muted);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
-      padding: 10px 12px;
-      border-radius: 12px;
+      padding: 4px 14px;
+      border-radius: 9px;
       cursor: pointer;
       transition: all 0.15s ease;
     }
@@ -2685,45 +2698,24 @@
     }
 
     .qa-split-share-box {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px dashed var(--card-border);
-    }
-
-    .qa-split-mode-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
       margin-top: 8px;
-      margin-bottom: 8px;
-    }
-
-    .qa-split-chip {
-      background: var(--card-soft);
-      border: 1.5px solid var(--card-border);
-      color: var(--text-muted);
-      font-size: 12px;
-      font-weight: 700;
-      padding: 6px 11px;
-      border-radius: 999px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .qa-split-chip.active {
-      background: var(--pill-active-bg);
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .qa-split-input-wrap {
+      padding-top: 8px;
+      border-top: 1px dashed var(--card-border);
       display: flex;
       align-items: center;
       gap: 6px;
+    }
+
+    .qa-split-input-wrap {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
       background: var(--bg);
       border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 8px 12px;
+      border-radius: 10px;
+      padding: 5px 10px;
     }
 
     .qa-split-input-wrap:focus-within {
@@ -2736,31 +2728,51 @@
       border: none;
       outline: none;
       color: var(--text);
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
     }
 
-    .qa-split-preview {
-      margin-top: 8px;
-      padding: 8px 11px;
-      background: var(--card-soft);
-      border-radius: 10px;
-      font-size: 12px;
-      line-height: 1.5;
+    .qa-split-input::placeholder {
       color: var(--text-muted);
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
+    .qa-split-mode-chips {
+      display: flex;
+      flex-shrink: 0;
+      gap: 6px;
+    }
+
+    .qa-split-chip {
+      background: var(--card-soft);
+      border: 1.5px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .qa-split-chip.active {
+      background: var(--pill-active-bg);
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     .qa-amount-label-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
+      margin-bottom: 2px;
     }
 
     .qa-cat-preview-pill {
       font-size: 12px;
       font-weight: 700;
-      padding: 4px 10px;
+      padding: 3px 9px;
       border-radius: 999px;
       display: inline-flex;
       align-items: center;
@@ -2771,11 +2783,11 @@
       display: flex;
       align-items: baseline;
       gap: 6px;
-      margin: 2px 0 12px;
+      margin: 0 0 6px;
     }
 
     .qa-currency-symbol {
-      font-size: 26px;
+      font-size: 22px;
       font-weight: 800;
       color: var(--accent);
     }
@@ -2786,7 +2798,8 @@
       border: none;
       outline: none;
       color: var(--text);
-      font-size: 38px;
+      font-size: 32px;
+      line-height: 1.1;
       font-weight: 800;
       letter-spacing: -1px;
       font-variant-numeric: tabular-nums;
@@ -2799,7 +2812,7 @@
 
     .qa-quick-amt-row {
       display: flex;
-      gap: 7px;
+      gap: 6px;
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -2814,10 +2827,10 @@
       background: var(--card-soft);
       border: 1px solid var(--card-border);
       color: var(--text);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      padding: 7px 11px;
-      border-radius: 10px;
+      padding: 5px 8px;
+      border-radius: 9px;
       cursor: pointer;
       user-select: none;
       transition: transform 0.12s ease, opacity 0.15s ease;
@@ -2834,8 +2847,8 @@
     .qa-cat-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin-top: 9px;
+      gap: 6px;
+      margin-top: 6px;
     }
 
     .qa-cat-tile {
@@ -2843,9 +2856,9 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
-      padding: 9px 4px;
-      border-radius: 13px;
+      gap: 2px;
+      padding: 6px 3px;
+      border-radius: 11px;
       background: var(--card-soft);
       border: 1.5px solid var(--card-border);
       cursor: pointer;
@@ -2858,7 +2871,7 @@
     }
 
     .qa-cat-emoji {
-      font-size: 20px;
+      font-size: 18px;
       line-height: 1.1;
     }
 
@@ -2877,9 +2890,9 @@
       align-items: center;
       background: var(--bg);
       border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 4px 10px;
-      margin-top: 9px;
+      border-radius: 11px;
+      padding: 2px 10px;
+      margin-top: 6px;
       transition: border-color 0.2s;
     }
 
@@ -2893,13 +2906,13 @@
       border: none;
       outline: none;
       color: var(--text);
-      font-size: 16px;
-      padding: 9px 4px;
+      font-size: 15px;
+      padding: 6px 4px;
     }
 
     .qa-note-input::placeholder {
       color: var(--text-muted);
-      font-size: 14px;
+      font-size: 13px;
       opacity: 0.7;
     }
 
@@ -2907,8 +2920,8 @@
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 16px;
-      padding: 4px 6px;
+      font-size: 15px;
+      padding: 3px 6px;
       cursor: pointer;
       display: none;
     }
@@ -2916,14 +2929,14 @@
     .qa-tags-scroll {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 9px;
+      gap: 5px;
+      margin-top: 6px;
     }
 
     .qa-tags-empty {
       font-size: 12px;
       color: var(--text-muted);
-      padding: 4px 2px;
+      padding: 2px;
     }
 
     .qa-tag-chip {
@@ -2933,7 +2946,7 @@
       color: var(--text-muted);
       font-size: 12px;
       font-weight: 600;
-      padding: 5px 11px;
+      padding: 4px 10px;
       border-radius: 999px;
       cursor: pointer;
       user-select: none;
@@ -2949,40 +2962,12 @@
       box-shadow: inset 0 0 0 1px var(--accent);
     }
 
-    .qa-acc-wrap {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-      margin-top: 9px;
-    }
-
-    .qa-acc-chip {
-      background: var(--card-soft);
-      border: 1.5px solid var(--card-border);
-      color: var(--text-muted);
-      font-size: 12px;
-      font-weight: 700;
-      padding: 7px 12px;
-      border-radius: 11px;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.15s ease;
-    }
-
-    .qa-acc-chip.selected {
-      background: var(--pill-active-bg);
-      border-color: var(--accent);
-      color: var(--accent);
-      font-weight: 800;
-      box-shadow: 0 0 0 1px var(--accent);
-    }
-
     .qa-submit-btn {
       width: 100%;
       border: none;
-      border-radius: 16px;
-      padding: 15px 18px;
-      font-size: 16px;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 15px;
       font-weight: 800;
       color: #ffffff;
       background: var(--accent);
@@ -2993,7 +2978,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin-top: 4px;
+      margin-top: 2px;
     }
 
     .qa-submit-btn.income-mode {
@@ -3398,26 +3383,27 @@
     <div class="qa-container">
       <div id="qa-form-view">
         <div class="qa-header">
-          <div class="qa-brand-title"><span id="qa-header-user">定成</span> 記帳</div>
+          <div class="qa-header-left">
+            <div class="qa-brand-title"><span id="qa-header-user">定成</span></div>
+            <div class="qa-mode-switch" id="qa-mode-switch">
+              <button type="button" class="qa-mode-btn active" id="qa-mode-normal" onclick="qaSetMode('normal')">記帳</button>
+              <button type="button" class="qa-mode-btn" id="qa-mode-split" onclick="qaSetMode('split')">欠錢</button>
+            </div>
+          </div>
           <button type="button" class="icon-btn" style="width:32px;height:32px;" onclick="closeQuickAddModal()" title="關閉">✕</button>
         </div>
 
         <div id="qa-error-toast" class="qa-error-toast"></div>
 
-        <div class="qa-mode-switch" id="qa-mode-switch">
-          <button type="button" class="qa-mode-btn active" id="qa-mode-normal" onclick="qaSetMode('normal')">📝 一般記帳</button>
-          <button type="button" class="qa-mode-btn" id="qa-mode-split" onclick="qaSetMode('split')">🤝 分攤 / 代墊 (欠錢)</button>
-        </div>
-
-        <div class="qa-card qa-split-payer-card" id="qa-split-payer-card" style="display:none;">
-          <div class="qa-section-label">誰先付錢</div>
-          <div class="qa-payer-pills">
-            <button type="button" class="qa-payer-pill" id="qa-payer-ding" onclick="qaSelectSplitPayer('定成')">👦 定成 先付</button>
-            <button type="button" class="qa-payer-pill" id="qa-payer-yu" onclick="qaSelectSplitPayer('妤珊')">👧 妤珊 先付</button>
-          </div>
-        </div>
-
         <div class="qa-card qa-amount-card">
+          <div class="qa-split-payer-row" id="qa-split-payer-card" style="display:none;">
+            <span class="qa-section-label">誰先付錢</span>
+            <div class="qa-payer-pills">
+              <button type="button" class="qa-payer-pill" id="qa-payer-ding" onclick="qaSelectSplitPayer('定成')">定成</button>
+              <button type="button" class="qa-payer-pill" id="qa-payer-yu" onclick="qaSelectSplitPayer('妤珊')">妤珊</button>
+            </div>
+          </div>
+
           <div class="qa-amount-label-row">
             <span class="qa-section-label" id="qa-amount-label">消費金額</span>
             <span class="qa-cat-preview-pill" id="qa-cat-badge">🍽️ 食物</span>
@@ -3435,17 +3421,15 @@
           </div>
 
           <div class="qa-split-share-box" id="qa-split-share-box" style="display:none;">
-            <div class="qa-section-label" id="qa-split-share-label">【定成】自己花多少（他付多少）？</div>
-            <div class="qa-split-mode-chips">
-              <div class="qa-split-chip active" id="qa-split-chip-half" onclick="qaSetSplitShareMode('half')">⚖️ 一人一半</div>
-              <div class="qa-split-chip" id="qa-split-chip-zero" onclick="qaSetSplitShareMode('zero')">💸 0 元 (全額幫對方代墊)</div>
-              <div class="qa-split-chip" id="qa-split-chip-custom" onclick="qaSetSplitShareMode('custom')">✏️ 自訂金額</div>
-            </div>
-            <div class="qa-split-input-wrap">
+            <div class="qa-split-input-wrap" id="qa-split-input-wrap">
               <span style="font-weight:800; color:var(--accent);">$</span>
-              <input id="qa-payer-amount-input" class="qa-split-input" type="number" inputmode="decimal" step="any" min="0" placeholder="輸入先付者自己花的金額 (沒花填 0)" oninput="qaOnPayerAmountInput()">
+              <input id="qa-payer-amount-input" class="qa-split-input" type="number" inputmode="decimal" step="any" min="0" placeholder="他付多少" oninput="qaOnPayerAmountInput()">
             </div>
-            <div class="qa-split-preview" id="qa-split-preview">請輸入總金額，系統將自動試算雙方記帳與欠款</div>
+            <div class="qa-split-mode-chips">
+              <div class="qa-split-chip" id="qa-split-chip-half" onclick="qaSetSplitShareMode('half')">一人一半</div>
+              <div class="qa-split-chip" id="qa-split-chip-zero" onclick="qaSetSplitShareMode('zero')">0元</div>
+              <div class="qa-split-chip" id="qa-split-chip-custom" style="display:none;" onclick="qaSetSplitShareMode('custom')">自訂金額</div>
+            </div>
           </div>
         </div>
 
@@ -3461,11 +3445,6 @@
             <button type="button" class="qa-note-clear" id="qa-note-clear" onclick="qaClearNote()">✕</button>
           </div>
           <div class="qa-tags-scroll" id="qa-tags-scroll"></div>
-        </div>
-
-        <div class="qa-card" id="qa-acc-card">
-          <div class="qa-section-label">付款帳戶</div>
-          <div class="qa-acc-wrap" id="qa-acc-wrap"></div>
         </div>
 
         <button type="button" class="qa-submit-btn" id="qa-submit-btn" onclick="submitWebQuickRecord()" disabled>
@@ -3997,7 +3976,7 @@
       }
 
       // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-      const PWA_VERSION = "1.1";
+      const PWA_VERSION = "1.2";
       const oldVer = localStorage.getItem("money_pwa_version");
       if (oldVer !== PWA_VERSION) {
         localStorage.setItem("money_pwa_version", PWA_VERSION);
@@ -5571,7 +5550,7 @@
       targetDateStr: "",
       mode: "normal",
       splitPayer: "定成",
-      splitShareMode: "half"
+      splitShareMode: "custom"
     };
     let webCategoryNotesCacheByUser = {};
     let webCategoryNotesSyncInFlight = {};
@@ -5850,6 +5829,7 @@
 
     function qaRenderAccounts() {
       const wrap = document.getElementById("qa-acc-wrap");
+      if (!wrap) return;
       let html = "";
       for (let i = 0; i < QA_ACCOUNTS.length; i++) {
         const a = QA_ACCOUNTS[i];
@@ -5951,13 +5931,11 @@
 
       const payerCard = document.getElementById("qa-split-payer-card");
       const shareBox = document.getElementById("qa-split-share-box");
-      const accCard = document.getElementById("qa-acc-card");
       const amtLabel = document.getElementById("qa-amount-label");
 
-      if (payerCard) payerCard.style.display = isSplit ? "block" : "none";
-      if (shareBox) shareBox.style.display = isSplit ? "block" : "none";
-      if (accCard) accCard.style.display = isSplit ? "none" : "block";
-      if (amtLabel) amtLabel.innerText = isSplit ? "總共付多少錢 (總金額)" : "消費金額";
+      if (payerCard) payerCard.style.display = isSplit ? "flex" : "none";
+      if (shareBox) shareBox.style.display = isSplit ? "flex" : "none";
+      if (amtLabel) amtLabel.innerText = isSplit ? "總金額" : "消費金額";
 
       if (!isSplit) return;
 
@@ -5967,46 +5945,20 @@
       if (dingBtn) dingBtn.className = "qa-payer-pill" + (payer === "定成" ? " active-ding" : "");
       if (yuBtn) yuBtn.className = "qa-payer-pill" + (payer === "妤珊" ? " active-yu" : "");
 
-      const shareLabel = document.getElementById("qa-split-share-label");
-      if (shareLabel) {
-        shareLabel.innerText = `【${payer}】自己花多少（0 = 全額幫對方代墊）？`;
-      }
-
+      const isCustom = (qaState.splitShareMode === "custom");
+      const inputWrap = document.getElementById("qa-split-input-wrap");
       const halfChip = document.getElementById("qa-split-chip-half");
       const zeroChip = document.getElementById("qa-split-chip-zero");
       const customChip = document.getElementById("qa-split-chip-custom");
+
+      if (inputWrap) inputWrap.style.display = isCustom ? "flex" : "none";
       if (halfChip) halfChip.className = "qa-split-chip" + (qaState.splitShareMode === "half" ? " active" : "");
       if (zeroChip) zeroChip.className = "qa-split-chip" + (qaState.splitShareMode === "zero" ? " active" : "");
-      if (customChip) customChip.className = "qa-split-chip" + (qaState.splitShareMode === "custom" ? " active" : "");
-
-      qaUpdateSplitPreview();
+      if (customChip) customChip.style.display = isCustom ? "none" : "inline-flex";
     }
 
     function qaUpdateSplitPreview() {
-      const previewEl = document.getElementById("qa-split-preview");
-      if (!previewEl || qaState.mode !== "split") return;
-      const info = qaCalculateSplitDetails();
-      if (!info.valid) {
-        if (info.reason === "exceeds_total") {
-          previewEl.innerHTML = `<span style="color:var(--expense); font-weight:700;">⚠️ 先付者自己花的金額不可大於總金額 $${info.totalAmount.toLocaleString()}</span>`;
-        } else if (info.reason === "negative_payer_amount") {
-          previewEl.innerHTML = `<span style="color:var(--expense); font-weight:700;">⚠️ 金額不可為負數</span>`;
-        } else if (info.reason === "missing_payer_amount") {
-          previewEl.innerText = `請輸入【${info.payer}】自己花的金額（若沒花請填 0 或點上方「0 元」）`;
-        } else {
-          previewEl.innerText = "請輸入總金額，系統將自動試算雙方記帳與欠款";
-        }
-        return;
-      }
-
-      const payerPartText = (info.payerAmount === 0)
-        ? `<b>${info.payer}</b> 自付 <b>$0</b>（不記帳，全額幫 <b>${info.debtor}</b> 代墊）`
-        : `<b>${info.payer}</b> 記帳 <b>$${info.payerAmount.toLocaleString()}</b>`;
-      const debtorPartText = `<b>${info.debtor}</b> 記帳 <b>$${info.debtorAmount.toLocaleString()}</b>`;
-      const debtText = (info.debtorAmount > 0)
-        ? `<b>${info.debtor}</b> 欠 ${info.payer} <b>+$${info.debtorAmount.toLocaleString()}</b>`
-        : "雙方無欠款變動";
-      previewEl.innerHTML = `${payerPartText} · ${debtorPartText}<br>🤝 ${debtText}`;
+      // 已精簡移除預覽文字區，保留空白函式相容呼叫
     }
 
     function qaSetMode(mode) {
@@ -6039,29 +5991,28 @@
 
     function qaSetSplitShareMode(shareMode) {
       qaHideError();
-      qaState.splitShareMode = shareMode;
-      qaSyncSplitPayerInputDisplay();
+      const prevMode = qaState.splitShareMode;
+      const nextMode = (shareMode !== "custom" && prevMode === shareMode) ? "custom" : shareMode;
+      qaState.splitShareMode = nextMode;
+
+      const inp = document.getElementById("qa-payer-amount-input");
+      if (nextMode === "custom") {
+        if (inp && prevMode !== "custom") inp.value = "";
+      } else {
+        qaSyncSplitPayerInputDisplay();
+      }
+
       qaRenderSplitUI();
       qaUpdateSubmitButton();
-      if (shareMode === "custom") {
-        const inp = document.getElementById("qa-payer-amount-input");
-        if (inp) {
-          inp.focus();
-          inp.select();
-        }
+      if (nextMode === "custom" && inp) {
+        inp.focus();
       }
     }
 
     function qaOnPayerAmountInput() {
       qaHideError();
       qaState.splitShareMode = "custom";
-      const halfChip = document.getElementById("qa-split-chip-half");
-      const zeroChip = document.getElementById("qa-split-chip-zero");
-      const customChip = document.getElementById("qa-split-chip-custom");
-      if (halfChip) halfChip.className = "qa-split-chip";
-      if (zeroChip) zeroChip.className = "qa-split-chip";
-      if (customChip) customChip.className = "qa-split-chip active";
-      qaUpdateSplitPreview();
+      qaRenderSplitUI();
       qaUpdateSubmitButton();
     }
 
@@ -6070,7 +6021,6 @@
       if (qaState.mode === "split" && qaState.splitShareMode !== "custom") {
         qaSyncSplitPayerInputDisplay();
       }
-      qaUpdateSplitPreview();
       qaUpdateSubmitButton();
     }
 
@@ -6100,7 +6050,7 @@
           if (info.reason === "exceeds_total") {
             txt.innerText = "自付金額不可大於總金額";
           } else if (info.reason === "missing_payer_amount") {
-            txt.innerText = "請輸入先付者自己花的金額";
+            txt.innerText = "請輸入他付多少";
           } else if (info.reason === "negative_payer_amount") {
             txt.innerText = "金額不可為負數";
           } else {
@@ -6108,13 +6058,12 @@
           }
         } else {
           btn.disabled = false;
-          if (info.payerAmount === 0) {
-            txt.innerText = `確認代墊全額 · ${info.debtor}欠$${info.debtorAmount.toLocaleString()}`;
+          if (info.debtorAmount === 0) {
+            txt.innerText = `儲存記帳 · $${info.totalAmount.toLocaleString()}`;
           } else {
-            txt.innerText = `儲存分攤 · ${info.debtor}欠$${info.debtorAmount.toLocaleString()}`;
+            txt.innerText = `儲存欠錢 · ${info.debtor}欠$${info.debtorAmount.toLocaleString()}`;
           }
         }
-        qaUpdateSplitPreview();
         return;
       }
 
@@ -6158,7 +6107,7 @@
         targetDateStr: targetDateStr,
         mode: "normal",
         splitPayer: currentUser,
-        splitShareMode: "half"
+        splitShareMode: "custom"
       };
 
       const userSpan = document.getElementById("qa-header-user");
@@ -6180,7 +6129,6 @@
 
       qaRenderCategories();
       qaRenderQuickTags();
-      qaRenderAccounts();
       qaRenderSplitUI();
       qaUpdateSubmitButton();
 
@@ -6411,20 +6359,20 @@
 
       const payload = {
         user: qaState.user,
-        Account: qaState.account,
+        Account: "現金",
         Category: finalCategory,
         Amount: amt,
         Currency: "TWD",
         "Recorded At": recordedAt,
         note: finalNote,
-        "Account ID": inferAccountIdFromName(qaState.account)
+        "Account ID": 0
       };
 
       commitNewRecordOptimistically(payload);
 
       document.getElementById("qa-sum-user").innerText = qaState.user;
       document.getElementById("qa-sum-item").innerText = `${meta.icon} ${finalNote}（${finalCategory}）`;
-      document.getElementById("qa-sum-acc").innerText = qaState.account;
+      document.getElementById("qa-sum-acc").innerText = "現金";
       document.getElementById("qa-sum-amt").innerText = (finalCategory === "收入" ? "+$" : "$") + amt.toLocaleString();
       document.getElementById("qa-success-msg").innerText = navigator.onLine
         ? "已即時寫入並同步至雲端"
