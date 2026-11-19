@@ -17,7 +17,7 @@
  */
 
 // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-const WIDGET_VERSION = "1.2.4";
+const WIDGET_VERSION = "1.2.5";
 
 // 🔗 您的 Google Apps Script 記帳 Web App 部署網址（/exec 結尾）
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-lI8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
@@ -2398,7 +2398,7 @@ function buildQuickAddHtml(initialUser, initialNotesByUser, hasNotesCache) {
         <div class="split-share-box" id="split-share-box" style="display:none;">
           <div class="split-input-wrap" id="split-input-wrap">
             <span style="font-weight:800; color:var(--accent);">$</span>
-            <input id="payer-amount-input" class="split-input" type="number" inputmode="decimal" step="any" min="0" placeholder="他付多少">
+            <input id="payer-amount-input" class="split-input" type="number" inputmode="decimal" step="any" min="0" placeholder="定成付多少">
           </div>
           <div class="split-mode-chips">
             <div class="split-chip" id="split-chip-half" onclick="setSplitShareMode('half')">一人一半</div>
@@ -2725,6 +2725,8 @@ function buildQuickAddHtml(initialUser, initialNotesByUser, hasNotesCache) {
     if (!isSplit) return;
 
     var payer = state.splitPayer === "妤珊" ? "妤珊" : "定成";
+    var payerInp = document.getElementById("payer-amount-input");
+    if (payerInp) payerInp.placeholder = payer + "付多少";
     document.getElementById("payer-ding").className = "payer-pill" + (payer === "定成" ? " active-ding" : "");
     document.getElementById("payer-yu").className = "payer-pill" + (payer === "妤珊" ? " active-yu" : "");
 
@@ -2835,7 +2837,7 @@ function buildQuickAddHtml(initialUser, initialNotesByUser, hasNotesCache) {
         if (info.reason === "exceeds_total") {
           txt.innerText = "自付金額不可大於總金額";
         } else if (info.reason === "missing_payer_amount") {
-          txt.innerText = "請輸入他付多少";
+          txt.innerText = "請輸入" + info.payer + "付多少";
         } else if (info.reason === "negative_payer_amount") {
           txt.innerText = "金額不可為負數";
         } else {

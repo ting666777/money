@@ -3443,7 +3443,7 @@
           <div class="qa-split-share-box" id="qa-split-share-box" style="display:none;">
             <div class="qa-split-input-wrap" id="qa-split-input-wrap">
               <span style="font-weight:800; color:var(--accent);">$</span>
-              <input id="qa-payer-amount-input" class="qa-split-input" type="number" inputmode="decimal" step="any" min="0" placeholder="他付多少" oninput="qaOnPayerAmountInput()">
+              <input id="qa-payer-amount-input" class="qa-split-input" type="number" inputmode="decimal" step="any" min="0" placeholder="定成付多少" oninput="qaOnPayerAmountInput()">
             </div>
             <div class="qa-split-mode-chips">
               <div class="qa-split-chip" id="qa-split-chip-half" onclick="qaSetSplitShareMode('half')">一人一半</div>
@@ -3621,7 +3621,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">1.2.1</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">1.2.4</span>
         </div>
         <button type="button" onclick="forceUpdatePwa();" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -3996,7 +3996,7 @@
       }
 
       // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-      const PWA_VERSION = "1.2.1";
+      const PWA_VERSION = "1.2.4";
       const verLabelEl = document.getElementById("settings-pwa-version-label");
       if (verLabelEl) verLabelEl.textContent = PWA_VERSION;
       const oldVer = localStorage.getItem("money_pwa_version");
@@ -5869,6 +5869,8 @@
     function qaCalculateSplitDetails() {
       const totalAmt = parseFloat(document.getElementById("qa-amount-input").value);
       const payer = qaState.splitPayer === "妤珊" ? "妤珊" : "定成";
+      const payerInp = document.getElementById("qa-payer-amount-input");
+      if (payerInp) payerInp.placeholder = `${payer}付多少`;
       const debtor = (payer === "定成") ? "妤珊" : "定成";
       const isHalf = (qaState.splitShareMode === "half");
 
@@ -5962,6 +5964,8 @@
       if (!isSplit) return;
 
       const payer = qaState.splitPayer === "妤珊" ? "妤珊" : "定成";
+      const payerInp = document.getElementById("qa-payer-amount-input");
+      if (payerInp) payerInp.placeholder = `${payer}付多少`;
       const dingBtn = document.getElementById("qa-payer-ding");
       const yuBtn = document.getElementById("qa-payer-yu");
       if (dingBtn) dingBtn.className = "qa-payer-pill" + (payer === "定成" ? " active-ding" : "");
@@ -6072,7 +6076,7 @@
           if (info.reason === "exceeds_total") {
             txt.innerText = "自付金額不可大於總金額";
           } else if (info.reason === "missing_payer_amount") {
-            txt.innerText = "請輸入他付多少";
+            txt.innerText = `請輸入${info.payer}付多少`;
           } else if (info.reason === "negative_payer_amount") {
             txt.innerText = "金額不可為負數";
           } else {
