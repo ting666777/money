@@ -17,7 +17,7 @@
  */
 
 // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-const WIDGET_VERSION = "1.2.7";
+const WIDGET_VERSION = "1.2.8";
 
 // 🔗 您的 Google Apps Script 記帳 Web App 部署網址（/exec 結尾）
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-lI8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
@@ -1145,15 +1145,23 @@ function renderMediumSplitView(widget, data, userColor, displayItems) {
   rightHeader.addSpacer();
   addQuickAddPill(rightHeader, data.user || CURRENT_USER, userColor, true);
 
-  rightCol.addSpacer(5);
+  const itemsToShow = displayItems.slice(0, 8);
+  const isDenseList = itemsToShow.length > 5;
+  rightCol.addSpacer(isDenseList ? 3 : 5);
 
-  const itemsToShow = displayItems.slice(0, 5);
   itemsToShow.forEach((item, index) => {
-    renderTransactionRow(rightCol, item);
+    renderTransactionRow(rightCol, item, isDenseList ? 10 : 12);
     if (index < itemsToShow.length - 1) {
-      rightCol.addSpacer(3);
+      rightCol.addSpacer(isDenseList ? 1 : 3);
     }
   });
+
+  if (displayItems.length > 8) {
+    rightCol.addSpacer(2);
+    const moreHint = rightCol.addText(`還有 ${displayItems.length - 8} 筆，點開看全部`);
+    moreHint.font = Font.systemFont(9);
+    moreHint.textColor = THEME.textMuted;
+  }
 
   rightCol.addSpacer();
 }
@@ -1244,9 +1252,9 @@ function renderLargeWidget(widget, data) {
     listTitle.font = Font.boldSystemFont(12);
     listTitle.textColor = THEME.textSecondary;
 
-    if (todayItems.length > 8) {
+    if (todayItems.length > 12) {
       listHeader.addSpacer();
-      const moreText = listHeader.addText(`顯示最新 8 筆`);
+      const moreText = listHeader.addText(`顯示最新 12 筆`);
       moreText.font = Font.systemFont(10);
       moreText.textColor = THEME.textMuted;
     }
@@ -1262,7 +1270,8 @@ function renderLargeWidget(widget, data) {
         }
       });
     } else {
-      const displayItems = todayItems.slice(0, 8);
+      const displayItems = todayItems.slice(0, 12);
+      const isUltraDense = displayItems.length > 8;
       const half = Math.ceil(displayItems.length / 2);
       const leftItems = displayItems.slice(0, half);
       const rightItems = displayItems.slice(half);
@@ -1273,9 +1282,9 @@ function renderLargeWidget(widget, data) {
       const leftCol = twoColStack.addStack();
       leftCol.layoutVertically();
       leftItems.forEach((item, index) => {
-        renderCompactTransactionRow(leftCol, item);
+        renderCompactTransactionRow(leftCol, item, isUltraDense);
         if (index < leftItems.length - 1) {
-          leftCol.addSpacer(4);
+          leftCol.addSpacer(isUltraDense ? 2 : 4);
         }
       });
 
@@ -1284,9 +1293,9 @@ function renderLargeWidget(widget, data) {
       const rightCol = twoColStack.addStack();
       rightCol.layoutVertically();
       rightItems.forEach((item, index) => {
-        renderCompactTransactionRow(rightCol, item);
+        renderCompactTransactionRow(rightCol, item, isUltraDense);
         if (index < rightItems.length - 1) {
-          rightCol.addSpacer(4);
+          rightCol.addSpacer(isUltraDense ? 2 : 4);
         }
       });
     }
@@ -1346,13 +1355,13 @@ function renderMetricCard(parent, title, value, valColor) {
 /**
  * 輔助組件：中尺寸簡潔單列交易項目（金額不加負號）
  */
-function renderTransactionRow(parent, item) {
+function renderTransactionRow(parent, item, fontSize = 12) {
   const row = parent.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
 
   const itemName = row.addText(item.note || item.Category || "消費");
-  itemName.font = Font.mediumSystemFont(13);
+  itemName.font = Font.mediumSystemFont(fontSize);
   itemName.textColor = THEME.textPrimary;
   itemName.lineLimit = 1;
 
@@ -1361,7 +1370,7 @@ function renderTransactionRow(parent, item) {
   const isIncome = (item.Category === "收入");
   const amtSign = isIncome ? "+$" : "$";
   const amtText = row.addText(`${amtSign}${Number(item.Amount || 0).toLocaleString()}`);
-  amtText.font = Font.boldSystemFont(13);
+  amtText.font = Font.boldSystemFont(fontSize);
   amtText.textColor = isIncome ? THEME.accentGreen : THEME.textPrimary;
 }
 
@@ -1401,20 +1410,20 @@ function renderDetailedTransactionRow(parent, item) {
 /**
  * 🏷️ 雙欄緊湊型消費小卡片（專為 5 筆以上消費設計，左右並列、節省空間絕不擠破上方）
  */
-function renderCompactTransactionRow(parent, item) {
+function renderCompactTransactionRow(parent, item, ultraDense = false) {
   const row = parent.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
   row.backgroundColor = THEME.cardBg;
   row.cornerRadius = 6;
-  row.setPadding(4, 7, 4, 7);
+  row.setPadding(ultraDense ? 3 : 4, ultraDense ? 6 : 7, ultraDense ? 3 : 4, ultraDense ? 6 : 7);
 
   const cat = String(item.Category || "其他").trim();
   const symName = CATEGORY_SYMBOLS[cat] || "tag.fill";
   const sym = SFSymbol.named(symName);
   if (sym) {
     const symImg = row.addImage(sym.image);
-    symImg.imageSize = new Size(11, 11);
+    symImg.imageSize = new Size(ultraDense ? 10 : 11, ultraDense ? 10 : 11);
     symImg.tintColor = THEME.accentColor || THEME.accentCyan;
   }
 
@@ -1422,7 +1431,7 @@ function renderCompactTransactionRow(parent, item) {
 
   const titleStr = String(item.note || item.Category || "消費").trim();
   const title = row.addText(titleStr);
-  title.font = Font.systemFont(11);
+  title.font = Font.systemFont(ultraDense ? 10 : 11);
   title.textColor = THEME.textPrimary;
   title.lineLimit = 1;
 
@@ -1430,7 +1439,7 @@ function renderCompactTransactionRow(parent, item) {
 
   const amt = Number(item.Amount || 0);
   const amtText = row.addText(`$${amt.toLocaleString()}`);
-  amtText.font = Font.boldSystemFont(11);
+  amtText.font = Font.boldSystemFont(ultraDense ? 10 : 11);
   amtText.textColor = (item.Category === "收入") ? THEME.accentGreen : THEME.accentRose;
 }
 
