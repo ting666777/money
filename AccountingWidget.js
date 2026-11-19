@@ -17,7 +17,7 @@
  */
 
 // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-const WIDGET_VERSION = "1.2.1";
+const WIDGET_VERSION = "1.2.1.1";
 
 // 🔗 您的 Google Apps Script 記帳 Web App 部署網址（/exec 結尾）
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-lI8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
