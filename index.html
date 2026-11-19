@@ -3119,6 +3119,23 @@
       border-radius: 14px;
       cursor: pointer;
     }
+
+    .qa-btn-danger-soft {
+      grid-column: 1 / -1;
+      background: color-mix(in srgb, var(--expense) 12%, transparent);
+      border: 1.5px solid color-mix(in srgb, var(--expense) 45%, transparent);
+      color: var(--expense);
+      font-size: 14px;
+      font-weight: 800;
+      padding: 12px;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .qa-btn-danger-soft:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -3498,7 +3515,8 @@
 
         <div class="qa-action-grid">
           <button type="button" class="qa-btn-primary-soft" onclick="qaResetForAnother()">＋ 再記一筆</button>
-          <button type="button" class="qa-btn-secondary" onclick="closeQuickAddModal()">📊 返回儀表板</button>
+          <button type="button" class="qa-btn-secondary" onclick="closeQuickAddModal()">返回主頁</button>
+          <button type="button" class="qa-btn-danger-soft" id="qa-delete-last-btn" onclick="qaDeleteLastRecord()">刪除這筆</button>
         </div>
       </div>
     </div>
@@ -3621,7 +3639,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">1.2.4</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">1.2.5</span>
         </div>
         <button type="button" onclick="forceUpdatePwa();" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -3710,6 +3728,9 @@
           },
           deleteRecordByRow: function(user, rowIndex, matchCriteria) {
             callGasApi({ action: "deleteRecord", user: user, rowIndex: rowIndex, matchCriteria: matchCriteria });
+          },
+          deleteCashSplitRecords: function(payload) {
+            callGasApi(Object.assign({ action: "deleteCashSplit" }, payload || {}));
           },
           splitRecordAndSyncDebt: function(user, rowIndex, splitAmount, matchCriteria) {
             callGasApi({ action: "splitRecordAndSyncDebt", user: user, rowIndex: rowIndex, splitAmount: splitAmount, matchCriteria: matchCriteria });
@@ -3996,7 +4017,7 @@
       }
 
       // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-      const PWA_VERSION = "1.2.4";
+      const PWA_VERSION = "1.2.5";
       const verLabelEl = document.getElementById("settings-pwa-version-label");
       if (verLabelEl) verLabelEl.textContent = PWA_VERSION;
       const oldVer = localStorage.getItem("money_pwa_version");
@@ -6326,6 +6347,103 @@
             cashSplitPayload.recordedAt
           );
       });
+      return {
+        payer: payer,
+        debtor: debtor,
+        payerAmount: payerAmt,
+        debtorAmount: debtorAmt,
+        totalAmount: splitInfo.totalAmount,
+        category: finalCategory,
+        note: finalNote,
+        recordedAt: recordedAt,
+        skipDebtSync: false,
+        payerRecord: optPayerRec,
+        debtorRecord: optDebtorRec
+      };
+    }
+
+    let qaLastSubmitted = null;
+
+    function qaRemoveLocalRecordAndExpense(rec) {
+      if (!rec) return;
+      const idx = allRecords.indexOf(rec);
+      if (idx !== -1) allRecords.splice(idx, 1);
+      const ym = String(rec["Recorded At"] || "").slice(0, 7);
+      const amt = Number(rec.Amount || 0);
+      if (rec.Category !== "收入" && ym && monthlyExpensesMap[rec.user] && monthlyExpensesMap[rec.user][ym] !== undefined) {
+        monthlyExpensesMap[rec.user][ym] = Math.max(0, Math.round((Number(monthlyExpensesMap[rec.user][ym]) || 0) - amt));
+      }
+    }
+
+    function qaResetDeleteButton() {
+      const delBtn = document.getElementById("qa-delete-last-btn");
+      if (delBtn) {
+        delBtn.disabled = false;
+        delBtn.innerText = "刪除這筆";
+      }
+    }
+
+    function qaDeleteLastRecord() {
+      if (!qaLastSubmitted) return;
+      const delBtn = document.getElementById("qa-delete-last-btn");
+      if (delBtn) {
+        delBtn.disabled = true;
+        delBtn.innerText = "刪除中...";
+      }
+
+      const target = qaLastSubmitted;
+      qaLastSubmitted = null;
+
+      if (target.mode === "split" && target.split) {
+        const s = target.split;
+        qaRemoveLocalRecordAndExpense(s.payerRecord);
+        qaRemoveLocalRecordAndExpense(s.debtorRecord);
+        saveLocalDashboardCache();
+        refreshView();
+
+        enqueueServerMutation(function(done) {
+          google.script.run
+            .withSuccessHandler(function() { done(); })
+            .withFailureHandler(function(err) {
+              alert("雲端刪除分攤失敗：" + ((err && err.message) ? err.message : String(err)));
+              done();
+            })
+            .deleteCashSplitRecords({
+              payer: s.payer,
+              debtor: s.debtor,
+              payerAmount: s.payerAmount,
+              debtorAmount: s.debtorAmount,
+              note: s.note,
+              recordedAt: s.recordedAt,
+              skipDebtSync: s.skipDebtSync,
+              payerRecord: s.payerRecord,
+              debtorRecord: s.debtorRecord
+            });
+        });
+      } else if (target.record) {
+        const rec = target.record;
+        qaRemoveLocalRecordAndExpense(rec);
+        saveLocalDashboardCache();
+        refreshView();
+
+        enqueueServerMutation(function(done) {
+          google.script.run
+            .withSuccessHandler(function() { done(); })
+            .withFailureHandler(function(err) {
+              alert("雲端刪除失敗：" + ((err && err.message) ? err.message : String(err)));
+              done();
+            })
+            .deleteRecordByRow(rec.user, rec.rowIndex, {
+              recordedAt: rec["Recorded At"] || "",
+              amount: rec.Amount,
+              note: rec.note || "",
+              category: rec.Category || ""
+            });
+        });
+      }
+
+      if (delBtn) delBtn.innerText = "已刪除";
+      qaResetForAnother();
     }
 
     function submitWebQuickRecord() {
@@ -6362,7 +6480,9 @@
           return;
         }
 
-        commitCashSplitOptimistically(splitInfo, finalCategory, finalNote, recordedAt);
+        const splitRef = commitCashSplitOptimistically(splitInfo, finalCategory, finalNote, recordedAt);
+        qaLastSubmitted = { mode: "split", split: splitRef };
+        qaResetDeleteButton();
 
         document.getElementById("qa-sum-user").innerText = `${splitInfo.payer} 先付 (${splitInfo.debtor}欠 +$${splitInfo.debtorAmount.toLocaleString()})`;
         document.getElementById("qa-sum-item").innerText = `${meta.icon} ${finalNote}（${finalCategory}）`;
@@ -6394,7 +6514,9 @@
         "Account ID": 0
       };
 
-      commitNewRecordOptimistically(payload);
+      const savedOptRec = commitNewRecordOptimistically(payload);
+      qaLastSubmitted = { mode: "normal", record: savedOptRec };
+      qaResetDeleteButton();
 
       document.getElementById("qa-sum-user").innerText = qaState.user;
       document.getElementById("qa-sum-item").innerText = `${meta.icon} ${finalNote}（${finalCategory}）`;
@@ -6542,6 +6664,7 @@
           })
           .addStructuredRecord(payload);
       });
+      return optimisticRec;
     }
 
     function handleFormSubmit(e) {
@@ -6667,7 +6790,9 @@
             .updateStructuredRecord(user, latestRowIdx, payload, criteriaCopy);
         });
       } else {
-        commitNewRecordOptimistically(payload);
+        const savedOptRec = commitNewRecordOptimistically(payload);
+      qaLastSubmitted = { mode: "normal", record: savedOptRec };
+      qaResetDeleteButton();
       }
     }
 

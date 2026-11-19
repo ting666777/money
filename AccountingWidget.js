@@ -17,7 +17,7 @@
  */
 
 // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-const WIDGET_VERSION = "1.2.5";
+const WIDGET_VERSION = "1.2.6";
 
 // 🔗 您的 Google Apps Script 記帳 Web App 部署網址（/exec 結尾）
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-lI8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
@@ -1496,6 +1496,16 @@ async function openQuickAddWebView(initialUser) {
       }
       return false;
     }
+    if (url.startsWith("quickadd://delete")) {
+      const queryPart = url.split("payload=")[1] || "";
+      try {
+        const payload = JSON.parse(decodeURIComponent(queryPart));
+        processQuickAddDelete(wv, payload);
+      } catch (err) {
+        wv.evaluateJavaScript("onQuickAddDeleteError('刪除資料解析失敗')");
+      }
+      return false;
+    }
     if (url.startsWith("quickadd://syncnotes")) {
       const uMatch = url.match(/user=([^&]+)/);
       const u = uMatch ? decodeURIComponent(uMatch[1]) : targetUser;
@@ -1781,6 +1791,117 @@ function updateLocalWidgetCacheAfterAdd(user, rec) {
 
     if (!isIncome && recTime.startsWith(monthPrefix)) {
       cached.monthTotal = Math.round((Number(cached.monthTotal) || 0) + amt);
+      const rawCachedBudget = Number(cached.budget);
+      const isNoBudget = (cached.explicitZeroBudget === true && rawCachedBudget === 0) || (cached.budget === 0);
+      const budget = isNoBudget
+        ? 0
+        : ((!isNaN(rawCachedBudget) && rawCachedBudget > 0) ? rawCachedBudget : (user === "定成" ? 15000 : 25000));
+      cached.remainingBudget = budget > 0 ? Math.max(0, budget - cached.monthTotal) : 0;
+      cached.budgetProgress = budget > 0 ? Math.min(100, Math.round((cached.monthTotal / budget) * 100)) : 0;
+    }
+
+    cached.updatedAt = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    fm.writeString(cachePath, JSON.stringify(cached));
+  } catch (e) {}
+}
+
+/**
+ * 🗑️ 刪除剛建立的那一筆紀錄（同步更新雲端與本地小組件快取）
+ */
+async function processQuickAddDelete(wv, payload) {
+  try {
+    const req = new Request(WEB_APP_URL);
+    req.method = "POST";
+    req.headers = { "Content-Type": "application/json" };
+    req.timeoutInterval = 15;
+
+    const resData = (payload && payload.res) ? payload.res : {};
+    if (payload && payload.mode === "split") {
+      const payer = resData.payer || CURRENT_USER;
+      const debtor = resData.debtor || (payer === "定成" ? "妤珊" : "定成");
+      const payerAmt = Number(resData.payerAmount || 0);
+      const debtorAmt = Number(resData.debtorAmount || 0);
+
+      req.body = JSON.stringify({
+        action: "deleteCashSplit",
+        payer: payer,
+        debtor: debtor,
+        payerAmount: payerAmt,
+        debtorAmount: debtorAmt,
+        note: resData.note || "",
+        recordedAt: resData.recordedAt || "",
+        payerRecord: resData.payerRecord || null,
+        debtorRecord: resData.debtorRecord || null
+      });
+      const res = await req.loadJSON();
+      if (res && res.success) {
+        if (payerAmt > 0 && resData.payerRecord) updateLocalWidgetCacheAfterDelete(payer, resData.payerRecord);
+        if (debtorAmt > 0 && resData.debtorRecord) updateLocalWidgetCacheAfterDelete(debtor, resData.debtorRecord);
+        try { await wv.evaluateJavaScript("onQuickAddDeleteSuccess()"); } catch (e) {}
+      } else {
+        const errMsg = (res && res.message) ? res.message : "刪除失敗，請稍後再試";
+        try { await wv.evaluateJavaScript(`onQuickAddDeleteError(${JSON.stringify(errMsg)})`); } catch (e) {}
+      }
+      return;
+    }
+
+    const rec = resData.record || {};
+    const targetUser = rec.user || CURRENT_USER;
+    req.body = JSON.stringify({
+      action: "deleteRecord",
+      user: targetUser,
+      rowIndex: rec.rowIndex,
+      matchCriteria: {
+        recordedAt: rec["Recorded At"] || "",
+        amount: rec.Amount,
+        note: rec.note || "",
+        category: rec.Category || ""
+      }
+    });
+    const res = await req.loadJSON();
+    if (res && res.success) {
+      updateLocalWidgetCacheAfterDelete(targetUser, rec);
+      try { await wv.evaluateJavaScript("onQuickAddDeleteSuccess()"); } catch (e) {}
+    } else {
+      const errMsg = (res && res.message) ? res.message : "刪除失敗，請稍後再試";
+      try { await wv.evaluateJavaScript(`onQuickAddDeleteError(${JSON.stringify(errMsg)})`); } catch (e) {}
+    }
+  } catch (err) {
+    const msg = "網路連線逾時或異常：" + (err && err.message ? err.message : String(err));
+    try { await wv.evaluateJavaScript(`onQuickAddDeleteError(${JSON.stringify(msg)})`); } catch (e) {}
+  }
+}
+
+function updateLocalWidgetCacheAfterDelete(user, rec) {
+  try {
+    const fm = FileManager.local();
+    const cachePath = fm.joinPath(fm.documentsDirectory(), `accounting_widget_cache_${user}.json`);
+    if (!fm.fileExists(cachePath)) return;
+
+    const cached = JSON.parse(fm.readString(cachePath));
+    const now = new Date();
+    const pad = (n) => (n < 10 ? "0" + n : "" + n);
+    const todayStr = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())}`;
+    const monthPrefix = `${now.getFullYear()}/${pad(now.getMonth() + 1)}`;
+    const recTime = String(rec["Recorded At"] || todayStr);
+    const amt = Number(rec.Amount) || 0;
+    const isIncome = (rec.Category === "收入");
+
+    if (!isIncome && recTime.startsWith(todayStr)) {
+      cached.todayTotal = Math.max(0, Math.round((Number(cached.todayTotal) || 0) - amt));
+      cached.todayCount = Math.max(0, (Number(cached.todayCount) || 0) - 1);
+      if (Array.isArray(cached.todayRecords)) {
+        const idx = cached.todayRecords.findIndex((r) =>
+          Number(r.Amount) === amt &&
+          String(r.note || "") === String(rec.note || "") &&
+          String(r["Recorded At"] || "") === recTime
+        );
+        if (idx !== -1) cached.todayRecords.splice(idx, 1);
+      }
+    }
+
+    if (!isIncome && recTime.startsWith(monthPrefix)) {
+      cached.monthTotal = Math.max(0, Math.round((Number(cached.monthTotal) || 0) - amt));
       const rawCachedBudget = Number(cached.budget);
       const isNoBudget = (cached.explicitZeroBudget === true && rawCachedBudget === 0) || (cached.budget === 0);
       const budget = isNoBudget
@@ -2338,6 +2459,21 @@ function buildQuickAddHtml(initialUser, initialNotesByUser, hasNotesCache) {
     border-radius: 14px;
     cursor: pointer;
   }
+  .btn-danger-soft {
+    grid-column: 1 / -1;
+    background: rgba(251, 113, 133, 0.14);
+    border: 1px solid rgba(251, 113, 133, 0.42);
+    color: var(--rose);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 12px;
+    border-radius: 14px;
+    cursor: pointer;
+  }
+  .btn-danger-soft:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   .dismiss-hint {
     margin-top: 18px;
     font-size: 12px;
@@ -2453,7 +2589,8 @@ function buildQuickAddHtml(initialUser, initialNotesByUser, hasNotesCache) {
 
       <div class="action-grid">
         <button type="button" class="btn-primary-soft" onclick="resetForAnother()">＋ 再記一筆</button>
-        <button type="button" class="btn-secondary" onclick="openFullDashboard()">📊 開啟儀表板</button>
+        <button type="button" class="btn-secondary" onclick="openFullDashboard()">返回主頁</button>
+        <button type="button" class="btn-danger-soft" id="delete-last-btn" onclick="deleteLastRecord()">刪除這筆</button>
       </div>
       <div class="dismiss-hint">往下滑動或點擊上方「完成」即可返回桌面</div>
     </div>
@@ -2951,8 +3088,16 @@ function buildQuickAddHtml(initialUser, initialNotesByUser, hasNotesCache) {
     window.location.href = "quickadd://submit?payload=" + encodeURIComponent(JSON.stringify(payload));
   }
 
+  var lastSubmittedRecord = null;
+
   function onQuickAddSuccess(res, updatedNotesByUser) {
     state.submitting = false;
+    lastSubmittedRecord = { mode: state.mode, res: res };
+    var delBtn = document.getElementById("delete-last-btn");
+    if (delBtn) {
+      delBtn.disabled = false;
+      delBtn.innerText = "刪除這筆";
+    }
     if (updatedNotesByUser && typeof updatedNotesByUser === "object") {
       Object.keys(updatedNotesByUser).forEach(function(u) {
         if (updatedNotesByUser[u] && typeof updatedNotesByUser[u] === "object") {
@@ -3024,6 +3169,30 @@ function buildQuickAddHtml(initialUser, initialNotesByUser, hasNotesCache) {
 
   function openFullDashboard() {
     window.location.href = "quickadd://dashboard?user=" + encodeURIComponent(state.user);
+  }
+
+  function deleteLastRecord() {
+    if (!lastSubmittedRecord) return;
+    var delBtn = document.getElementById("delete-last-btn");
+    if (delBtn) {
+      delBtn.disabled = true;
+      delBtn.innerText = "刪除中...";
+    }
+    window.location.href = "quickadd://delete?payload=" + encodeURIComponent(JSON.stringify(lastSubmittedRecord));
+  }
+
+  function onQuickAddDeleteSuccess() {
+    lastSubmittedRecord = null;
+    resetForAnother();
+  }
+
+  function onQuickAddDeleteError(msg) {
+    var delBtn = document.getElementById("delete-last-btn");
+    if (delBtn) {
+      delBtn.disabled = false;
+      delBtn.innerText = "刪除這筆";
+    }
+    showError(msg || "刪除失敗，請稍後再試");
   }
 
   document.getElementById("amount-input").addEventListener("input", onMainAmountInput);
