@@ -17,7 +17,7 @@
  */
 
 // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-const WIDGET_VERSION = "1.2.8";
+const WIDGET_VERSION = "1.2.9";
 
 // 🔗 您的 Google Apps Script 記帳 Web App 部署網址（/exec 結尾）
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw-lI8xekExLAo2D9xtJXReDGejy4qrR-7GcCsWeTUvmMwJwzmObXIoOHvK057e5Rwz/exec";
@@ -464,35 +464,256 @@ const CATEGORY_SYMBOLS = {
   "其他": "tag.fill"
 };
 
+const REMINDER_NOTIF_ID = "accounting_daily_reminder_23";
+const REMINDER_TEST_NOTIF_ID = "accounting_test_reminder";
+const REMINDER_CONFIG_FILE = "accounting_reminder_config.json";
+
+function getLocalTodayStr(dateObj) {
+  const d = dateObj || new Date();
+  const pad = (n) => (n < 10 ? "0" + n : "" + n);
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+}
+
+function getMainDashboardActionUrl(targetUser) {
+  const user = (targetUser === "妤珊") ? "妤珊" : "定成";
+  if (USE_IN_APP_WEBVIEW) {
+    const scriptName = (typeof Script !== "undefined" && Script.name && Script.name()) || "記帳小組件";
+    return `scriptable:///run?scriptName=${encodeURIComponent(scriptName)}&action=openWebView&user=${encodeURIComponent(user)}`;
+  }
+  const baseUrl = PAGE_URL || WEB_APP_URL;
+  return baseUrl.includes("?")
+    ? `${baseUrl}&user=${encodeURIComponent(user)}`
+    : `${baseUrl}?user=${encodeURIComponent(user)}`;
+}
+
+function loadReminderConfig() {
+  const def = { enabled: true, hour: 23, minute: 0 };
+  try {
+    const fm = FileManager.local();
+    const path = fm.joinPath(fm.documentsDirectory(), REMINDER_CONFIG_FILE);
+    if (fm.fileExists(path)) {
+      const parsed = JSON.parse(fm.readString(path));
+      if (parsed && typeof parsed === "object") {
+        return {
+          enabled: parsed.enabled !== false,
+          hour: Number.isFinite(Number(parsed.hour)) ? Number(parsed.hour) : 23,
+          minute: Number.isFinite(Number(parsed.minute)) ? Number(parsed.minute) : 0
+        };
+      }
+    }
+  } catch (e) {}
+  return def;
+}
+
+function saveReminderConfig(cfg) {
+  try {
+    const fm = FileManager.local();
+    const path = fm.joinPath(fm.documentsDirectory(), REMINDER_CONFIG_FILE);
+    fm.writeString(path, JSON.stringify({
+      enabled: cfg && cfg.enabled !== false,
+      hour: cfg && Number.isFinite(Number(cfg.hour)) ? Number(cfg.hour) : 23,
+      minute: cfg && Number.isFinite(Number(cfg.minute)) ? Number(cfg.minute) : 0
+    }));
+  } catch (e) {}
+}
+
+function updateLocalManualState(user, delta) {
+  try {
+    const targetUser = (user === "妤珊") ? "妤珊" : "定成";
+    const todayStr = getLocalTodayStr();
+    const fm = FileManager.local();
+    const path = fm.joinPath(fm.documentsDirectory(), `accounting_manual_state_${targetUser}.json`);
+    let count = 0;
+    if (fm.fileExists(path)) {
+      const parsed = JSON.parse(fm.readString(path));
+      if (parsed && parsed.date === todayStr) {
+        count = Math.max(0, Number(parsed.count) || 0);
+      }
+    }
+    count = Math.max(0, count + Number(delta || 0));
+    fm.writeString(path, JSON.stringify({ date: todayStr, count: count }));
+  } catch (e) {}
+}
+
+function getLocalManualCountToday(user) {
+  try {
+    const targetUser = (user === "妤珊") ? "妤珊" : "定成";
+    const todayStr = getLocalTodayStr();
+    const fm = FileManager.local();
+    const path = fm.joinPath(fm.documentsDirectory(), `accounting_manual_state_${targetUser}.json`);
+    if (fm.fileExists(path)) {
+      const parsed = JSON.parse(fm.readString(path));
+      if (parsed && parsed.date === todayStr) {
+        return Math.max(0, Number(parsed.count) || 0);
+      }
+    }
+  } catch (e) {}
+  return 0;
+}
+
+function hasManualRecordToday(data, user) {
+  if (data && data.hasTodayManual === true) return true;
+  if (getLocalManualCountToday(user) > 0) return true;
+  if (!data) return false;
+  const todayStr = getLocalTodayStr();
+  const candidates = []
+    .concat(Array.isArray(data.todayRecords) ? data.todayRecords : [])
+    .concat(Array.isArray(data.recentRecords) ? data.recentRecords : []);
+  return candidates.some((r) => {
+    if (!r) return false;
+    const recDay = String(r.day || (r["Recorded At"] || "").slice(0, 10));
+    if (recDay !== todayStr) return false;
+    return String(r.Account || "").trim() === "現金" || Number(r["Account ID"] || 0) === 0;
+  });
+}
+
+async function clearPendingReminderNotifications(notifId) {
+  if (typeof Notification === "undefined") return;
+  try {
+    if (typeof Notification.removePending === "function") {
+      await Notification.removePending([notifId]);
+    }
+  } catch (e) {}
+  try {
+    if (typeof Notification.allPending === "function") {
+      const pending = await Notification.allPending();
+      if (Array.isArray(pending)) {
+        for (let i = 0; i < pending.length; i++) {
+          const item = pending[i];
+          if (item && (item.identifier === notifId || item.threadIdentifier === notifId) && typeof item.remove === "function") {
+            await item.remove();
+          }
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+function createAccountingReminderNotification(notifId, title, body, triggerDate, targetUser) {
+  const notif = new Notification();
+  notif.identifier = notifId;
+  notif.threadIdentifier = notifId;
+  notif.title = title;
+  notif.body = body;
+  notif.sound = "default";
+  notif.openURL = getMainDashboardActionUrl(targetUser);
+  notif.setTriggerDate(triggerDate);
+  return notif;
+}
+
+async function syncDailyReminderNotification(user, data, fireImmediateIfMissing = false, nowOverride = null) {
+  const targetUser = (user === "妤珊") ? "妤珊" : "定成";
+  const cfg = loadReminderConfig();
+  await clearPendingReminderNotifications(REMINDER_NOTIF_ID);
+
+  if (!cfg.enabled || typeof Notification === "undefined") {
+    return { scheduled: false, enabled: cfg.enabled, hasManualToday: false };
+  }
+
+  const now = nowOverride ? new Date(nowOverride) : new Date();
+  const hasManual = hasManualRecordToday(data, targetUser);
+
+  if (fireImmediateIfMissing && !hasManual) {
+    const immNotif = createAccountingReminderNotification(
+      "accounting_immediate_reminder_23",
+      "記得記帳",
+      `${targetUser} 今天尚未手動記帳，點選跳到記帳主畫面`,
+      new Date(now.getTime() + 1500),
+      targetUser
+    );
+    await immNotif.schedule();
+  }
+
+  const nextTrigger = new Date(now.getFullYear(), now.getMonth(), now.getDate(), cfg.hour, cfg.minute, 0, 0);
+  if (hasManual || now.getTime() >= nextTrigger.getTime()) {
+    nextTrigger.setDate(nextTrigger.getDate() + 1);
+  }
+
+  const scheduledNotif = createAccountingReminderNotification(
+    REMINDER_NOTIF_ID,
+    "記得記帳",
+    `${targetUser} 今天尚未手動記帳，點選跳到記帳主畫面`,
+    nextTrigger,
+    targetUser
+  );
+  await scheduledNotif.schedule();
+
+  return {
+    scheduled: true,
+    enabled: true,
+    hasManualToday: hasManual,
+    triggerTimestamp: nextTrigger.getTime(),
+    openURL: scheduledNotif.openURL
+  };
+}
+
+async function scheduleTestReminderNotification(user, delaySeconds = 5) {
+  if (typeof Notification === "undefined") return null;
+  const targetUser = (user === "妤珊") ? "妤珊" : "定成";
+  await clearPendingReminderNotifications(REMINDER_TEST_NOTIF_ID);
+  const triggerDate = new Date(Date.now() + Math.max(1, Number(delaySeconds) || 5) * 1000);
+  const notif = createAccountingReminderNotification(
+    REMINDER_TEST_NOTIF_ID,
+    "記得記帳（測試通知）",
+    `${targetUser} 今天尚未手動記帳，點選跳到記帳主畫面`,
+    triggerDate,
+    targetUser
+  );
+  await notif.schedule();
+  return { triggerAt: triggerDate.getTime(), openURL: notif.openURL };
+}
+
 // 進入點
 await main();
 
 async function main() {
-  // ⚡ 0. 處理點擊小組件「+」觸發的極速記帳視窗
-  if (args.queryParameters && args.queryParameters.action === "quickAdd") {
-    const targetUser = args.queryParameters.user || CURRENT_USER;
+  const shortcutParam = String(args.shortcutParameter || (Array.isArray(args.plainTexts) ? args.plainTexts[0] : "") || "").trim();
+  const actionParam = (args.queryParameters && args.queryParameters.action)
+    || (/checkReminder/i.test(shortcutParam) ? "checkReminder" : (/testNotification/i.test(shortcutParam) ? "testNotification" : ""));
+
+  // 0. 處理點擊小組件「+」觸發的極速記帳視窗
+  if (actionParam === "quickAdd") {
+    const targetUser = (args.queryParameters && args.queryParameters.user) || CURRENT_USER;
     loadActiveTheme(targetUser);
     await openQuickAddWebView(targetUser);
     Script.complete();
     return;
   }
 
-  // 🚀 1. 處理點擊小組件觸發的 In-App WebView 請求（精準開啟專屬使用者頁面！）
-  if (args.queryParameters && args.queryParameters.action === "openWebView") {
-    const targetUser = args.queryParameters.user || CURRENT_USER;
+  // 1. 處理點擊小組件或通知觸發的記帳主畫面請求
+  if (actionParam === "openWebView") {
+    const targetUser = (args.queryParameters && args.queryParameters.user) || CURRENT_USER;
     await openAccountingWebView(targetUser);
+    Script.complete();
+    return;
+  }
+
+  // 1B. 供捷徑自動化於每晚 23:00 呼叫即時檢查是否漏記
+  if (actionParam === "checkReminder") {
+    const targetUser = (args.queryParameters && args.queryParameters.user) || CURRENT_USER;
+    const data = await fetchAccountingData(targetUser);
+    await syncDailyReminderNotification(targetUser, data, true);
+    Script.complete();
+    return;
+  }
+
+  // 1C. 直接觸發測試通知
+  if (actionParam === "testNotification") {
+    const targetUser = (args.queryParameters && args.queryParameters.user) || CURRENT_USER;
+    await scheduleTestReminderNotification(targetUser, 3);
     Script.complete();
     return;
   }
 
   loadActiveTheme(CURRENT_USER);
 
-  // 🚀 2. 在 Scriptable App 內點擊執行時的快捷選單（可快速記帳、換主題、開 WebView 或預覽小工具）
+  // 2. 在 Scriptable App 內點擊執行時的快捷選單
   const hasQueryParams = args.queryParameters && Object.keys(args.queryParameters).length > 0;
-  if (!config.runsInWidget && !hasQueryParams) {
+  if (!config.runsInWidget && !hasQueryParams && !actionParam) {
+    const remCfg = loadReminderConfig();
     const alert = new Alert();
     alert.title = `📱 ${CURRENT_USER} 記帳`;
-    alert.message = `當前身份：【${CURRENT_USER}】\n目前主題：${THEME.themeName}\n目前版本：v${WIDGET_VERSION}`;
+    alert.message = `當前身份：【${CURRENT_USER}】\n目前主題：${THEME.themeName}\n目前版本：v${WIDGET_VERSION}\n每晚 23:00 提醒：${remCfg.enabled ? "已開啟" : "已關閉"}`;
     alert.addAction("⚡ 快速記一筆");
     alert.addAction("🚀 開啟全螢幕儀表板 WebView");
     alert.addAction("🎨 更換主題配色");
@@ -501,6 +722,8 @@ async function main() {
     const otherUser = CURRENT_USER === "妤珊" ? "定成" : "妤珊";
     alert.addAction("🔍 預覽 小尺寸 Widget");
     alert.addAction(`切換預設身份（改為 ${otherUser}）`);
+    alert.addAction("發送測試通知（5 秒後跳出）");
+    alert.addAction(remCfg.enabled ? "每日 23:00 記帳提醒：已開啟（點此關閉）" : "每日 23:00 記帳提醒：已關閉（點此開啟）");
     alert.addCancelAction("取消");
     const choice = await alert.present();
     if (choice === 0) {
@@ -542,6 +765,29 @@ async function main() {
       await okAlert.present();
       Script.complete();
       return;
+    } else if (choice === 7) {
+      await scheduleTestReminderNotification(CURRENT_USER, 5);
+      const testAlert = new Alert();
+      testAlert.title = "測試通知已排程";
+      testAlert.message = "通知將在 5 秒後跳出，請現在切回主畫面或鎖定螢幕查看；點選通知即可直接跳到記帳主畫面。";
+      testAlert.addAction("確定");
+      await testAlert.present();
+      Script.complete();
+      return;
+    } else if (choice === 8) {
+      const nextEnabled = !remCfg.enabled;
+      saveReminderConfig({ enabled: nextEnabled, hour: 23, minute: 0 });
+      const freshData = await fetchAccountingData(CURRENT_USER);
+      await syncDailyReminderNotification(CURRENT_USER, freshData, false);
+      const toggleAlert = new Alert();
+      toggleAlert.title = "提醒設定已更新";
+      toggleAlert.message = nextEnabled
+        ? "已開啟每日 23:00 提醒：若當天尚無網頁或小工具手動記帳，將於 23:00 跳通知提醒您。"
+        : "已關閉每日 23:00 記帳提醒。";
+      toggleAlert.addAction("確定");
+      await toggleAlert.present();
+      Script.complete();
+      return;
     } else {
       Script.complete();
       return;
@@ -549,6 +795,7 @@ async function main() {
   }
 
   const data = await fetchAccountingData(CURRENT_USER);
+  await syncDailyReminderNotification(CURRENT_USER, data, false);
   const widget = await createWidget(data);
 
   if (config.runsInWidget) {
@@ -677,9 +924,13 @@ function computeWidgetDataFromDashboard(dashData, currentUser) {
   let todayTotal = 0;
   const yesterdayRecs = [];
   let yesterdayTotal = 0;
+  let hasTodayManual = false;
 
   for (let i = 0; i < allRecs.length; i++) {
     const r = allRecs[i];
+    if (r.day === todayStr && (String(r.Account || "").trim() === "現金" || Number(r["Account ID"] || 0) === 0)) {
+      hasTodayManual = true;
+    }
     if (r.Category === "收入") continue;
     if (r.day === todayStr) {
       todayTotal += Number(r.Amount) || 0;
@@ -688,6 +939,9 @@ function computeWidgetDataFromDashboard(dashData, currentUser) {
       yesterdayTotal += Number(r.Amount) || 0;
       yesterdayRecs.push(r);
     }
+  }
+  if (!hasTodayManual && getLocalManualCountToday(currentUser) > 0) {
+    hasTodayManual = true;
   }
 
   // 若今日尚未有消費，取昨日花費；若昨日亦無，則取最近一次有消費的過去日期
@@ -746,10 +1000,11 @@ function computeWidgetDataFromDashboard(dashData, currentUser) {
     user: currentUser,
     todayStr: todayStr,
     isToday: hasToday,
+    hasTodayManual: hasTodayManual,
     expenseLabel: displayLabel,
     todayTotal: displayTotal,
     todayCount: displayRecords.length,
-    todayRecords: displayRecords.slice(0, 8),
+    todayRecords: displayRecords.slice(0, 12),
     recentRecords: allRecs.slice(0, 8),
     monthTotal: Math.round(userMonthTotal),
     dingMonthTotal: Math.round(dingMonthTotal),
@@ -781,16 +1036,7 @@ async function createWidget(data) {
   widget.backgroundGradient = gradient;
 
   // 點擊小工具行為：必定帶上當前使用者參數，確保點妤珊跳轉妤珊、點定成跳轉定成！
-  const targetWebUrl = PAGE_URL.includes("?")
-    ? `${PAGE_URL}&user=${encodeURIComponent(targetUser)}`
-    : `${PAGE_URL}?user=${encodeURIComponent(targetUser)}`;
-
-  if (USE_IN_APP_WEBVIEW) {
-    const scriptName = Script.name() || "記帳小組件";
-    widget.url = `scriptable:///run?scriptName=${encodeURIComponent(scriptName)}&action=openWebView&user=${encodeURIComponent(targetUser)}`;
-  } else {
-    widget.url = targetWebUrl;
-  }
+  widget.url = getMainDashboardActionUrl(targetUser);
 
   const family = config.widgetFamily || "medium";
 
@@ -1716,6 +1962,9 @@ async function processQuickAddSubmission(wv, payload) {
           });
           updatedByUser[debtor] = updateLocalCategoryNotesAfterAdd(debtor, finalCat, finalNote);
         }
+        updateLocalManualState(CURRENT_USER, 1);
+        if (payer !== CURRENT_USER) updateLocalManualState(payer, 1);
+        await syncDailyReminderNotification(CURRENT_USER, { hasTodayManual: true }, false);
         try {
           await wv.evaluateJavaScript(`onQuickAddSuccess(${JSON.stringify(res)}, ${JSON.stringify(updatedByUser)})`);
         } catch (e) {}
@@ -1748,6 +1997,8 @@ async function processQuickAddSubmission(wv, payload) {
         savedRec.Category || payload.Category,
         savedRec.note || payload.note
       );
+      updateLocalManualState(targetUser, 1);
+      await syncDailyReminderNotification(targetUser, { hasTodayManual: true }, false);
       const updatedByUser = {};
       updatedByUser[targetUser] = updatedNotes;
       try {
@@ -1795,8 +2046,9 @@ function updateLocalWidgetCacheAfterAdd(user, rec) {
       }
       cached.todayTotal = Math.round((Number(cached.todayTotal) || 0) + amt);
       cached.todayCount = (Number(cached.todayCount) || 0) + 1;
-      cached.todayRecords = [rec].concat(cached.todayRecords || []).slice(0, 8);
+      cached.todayRecords = [rec].concat(cached.todayRecords || []).slice(0, 12);
     }
+    cached.hasTodayManual = true;
 
     if (!isIncome && recTime.startsWith(monthPrefix)) {
       cached.monthTotal = Math.round((Number(cached.monthTotal) || 0) + amt);
@@ -1844,6 +2096,7 @@ async function processQuickAddDelete(wv, payload) {
       });
       const res = await req.loadJSON();
       if (res && res.success) {
+        updateLocalManualState(payer, -1);
         if (payerAmt > 0 && resData.payerRecord) updateLocalWidgetCacheAfterDelete(payer, resData.payerRecord);
         if (debtorAmt > 0 && resData.debtorRecord) updateLocalWidgetCacheAfterDelete(debtor, resData.debtorRecord);
         try { await wv.evaluateJavaScript("onQuickAddDeleteSuccess()"); } catch (e) {}
@@ -1869,6 +2122,7 @@ async function processQuickAddDelete(wv, payload) {
     });
     const res = await req.loadJSON();
     if (res && res.success) {
+      updateLocalManualState(targetUser, -1);
       updateLocalWidgetCacheAfterDelete(targetUser, rec);
       try { await wv.evaluateJavaScript("onQuickAddDeleteSuccess()"); } catch (e) {}
     } else {
