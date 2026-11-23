@@ -1469,6 +1469,52 @@
       box-shadow: 0 10px 30px rgba(74, 59, 50, 0.16);
     }
 
+    .edit-modal.edit-modal-qa {
+      background: var(--bg);
+      padding: 14px;
+      max-height: 92dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .qa-time-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 7px 12px;
+      margin-bottom: 8px;
+    }
+
+    .qa-time-inline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 8px;
+      margin-top: 6px;
+      border-top: 1px dashed var(--card-border);
+    }
+
+    .qa-time-input {
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: 9px;
+      padding: 5px 9px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      outline: none;
+      max-width: 195px;
+    }
+
+    .qa-time-input:focus {
+      border-color: var(--accent);
+    }
+
     .form-row {
       display: flex;
       flex-direction: column;
@@ -3361,50 +3407,49 @@
     </div>
   </div>
 
-  <!-- 新增/修改記帳 Modal -->
+  <!-- 修改記帳 Modal（與快速記帳一致的分類與 10 個備註快選，保留原帳戶不需填寫） -->
   <div class="edit-modal-overlay" id="edit-modal" onclick="closeEditModal(event)">
-    <div class="edit-modal" onclick="event.stopPropagation()">
-      <h3 style="margin-bottom:14px; font-size:1.1rem;" id="modal-heading">記一筆帳</h3>
+    <div class="edit-modal edit-modal-qa" onclick="event.stopPropagation()">
+      <div class="qa-header" style="margin-bottom:8px;">
+        <h3 style="margin:0; font-size:1.05rem; font-weight:800;" id="modal-heading">修改記帳</h3>
+        <button type="button" class="icon-btn" style="width:30px; height:30px;" onclick="closeEditModal()" title="關閉">✕</button>
+      </div>
       <form id="record-form" onsubmit="handleFormSubmit(event)">
         <input type="hidden" id="form-row-index" value="">
         <input type="hidden" id="form-user" value="定成">
+        <input type="hidden" id="form-category" value="食物">
+        <input type="hidden" id="form-account" value="現金">
 
-        <div class="form-row">
-          <label class="form-label">項目 / 備註</label>
-          <input type="text" class="form-input" id="form-note" placeholder="例如：午餐、全聯、洗衣機" required>
-        </div>
-
-        <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <div>
-            <label class="form-label">金額</label>
-            <input type="number" step="any" class="form-input" id="form-amount" placeholder="金額" required>
+        <div class="qa-card qa-amount-card">
+          <div class="qa-amount-label-row">
+            <span class="qa-section-label">金額</span>
+            <span class="qa-cat-preview-pill" id="edit-cat-badge">食物</span>
           </div>
-          <div>
-            <label class="form-label">分類</label>
-            <select class="form-select" id="form-category" style="width:100%;"></select>
+          <div class="qa-amount-input-wrap" style="padding-bottom:2px;">
+            <span class="qa-currency-symbol">$</span>
+            <input type="number" inputmode="decimal" step="any" min="0" class="qa-amount-input" id="form-amount" placeholder="0" required>
           </div>
-        </div>
-
-        <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <div>
-            <label class="form-label">時間</label>
-            <input type="datetime-local" class="form-input" id="form-time" required>
-          </div>
-          <div>
-            <label class="form-label">帳戶</label>
-            <select class="form-select" id="form-account" style="width:100%;">
-              <option value="現金">現金</option>
-              <option value="富邦信用卡">富邦信用卡(0493)</option>
-              <option value="台新Richart">台新Richart(5403)</option>
-              <option value="全支付">全支付</option>
-              <option value="國泰世華信用卡">國泰世華信用卡(7488)</option>
-              <option value="郵局">郵局(14071)</option>
-              <option value="LINE Bank">LINE Bank快點卡</option>
-            </select>
+          <div class="qa-time-inline">
+            <span class="qa-section-label">日期時間</span>
+            <input type="datetime-local" class="qa-time-input" id="form-time" required>
           </div>
         </div>
 
-        <div class="form-btn-group">
+        <div class="qa-card">
+          <div class="qa-section-label">分類</div>
+          <div class="qa-cat-grid" id="edit-cat-grid"></div>
+        </div>
+
+        <div class="qa-card">
+          <div class="qa-section-label">備註</div>
+          <div class="qa-note-input-box">
+            <input type="text" class="qa-note-input" id="form-note" placeholder="輸入品項或店家" oninput="editOnNoteInput(this.value)" required>
+            <button type="button" class="qa-note-clear" id="edit-note-clear" onclick="editClearNote()">✕</button>
+          </div>
+          <div class="qa-tags-scroll" id="edit-tags-scroll"></div>
+        </div>
+
+        <div class="form-btn-group" style="margin-top:10px;">
           <button type="button" class="btn-del" id="form-del-btn" style="display:none; align-items:center; justify-content:center;" onclick="handleDeleteCurrentRecord()" title="刪除">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
           </button>
@@ -3482,6 +3527,11 @@
             <button type="button" class="qa-note-clear" id="qa-note-clear" onclick="qaClearNote()">✕</button>
           </div>
           <div class="qa-tags-scroll" id="qa-tags-scroll"></div>
+        </div>
+
+        <div class="qa-time-bar">
+          <span class="qa-section-label">日期時間</span>
+          <input id="qa-time-input" class="qa-time-input" type="datetime-local">
         </div>
 
         <button type="button" class="qa-submit-btn" id="qa-submit-btn" onclick="submitWebQuickRecord()" disabled>
@@ -3639,7 +3689,7 @@
       <div style="margin-top:14px; padding:10px 14px; background:var(--card-soft); border:1px solid var(--card-border); border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span style="font-size:0.75rem; color:var(--text-muted);">系統版本：</span>
-          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">1.2.6</span>
+          <span id="settings-pwa-version-label" style="font-size:0.8rem; font-weight:800; color:var(--accent);">1.2.7</span>
         </div>
         <button type="button" onclick="forceUpdatePwa();" style="border:none; background:transparent; color:var(--ding); font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">
           🔄 強制檢查更新
@@ -4017,7 +4067,7 @@
       }
 
       // 版本編號規範：自 1.0 起算；小更新為 1.1 / 1.2，極小修正為 1.0.1 / 1.0.2
-      const PWA_VERSION = "1.2.6";
+      const PWA_VERSION = "1.2.7";
       const verLabelEl = document.getElementById("settings-pwa-version-label");
       if (verLabelEl) verLabelEl.textContent = PWA_VERSION;
       const oldVer = localStorage.getItem("money_pwa_version");
@@ -5578,6 +5628,7 @@
     // =====================================================
     function initFormCategoryOptions() {
       const sel = document.getElementById("form-category");
+      if (!sel || sel.tagName !== "SELECT") return;
       sel.innerHTML = Object.keys(CATEGORY_META).map(cat => `<option value="${cat}">${CATEGORY_META[cat].icon} ${cat}</option>`).join("");
     }
 
@@ -6156,6 +6207,18 @@
       document.getElementById("qa-error-toast").style.display = "none";
     }
 
+    function qaSetDefaultTimeInput(targetDateStr) {
+      const timeInput = document.getElementById("qa-time-input");
+      if (!timeInput) return;
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      const baseDate = (/^\d{4}\/\d{2}\/\d{2}$/.test(targetDateStr))
+        ? targetDateStr
+        : getTodayString();
+      timeInput.value = `${baseDate.replace(/\//g, "-")}T${hh}:${mm}`;
+    }
+
     function openAddModal() {
       if (currentDimension !== "day") return;
       const targetDateStr = (/^\d{4}\/\d{2}\/\d{2}$/.test(currentTimeKey))
@@ -6184,6 +6247,7 @@
       if (payerInput) payerInput.value = "";
       document.getElementById("qa-note-input").value = "";
       document.getElementById("qa-note-clear").style.display = "none";
+      qaSetDefaultTimeInput(targetDateStr);
       qaHideError();
 
       document.getElementById("qa-form-view").style.display = "block";
@@ -6213,6 +6277,7 @@
       if (payerInput) payerInput.value = (qaState.splitShareMode === "zero") ? "0" : "";
       document.getElementById("qa-note-input").value = "";
       document.getElementById("qa-note-clear").style.display = "none";
+      qaSetDefaultTimeInput(qaState.targetDateStr);
       qaHideError();
       qaRenderSplitUI();
       qaUpdateSubmitButton();
@@ -6477,7 +6542,11 @@
       const baseDate = (/^\d{4}\/\d{2}\/\d{2}$/.test(qaState.targetDateStr))
         ? qaState.targetDateStr
         : getTodayString();
-      const recordedAt = `${baseDate} ${hh}:${mm}`;
+      const qaTimeEl = document.getElementById("qa-time-input");
+      const qaTimeRaw = qaTimeEl ? String(qaTimeEl.value || "").trim() : "";
+      const recordedAt = qaTimeRaw
+        ? qaTimeRaw.replace("T", " ").replace(/-/g, "/").slice(0, 16)
+        : `${baseDate} ${hh}:${mm}`;
       const meta = CATEGORY_META[finalCategory] || CATEGORY_META["食物"];
 
       if (qaState.mode === "split") {
@@ -6551,6 +6620,86 @@
       openEditModalWithRecordObj(rec);
     }
 
+    function editRenderCategories() {
+      const grid = document.getElementById("edit-cat-grid");
+      if (!grid) return;
+      const curCat = document.getElementById("form-category").value || "食物";
+      const cats = Object.keys(CATEGORY_META);
+      let html = "";
+      for (let i = 0; i < cats.length; i++) {
+        const catName = cats[i];
+        const meta = CATEGORY_META[catName];
+        const isSel = (curCat === catName);
+        const style = isSel
+          ? `border-color:${meta.color}; background:${meta.color}24; box-shadow:0 0 10px ${meta.color}30;`
+          : "";
+        html += `<div class="qa-cat-tile${isSel ? " selected" : ""}" style="${style}" onclick="editSelectCategory('${catName}')">` +
+                `<span class="qa-cat-emoji">${meta.icon}</span>` +
+                `<span class="qa-cat-name">${catName}</span>` +
+                `</div>`;
+      }
+      grid.innerHTML = html;
+
+      const curMeta = CATEGORY_META[curCat] || CATEGORY_META["食物"];
+      const badge = document.getElementById("edit-cat-badge");
+      if (badge) {
+        badge.innerText = curCat;
+        badge.style.color = curMeta.color;
+        badge.style.background = `${curMeta.color}24`;
+      }
+    }
+
+    function editSelectCategory(catName) {
+      document.getElementById("form-category").value = catName;
+      editRenderCategories();
+      editRenderQuickTags();
+    }
+
+    function editRenderQuickTags() {
+      const wrap = document.getElementById("edit-tags-scroll");
+      if (!wrap) return;
+      const editUser = document.getElementById("form-user").value || currentUser;
+      const editCat = document.getElementById("form-category").value || "食物";
+      const curNote = document.getElementById("form-note").value.trim();
+      const list = getWebDisplayQuickTags(editUser, editCat);
+      if (list.length === 0) {
+        wrap.innerHTML = '<div class="qa-tags-empty">此分類尚無過去備註紀錄</div>';
+        return;
+      }
+      let html = "";
+      for (let i = 0; i < list.length; i++) {
+        const txt = list[i];
+        const isAct = (curNote === txt);
+        html += `<div class="qa-tag-chip${isAct ? " active" : ""}" onclick="editApplyQuickTag(${i})">${escapeHtml(txt)}</div>`;
+      }
+      wrap.innerHTML = html;
+    }
+
+    function editApplyQuickTag(idx) {
+      const editUser = document.getElementById("form-user").value || currentUser;
+      const editCat = document.getElementById("form-category").value || "食物";
+      const list = getWebDisplayQuickTags(editUser, editCat);
+      const text = list[idx];
+      if (!text) return;
+      document.getElementById("form-note").value = text;
+      const clearBtn = document.getElementById("edit-note-clear");
+      if (clearBtn) clearBtn.style.display = "block";
+      editRenderQuickTags();
+    }
+
+    function editOnNoteInput(val) {
+      const clearBtn = document.getElementById("edit-note-clear");
+      if (clearBtn) clearBtn.style.display = val ? "block" : "none";
+      editRenderQuickTags();
+    }
+
+    function editClearNote() {
+      document.getElementById("form-note").value = "";
+      const clearBtn = document.getElementById("edit-note-clear");
+      if (clearBtn) clearBtn.style.display = "none";
+      editRenderQuickTags();
+    }
+
     function openEditModalWithRecordObj(rec) {
       editingModalMatchCriteria = {
         recordedAt: rec["Recorded At"] || rec.recordedAt || "",
@@ -6562,10 +6711,18 @@
       document.getElementById("modal-heading").innerText = `修改記帳 (${rec.user})`;
       document.getElementById("form-row-index").value = rec.rowIndex;
       document.getElementById("form-user").value = rec.user;
-      document.getElementById("form-note").value = rec.note || "";
+      const initNote = rec.note || "";
+      document.getElementById("form-note").value = initNote;
+      const editClearBtn = document.getElementById("edit-note-clear");
+      if (editClearBtn) editClearBtn.style.display = initNote ? "block" : "none";
       document.getElementById("form-amount").value = rec.Amount !== undefined ? rec.Amount : rec.amount;
       document.getElementById("form-category").value = rec.Category || rec.category || "食物";
       document.getElementById("form-account").value = rec.Account || rec.account || "現金";
+
+      mergeWebCategoryNotesFromRecords(rec.user, allRecords, false);
+      syncWebFullCategoryNotesIfNeeded(rec.user);
+      editRenderCategories();
+      editRenderQuickTags();
 
       // 轉換 Recorded At 為 datetime-local 格式 (yyyy-MM-ddTHH:mm)
       const rawTime = String(rec["Recorded At"] || rec.recordedAt || "");
